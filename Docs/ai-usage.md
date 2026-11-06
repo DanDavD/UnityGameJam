@@ -1,0 +1,24 @@
+# AI Usage Disclosure
+
+This game was made for the Official 2026 Unity Game Jam, which requires disclosing any use of generative AI. This file is kept up to date during development and summarized on the itch.io page.
+
+## Tools
+
+- **Claude Code** (Anthropic) as a development assistant, with a project-specific setup in `.claude/`:
+  - Subagents: `unity-developer`, `code-reviewer`, `ui-designer`, `ux-reviewer`, `jam-producer`
+  - Workflow skills: `/feature`, `/review-code`, `/ui-check`, `/scope`
+  - Reference skills: Unity's official plugin and selected Nice-Wolf-Studio Unity skills (MIT)
+  - MCP: MCP for Unity (Editor control, tests, console), Context7 (documentation)
+
+## How AI was used
+
+| Area | Use | Human role |
+|---|---|---|
+| Planning and game design | Brainstorming theme interpretations, checking the design against the judging rubric, scoping the week | Final concept, rules and every design decision |
+| Project setup | Generating `CLAUDE.md`, the design system document, agent and skill definitions, hooks | Review and approval of every file |
+
+*(Add a row per system as development goes: code, tests, UI, art, audio, text.)*
+
+## Not AI-generated
+
+*(List what was made entirely by hand or comes from credited third-party assets, see `credits.md`.)*
