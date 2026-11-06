@@ -1,4 +1,4 @@
-# GameJam *(working title)*
+# GodBoard
 
 A digital **board game of conquest** where the die is the pantheon. Made solo in one week for the **Official 2026 Unity Game Jam**. Theme: **"Lucky Number"**.
 
@@ -31,4 +31,4 @@ This project is built with [Claude Code](https://claude.com/claude-code) as a de
 
 ## Legal
 
-This game is not sponsored by or affiliated with Unity Technologies or its affiliates. Unity is a trademark or registered trademark of Unity Technologies or its affiliates in the U.S. and elsewhere.
+GodBoard is not sponsored by or affiliated with Unity Technologies or its affiliates. Unity is a trademark or registered trademark of Unity Technologies or its affiliates in the U.S. and elsewhere.
