@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "enabledPlugins": {
+    "unity@claude-plugins-official": true,
+    "context7@claude-plugins-official": true,
+    "csharp-lsp@claude-plugins-official": true
+  },
+  "enabledMcpjsonServers": ["unityMCP"],
+  "permissions": {
+    "allow": [
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git ls-files:*)",
+      "Bash(dotnet csharpier:*)",
+      "Bash(dotnet tool restore:*)",
+      "mcp__unityMCP__read_console"
+    ],
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git clean:*)",
+      "Bash(git checkout -- :*)",
+      "Bash(git restore:*)",
+      "Bash(git rebase:*)",
+      "Bash(git commit --amend:*)",
+      "Bash(rm -rf:*)",
+      "Bash(rm -r:*)",
+      "Edit(/ProjectSettings/**)",
+      "Write(/ProjectSettings/**)",
+      "Edit(/Packages/manifest.json)",
+      "Write(/Packages/manifest.json)"
+    ],
+    "deny": [
+      "Edit(/Library/**)",
+      "Write(/Library/**)",
+      "Edit(/Temp/**)",
+      "Write(/Temp/**)",
+      "Edit(/Logs/**)",
+      "Write(/Logs/**)",
+      "Edit(/UserSettings/**)",
+      "Write(/UserSettings/**)",
+      "Edit(**/*.meta)",
+      "Write(**/*.meta)",
+      "Read(**/.env)",
+      "Read(**/.env.*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/format-csharp.js\"",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}

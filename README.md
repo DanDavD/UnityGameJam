@@ -27,7 +27,7 @@ Opposite faces of a die always add up to 7, so **your lucky number is your rival
 
 ## AI-assisted development
 
-This project is built with [Claude Code](https://claude.com/claude-code) as a development partner for planning, design review, code review and balance simulations. The full disclosure of how AI was used is in [`docs/ai-usage.md`](docs/ai-usage.md) *(coming soon)*.
+This project is built with [Claude Code](https://claude.com/claude-code) as a development partner for planning, design review, code review and balance simulations. The full disclosure of how AI was used is in [`Docs/ai-usage.md`](Docs/ai-usage.md).
 
 ## Legal
 
