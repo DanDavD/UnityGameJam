@@ -12,7 +12,7 @@ Feature freeze **Sun Nov 8**. Game finished **Wed Nov 11, midnight**. Nov 12-14:
 
 ## Game
 
-Digital **board game of conquest**: 1 human vs 3 bots on a small map (12-15 territories, temples in the center). **The die is the pantheon** (d6):
+Digital **board game of faith and conquest**: 1 human vs 3 bots racing for temples on a small altar-shaped board. The territory/attack skeleton is a familiar genre on purpose (instant readability); the identity is the lucky number. **The die is the pantheon** (d6):
 
 | Face | Meaning | Rival (opposite face) |
 |---|---|---|
@@ -25,11 +25,54 @@ Digital **board game of conquest**: 1 human vs 3 bots on a small map (12-15 terr
 
 Opposite faces sum to 7: **your sacred number is your rival's, and it is your cursed number.** Every roll is read per nation as **sacred / cursed / neutral**.
 
-**MVP (must ship):** map + territories, turn state machine, reinforcements, combat (both roll a d6: cursed = auto-lose, sacred = win/power, neutral = higher wins, tie → defender), Destiny Die each round (favored god / weakened rival / 3 boon / 4 penalty), simple bots, win condition (3 temples, elimination, or most territories after 15 rounds), self-teaching onboarding, main menu, end screen, sound.
+### Rules (approved)
+
+**Board (13 territories, symmetric).** Each nation starts in its corner with a **Capital (3 troops)** and a **Village (2 troops)**. Rivals sit in opposite corners: Zeus top-left, Ra top-right, Thor bottom-right, Morrígan bottom-left. **4 Temples** on the edges (North between Zeus and Ra, East between Ra and Thor, South between Thor and Morrígan, West between Morrígan and Zeus) and the **Altar** in the center. Temples and Altar start empty (no owner, 0 troops).
+
+Adjacency: Capital – own Village. Each Village – the two Temples flanking its corner. Altar – all 4 Temples.
+
+**Round.** At the start of every round the **Destiny Die** is rolled:
+
+| Face | Effect this round |
+|---|---|
+| A god's face (1, 6, 2, 5) | That god is **favored: +2 reinforcements**. Its rival is **weakened: −2 reinforcements** |
+| 3, good fortune | Everyone **+1 reinforcement** |
+| 4, bad omen | Each nation **loses 1 troop from its largest army** (only if that territory has 2+ troops; ties: lowest territory id) |
+
+**Turn order:** Zeus → Ra → Thor → Morrígan (eliminated nations are skipped).
+
+**Turn: Reinforce → Attack → End.**
+
+1. **Reinforce:** receive `2 + territories / 2 (integer) + temples owned + Destiny modifier`, minimum 1. Place them one at a time on any owned territory. When all are placed, the Attack phase starts.
+2. **Attack (any number of times):** from an owned territory with **2+ troops** to an adjacent territory not owned by you.
+   - **Empty unowned territory:** captured directly, no combat.
+   - **Enemy territory:** both roll a d6 (`CombatResolver`). The roll is shown first and the attacker may make an **Offering**: sacrifice 1 troop from the attacking territory to **re-roll their own die**, once per combat, only **while the attacker is losing** the rolled combat and only if the attacking territory has **3+ troops**. The re-roll replaces the attacker's roll, even if it is worse. Then the combat resolves: **the loser loses 1 troop**.
+   - **Capture:** when the defender reaches 0, the attacker takes the territory and moves **all troops but one** into it.
+3. **End turn.** No separate fortify phase (reinforcements can be placed anywhere).
+
+A nation with no territories is **eliminated**.
+
+**Victory (first that happens):**
+1. **Control 3 of the 4 Temples at the start of your turn** (primary goal).
+2. **Last nation standing.**
+3. **After 15 rounds:** most territories; tie → most troops; tie → earlier in turn order.
+
+**Design filter:** theme is 40% of the jam score. For every feature ask *"if the lucky number were removed, would this still work?"*. Prefer no. Restraint over scope. The player must understand what to do in the first minute without reading. Always show *why* a result happened. Visual and UI rules live in [`Docs/design-system.md`](Docs/design-system.md).
+
+### Phases
+
+| Phase | Content | Status |
+|---|---|---|
+| 1 | Core: dice, pantheon, combat resolution | Done |
+| 2 | Core: board, territories, turn state machine, reinforcements, Destiny Die, Offering, victory | Done |
+| 3 | Presentation: altar-shaped parchment board, pieces, dice view, input; simple bots (AI) | |
+| 4 | UI Toolkit HUD, combat panel with "why", self-teaching onboarding, main menu, end screen | |
+| 5 | Audio, juice, balance via headless bot-vs-bot simulations | |
+| 6 | WebGL build, bug fixing, polish (finish by Wed Nov 11) | |
 
 **If time allows:** unique god powers (Zeus lightning, Thor auto-win, Ra double production, Morrígan converts the dead), hot-seat mode, per-god VFX.
 
-**Design filter:** theme is 40% of the jam score. For every feature ask *"if the lucky number were removed, would this still work?"*. Prefer no. Restraint over scope. The player must understand what to do in the first minute without reading. Always show *why* a result happened. Visual and UI rules live in [`Docs/design-system.md`](Docs/design-system.md).
+**Visual identity (never like a world-map war game):** a parchment board shaped like an altar, the four gods in their corners, temples around the center. No world map, no toy soldiers, no political-map colors.
 
 ## Project structure
 
