@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
+using GameJam.Core;
 
-namespace GameJam.Core.Tests
+namespace GameJam.Tests
 {
     /// <summary>Returns queued values in order so tests control every roll.</summary>
     public sealed class FakeRandom : IRandom

@@ -70,3 +70,6 @@ desktop.ini
 
 # Local Claude Code settings (shared settings in .claude/settings.json are kept)
 .claude/settings.local.json
+
+# Screenshots taken during development and reviews
+/[Cc]aptures/

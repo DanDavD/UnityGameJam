@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d652398f2f79cb349a2d8be406e647cd, type: 3}
+  m_Name: GodVisuals
+  m_EditorClassIdentifier: GameJam.Gameplay::GameJam.Gameplay.GodVisuals
+  _gods:
+  - _god: 0
+    _color: {r: 0.3372549, g: 0.7058824, b: 0.9137255, a: 1}
+    _tint: {r: 0.8392157, g: 0.9137255, b: 0.9411765, a: 1}
+    _icon: {fileID: 21300000, guid: 4d9f54dfb92c057428c403e36fc0d1b1, type: 3}
+  - _god: 2
+    _color: {r: 0.9019608, g: 0.62352943, b: 0, a: 1}
+    _tint: {r: 0.9490196, g: 0.8666667, b: 0.6901961, a: 1}
+    _icon: {fileID: 21300000, guid: 28c4ace52a02f664e886b0021adb89fa, type: 3}
+  - _god: 1
+    _color: {r: 0.8352941, g: 0.36862746, b: 0, a: 1}
+    _tint: {r: 0.92156863, g: 0.8039216, b: 0.7058824, a: 1}
+    _icon: {fileID: 21300000, guid: 250b89269b0188a4ea0d11193394b944, type: 3}
+  - _god: 3
+    _color: {r: 0.101960786, g: 0.101960786, b: 0.101960786, a: 1}
+    _tint: {r: 0.8117647, g: 0.78039217, b: 0.7294118, a: 1}
+    _icon: {fileID: 21300000, guid: a138c74c14312cf40865de70555aa389, type: 3}
+  _unownedFill: {r: 0.9843137, g: 0.9647059, b: 0.9254902, a: 1}
+  _unownedBorder: {r: 0.16862746, g: 0.12941177, b: 0.09411765, a: 1}

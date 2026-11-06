@@ -39,13 +39,13 @@ Adjacency: Capital – own Village. Each Village – the two Temples flanking it
 | 3, good fortune | Everyone **+1 reinforcement** |
 | 4, bad omen | Each nation **loses 1 troop from its largest army** (only if that territory has 2+ troops; ties: lowest territory id) |
 
-**Turn order:** Zeus → Ra → Thor → Morrígan (eliminated nations are skipped).
+**Turn order (decided by the Destiny Die):** base cycle Zeus → Ra → Thor → Morrígan. If the Destiny face is a god's face, **that god opens the round** and the others follow in the cycle. On 3 or 4 the opener rotates one step from the previous round's opener (round 1 on 3/4: Zeus). Eliminated nations are skipped.
 
 **Turn: Reinforce → Attack → End.**
 
 1. **Reinforce:** receive `2 + territories / 2 (integer) + temples owned + Destiny modifier`, minimum 1. Place them one at a time on any owned territory. When all are placed, the Attack phase starts.
 2. **Attack (any number of times):** from an owned territory with **2+ troops** to an adjacent territory not owned by you.
-   - **Empty unowned territory:** captured directly, no combat.
+   - **Empty unowned territory:** captured directly, no combat, but you may send only **a third of the source's troops** (`max(1, troops / 3)`, the source always keeps at least 1).
    - **Enemy territory:** both roll a d6 (`CombatResolver`). The roll is shown first and the attacker may make an **Offering**: sacrifice 1 troop from the attacking territory to **re-roll their own die**, once per combat, only **while the attacker is losing** the rolled combat and only if the attacking territory has **3+ troops**. The re-roll replaces the attacker's roll, even if it is worse. Then the combat resolves: **the loser loses 1 troop**.
    - **Capture:** when the defender reaches 0, the attacker takes the territory and moves **all troops but one** into it.
 3. **End turn.** No separate fortify phase (reinforcements can be placed anywhere).
@@ -55,9 +55,9 @@ A nation with no territories is **eliminated**.
 **Victory (first that happens):**
 1. **Control 3 of the 4 Temples at the start of your turn** (primary goal).
 2. **Last nation standing.**
-3. **After 15 rounds:** most territories; tie → most troops; tie → earlier in turn order.
+3. **After 15 rounds:** most territories; tie → most troops; tie → earlier in the base cycle (Zeus, Ra, Thor, Morrígan).
 
-**Design filter:** theme is 40% of the jam score. For every feature ask *"if the lucky number were removed, would this still work?"*. Prefer no. Restraint over scope. The player must understand what to do in the first minute without reading. Always show *why* a result happened. Visual and UI rules live in [`Docs/design-system.md`](Docs/design-system.md).
+**Design filter:** every mechanic must be **fun, easy to understand, simple to implement and unique**, and it should be decided by the lucky number whenever possible. Theme is 40% of the jam score. For every feature ask *"if the lucky number were removed, would this still work?"*. Prefer no. Restraint over scope. The player must understand what to do in the first minute without reading. Always show *why* a result happened. Visual and UI rules live in [`Docs/design-system.md`](Docs/design-system.md).
 
 ### Phases
 
@@ -65,10 +65,21 @@ A nation with no territories is **eliminated**.
 |---|---|---|
 | 1 | Core: dice, pantheon, combat resolution | Done |
 | 2 | Core: board, territories, turn state machine, reinforcements, Destiny Die, Offering, victory | Done |
-| 3 | Presentation: altar-shaped parchment board, pieces, dice view, input; simple bots (AI) | |
+| 3 | Presentation: altar-shaped parchment board, pieces, dice view, input; simple bots (AI); first WebGL build | Done |
 | 4 | UI Toolkit HUD, combat panel with "why", self-teaching onboarding, main menu, end screen | |
 | 5 | Audio, juice, balance via headless bot-vs-bot simulations | |
 | 6 | WebGL build, bug fixing, polish (finish by Wed Nov 11) | |
+
+#### Phase 3 plan (approved)
+
+- One scene `Match`. The 13 territory positions live in a `BoardLayout` ScriptableObject so they can be moved in the Editor.
+- Placeholder art: simple rounded shapes on a parchment background, already using the design-system colors and god icons. Final art in phase 5.
+- Each territory shows owner color + god icon (never color alone) + troop count; temples and the Altar have distinct shapes.
+- Input: Reinforce = click an own territory for +1 troop. Attack = click an own territory, legal targets highlight (`CanAttack`), click a target to roll. If losing and `CanMakeOffering`, show **Offering** and **Accept** buttons; otherwise the combat confirms after the dice animation. An **End turn** button. Buttons are minimal UI Toolkit placeholders (full HUD in phase 4).
+- Dice view: two dice that tumble and land showing the number and SACRED / CURSED / NEUTRAL in each god's color.
+- Bots (`Scripts/AI`, pure C#, tested headlessly): reinforce next to the best target; attack priority empty temples → empty territories → enemies with fewer troops; keep attacking while they have the troop advantage; make an Offering when losing with 4+ troops. Bot turns play with short pauses so the player can follow.
+- `MatchController` wires `Match` to the scene, listens to events and runs bot turns. The human plays Zeus for now.
+- Finish the phase with the first WebGL build uploaded to itch as a draft.
 
 **If time allows:** unique god powers (Zeus lightning, Thor auto-win, Ra double production, Morrígan converts the dead), hot-seat mode, per-god VFX.
 

@@ -27,6 +27,20 @@ namespace GameJam.Core
                 _ => throw new ArgumentOutOfRangeException(nameof(god), god, null),
             };
 
+        /// <summary>The god whose sacred number is <paramref name="face"/>; null for 3 and 4, which belong to everyone.</summary>
+        public static God? GodOfFace(int face)
+        {
+            Die.EnsureValidFace(face);
+            return face switch
+            {
+                1 => God.Zeus,
+                6 => God.Thor,
+                2 => God.Ra,
+                5 => God.Morrigan,
+                _ => null,
+            };
+        }
+
         public static RollOutcome Read(God god, int face)
         {
             Die.EnsureValidFace(face);

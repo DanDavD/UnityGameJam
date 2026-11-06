@@ -1,0 +1,360 @@
+/* Placeholder match HUD (phase 3). Every value comes from Styles/Tokens.uss.
+   Text sizes on the HUD: h2 (round / Destiny), body (identity, goal, prompt, verdict), label (buttons, tags).
+   The end banner is a modal of its own: h1, body, label. */
+
+.hud {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    padding: var(--space-8);
+    justify-content: space-between;
+}
+
+/* Paper card with a flat offset shadow (thicker, darker bottom edge). */
+.card {
+    background-color: var(--paper);
+    border-width: var(--border-width);
+    border-bottom-width: var(--shadow-offset);
+    border-color: var(--paper-shade);
+    border-bottom-color: var(--shadow);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+}
+
+/* Top left: who you are and what you want */
+.hud__identity {
+    position: absolute;
+    left: var(--space-8);
+    top: var(--space-8);
+    flex-direction: row;
+    align-items: center;
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+}
+
+.hud__identity-text {
+    margin-left: var(--space-3);
+}
+
+.hud__identity-line {
+    font-size: var(--font-size-body);
+    -unity-font-style: bold;
+    color: var(--ink);
+    padding: 0;
+    margin: 0;
+}
+
+.hud__goal {
+    font-size: var(--font-size-body);
+    color: var(--ink-soft);
+    padding: 0;
+    margin: var(--space-1) 0 0 0;
+}
+
+/* Top center: round and Destiny, the loudest line on the HUD */
+.hud__top {
+    align-items: center;
+}
+
+/* Capped so it wraps instead of running into the identity card at 1280x720. */
+.hud__round {
+    max-width: var(--round-line-width);
+    white-space: normal;
+    -unity-text-align: middle-center;
+    font-size: var(--font-size-h2);
+    -unity-font-style: bold;
+    color: var(--ink);
+    padding: var(--space-2) var(--space-6);
+    border-radius: var(--radius-md);
+}
+
+/* Bottom center: prompt and actions */
+.hud__bottom {
+    align-items: center;
+}
+
+.hud__prompt {
+    font-size: var(--font-size-body);
+    color: var(--ink);
+    margin-bottom: var(--space-3);
+    -unity-text-align: middle-center;
+}
+
+.hud__actions {
+    flex-direction: row;
+    justify-content: center;
+}
+
+/* Nation chip: nation color + icon, so the god is never color alone */
+.god-chip {
+    width: var(--icon-lg);
+    height: var(--icon-lg);
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--paper-shade);
+    border-width: var(--border-width);
+    border-color: var(--ink);
+    border-radius: var(--radius-md);
+}
+
+.god-chip--lg {
+    width: var(--chip-lg);
+    height: var(--chip-lg);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-4);
+}
+
+.god-chip__icon {
+    width: var(--icon-md);
+    height: var(--icon-md);
+    -unity-background-scale-mode: scale-to-fit;
+    -unity-background-image-tint-color: var(--ink);
+}
+
+.god-chip--lg > .god-chip__icon {
+    width: var(--icon-lg);
+    height: var(--icon-lg);
+}
+
+.god-chip.god--zeus { background-color: var(--nation-zeus); }
+.god-chip.god--thor { background-color: var(--nation-thor); }
+.god-chip.god--ra { background-color: var(--nation-ra); }
+.god-chip.god--morrigan { background-color: var(--nation-morrigan); }
+
+.god--zeus > .god-chip__icon { background-image: url("../Art/Placeholder/icon_zeus_bolt.png"); }
+.god--thor > .god-chip__icon { background-image: url("../Art/Placeholder/icon_thor_hammer.png"); }
+.god--ra > .god-chip__icon { background-image: url("../Art/Placeholder/icon_ra_sun.png"); }
+.god--morrigan > .god-chip__icon {
+    background-image: url("../Art/Placeholder/icon_morrigan_crow.png");
+    -unity-background-image-tint-color: var(--paper);
+}
+
+/* Buttons */
+.button {
+    min-height: var(--button-min-height);
+    margin: 0 var(--space-2);
+    padding: var(--space-3) var(--space-6);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-label);
+    -unity-font-style: bold;
+    letter-spacing: var(--letter-spacing-label);
+    transition-property: background-color, translate, scale;
+    transition-duration: var(--duration-fast);
+    transition-timing-function: var(--ease-enter);
+}
+
+.button--primary {
+    background-color: var(--wood);
+    color: var(--paper);
+    border-width: 0;
+}
+
+.button--primary:hover {
+    background-color: var(--wood-dark);
+    translate: var(--hover-lift);
+}
+
+.button--secondary {
+    background-color: var(--clear);
+    color: var(--wood);
+    border-width: var(--border-width);
+    border-color: var(--wood);
+}
+
+.button--secondary:hover {
+    background-color: var(--paper-shade);
+    translate: var(--hover-lift);
+}
+
+.button:active {
+    scale: var(--press-scale);
+}
+
+.button:disabled {
+    background-color: var(--paper-shade);
+    border-color: var(--paper-shade);
+    color: var(--ink-faint);
+    translate: 0 0;
+}
+
+/* Right: combat dice */
+.dice-panel {
+    position: absolute;
+    right: var(--space-8);
+    top: 50%;
+    translate: 0 -50%;
+    align-items: center;
+    padding: var(--space-4);
+}
+
+.dice-panel__title {
+    font-size: var(--font-size-label);
+    -unity-font-style: bold;
+    color: var(--ink);
+    margin-bottom: var(--space-3);
+}
+
+.dice-panel__row {
+    flex-direction: row;
+}
+
+.die-slot {
+    align-items: center;
+    margin: 0 var(--space-1);
+}
+
+.die-slot__name {
+    font-size: var(--font-size-label);
+    color: var(--ink-soft);
+    margin-bottom: var(--space-2);
+}
+
+.die {
+    width: var(--die-size);
+    height: var(--die-size);
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background-color: var(--paper);
+    border-width: var(--die-border);
+    border-color: var(--ink);
+    border-radius: var(--radius-lg);
+}
+
+.die__face {
+    font-size: var(--font-size-die);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    color: var(--ink);
+    padding: 0;
+    margin: 0;
+}
+
+/* Corner symbol: ✦ sacred, ✖ cursed. Shown by the die outcome class. */
+.die__mark {
+    position: absolute;
+    top: var(--space-1);
+    right: var(--space-2);
+    font-size: var(--font-size-body);
+    -unity-font-style: bold;
+    color: var(--ink);
+    padding: 0;
+    margin: 0;
+    display: none;
+}
+
+/* Cursed crack: a diagonal split across the face, under the number. */
+.die__crack {
+    position: absolute;
+    left: -21%;
+    top: 50%;
+    width: 142%;
+    height: var(--die-border);
+    background-color: var(--ink-faint);
+    rotate: -45deg;
+    display: none;
+}
+
+/* One class per god, shared by its die and outcome tag */
+.die.god--zeus { border-color: var(--nation-zeus); }
+.die.god--thor { border-color: var(--nation-thor); }
+.die.god--ra { border-color: var(--nation-ra); }
+.die.god--morrigan { border-color: var(--nation-morrigan); }
+
+/* Sacred: thicker nation border and a glow of the nation tint. */
+.die.die--sacred {
+    border-width: var(--die-border-sacred);
+}
+
+.die--sacred.god--zeus { background-color: var(--nation-zeus-tint); }
+.die--sacred.god--thor { background-color: var(--nation-thor-tint); }
+.die--sacred.god--ra { background-color: var(--nation-ra-tint); }
+.die--sacred.god--morrigan { background-color: var(--nation-morrigan-tint); }
+
+.die--sacred > .die__mark--sacred {
+    display: flex;
+}
+
+/* Cursed: desaturated (no nation color), cracked and marked. Declared after the god rules so it wins. */
+.die.die--cursed {
+    background-color: var(--paper-shade);
+    border-color: var(--ink-faint);
+}
+
+.die--cursed > .die__face {
+    color: var(--ink-soft);
+}
+
+.die--cursed > .die__crack,
+.die--cursed > .die__mark--cursed {
+    display: flex;
+}
+
+.outcome {
+    margin-top: var(--space-2);
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--font-size-label);
+    -unity-font-style: bold;
+    letter-spacing: var(--letter-spacing-label);
+    color: var(--ink);
+    background-color: var(--paper);
+    border-width: var(--border-width);
+    border-color: var(--paper-shade);
+    border-radius: var(--radius-sm);
+}
+
+.outcome.god--zeus { background-color: var(--nation-zeus-tint); border-color: var(--nation-zeus); }
+.outcome.god--thor { background-color: var(--nation-thor-tint); border-color: var(--nation-thor); }
+.outcome.god--ra { background-color: var(--nation-ra-tint); border-color: var(--nation-ra); }
+.outcome.god--morrigan { background-color: var(--nation-morrigan-tint); border-color: var(--nation-morrigan); }
+
+/* The "why": body size, sentence case */
+.dice-panel__verdict {
+    margin-top: var(--space-4);
+    font-size: var(--font-size-body);
+    color: var(--ink);
+    -unity-text-align: middle-center;
+    white-space: normal;
+    max-width: var(--dice-panel-text-width);
+}
+
+/* End of match */
+.end-banner {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--scrim);
+}
+
+/* The top edge takes the winner's color; the chip carries its icon. */
+.end-banner__card {
+    min-width: var(--end-card-width);
+    align-items: center;
+    padding: var(--space-8);
+    border-top-width: var(--space-2);
+}
+
+.end-banner__card.god--zeus { border-top-color: var(--nation-zeus); }
+.end-banner__card.god--thor { border-top-color: var(--nation-thor); }
+.end-banner__card.god--ra { border-top-color: var(--nation-ra); }
+.end-banner__card.god--morrigan { border-top-color: var(--nation-morrigan); }
+
+.end-banner__title {
+    font-size: var(--font-size-h1);
+    -unity-font-style: bold;
+    color: var(--ink);
+}
+
+.end-banner__reason {
+    font-size: var(--font-size-body);
+    color: var(--ink-soft);
+    margin-top: var(--space-2);
+    margin-bottom: var(--space-6);
+}

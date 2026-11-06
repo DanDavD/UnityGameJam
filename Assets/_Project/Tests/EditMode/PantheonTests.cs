@@ -1,7 +1,8 @@
 using System;
+using GameJam.Core;
 using NUnit.Framework;
 
-namespace GameJam.Core.Tests
+namespace GameJam.Tests
 {
     public sealed class PantheonTests
     {
@@ -41,6 +42,29 @@ namespace GameJam.Core.Tests
         public void Read_ZeusAnyFace_ReturnsExpectedOutcome(int face, RollOutcome expected)
         {
             Assert.AreEqual(expected, Pantheon.Read(God.Zeus, face));
+        }
+
+        [TestCase(God.Zeus)]
+        [TestCase(God.Thor)]
+        [TestCase(God.Ra)]
+        [TestCase(God.Morrigan)]
+        public void GodOfFace_EachSacredFace_ReturnsItsGod(God god)
+        {
+            Assert.AreEqual(god, Pantheon.GodOfFace(Pantheon.SacredFace(god)));
+        }
+
+        [TestCase(Destiny.GoodFortuneFace)]
+        [TestCase(Destiny.BadOmenFace)]
+        public void GodOfFace_SharedFace_ReturnsNull(int face)
+        {
+            Assert.IsNull(Pantheon.GodOfFace(face));
+        }
+
+        [TestCase(0)]
+        [TestCase(7)]
+        public void GodOfFace_InvalidFace_Throws(int face)
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => Pantheon.GodOfFace(face));
         }
 
         [TestCase(0)]

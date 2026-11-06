@@ -19,12 +19,22 @@ namespace GameJam.Core
         public const int MinTroopsToAttack = 2;
         public const int MinTroopsToOffer = 3;
 
-        public static readonly IReadOnlyList<God> TurnOrder = Array.AsReadOnly(
+        /// <summary>An empty territory only takes a third of the source's troops (at least 1).</summary>
+        public const int EmptyCaptureDivisor = 3;
+
+        /// <summary>
+        /// The clockwise cycle of the corners. Each round starts at a different god (see
+        /// <see cref="RoundOpener"/>) and follows this cycle; the round-limit tie-break uses it as is.
+        /// </summary>
+        public static readonly IReadOnlyList<God> BaseTurnOrder = Array.AsReadOnly(
             new[] { God.Zeus, God.Ra, God.Thor, God.Morrigan }
         );
 
         private readonly IRandom _random;
+
+        // Both are positions in BaseTurnOrder.
         private int _turnIndex;
+        private int _openerIndex;
 
         public Match(Board board, IRandom random)
         {
@@ -32,7 +42,10 @@ namespace GameJam.Core
             _random = random ?? throw new ArgumentNullException(nameof(random));
         }
 
-        /// <summary>Round number and Destiny face, before the bad omen (if any) is applied.</summary>
+        /// <summary>
+        /// Round number and Destiny face, before the bad omen (if any) is applied.
+        /// <see cref="RoundOpener"/> and <see cref="CurrentGod"/> already hold the new round's first god.
+        /// </summary>
         public event Action<int, int> RoundStarted;
 
         /// <summary>God whose turn begins and the reinforcements it received.</summary>
@@ -57,18 +70,27 @@ namespace GameJam.Core
         public Board Board { get; }
         public int Round { get; private set; }
         public TurnPhase Phase { get; private set; }
-        public God CurrentGod => TurnOrder[_turnIndex];
+        public God CurrentGod => BaseTurnOrder[_turnIndex];
+
+        /// <summary>The god who plays first this round, chosen by the Destiny Die.</summary>
+        public God RoundOpener => BaseTurnOrder[_openerIndex];
 
         /// <summary>The Destiny Die face of the current round (0 before the match starts).</summary>
         public int DestinyFace { get; private set; }
 
         public int ReinforcementsLeft { get; private set; }
 
+        /// <summary>How the current turn's reinforcements were earned, so the UI can explain the total.</summary>
+        public Reinforcements TurnReinforcements { get; private set; }
+
         /// <summary>The combat waiting for an Offering or confirmation; null outside CombatPending.</summary>
         public Combat PendingCombat { get; private set; }
 
         public God? Winner { get; private set; }
         public VictoryReason? WinReason { get; private set; }
+
+        /// <summary>What decided a round-limit win, so the UI can explain it; null for any other ending.</summary>
+        public RoundLimitDecider? RoundLimitDecider { get; private set; }
 
         // A nation with no territories can never get one back, so ownership is the source of truth.
         public bool IsEliminated(God god) => Board.TerritoryCount(god) == 0;
@@ -90,13 +112,24 @@ namespace GameJam.Core
             && from.IsAdjacentTo(to)
             && from.Troops >= MinTroopsToAttack;
 
-        public static int CalculateReinforcements(int territories, int temples, int destinyModifier)
+        /// <summary>Troops that move into an empty territory; the source always keeps at least 1.</summary>
+        public static int EmptyCaptureTroops(int sourceTroops) =>
+            Math.Max(1, sourceTroops / EmptyCaptureDivisor);
+
+        /// <summary>
+        /// Position of a god in <see cref="BaseTurnOrder"/>, which is also its corner clockwise from top-left.
+        /// </summary>
+        public static int BaseTurnIndex(God god)
         {
-            int total = BaseReinforcements + territories / 2 + temples + destinyModifier;
-            return Math.Max(MinReinforcements, total);
+            for (int i = 0; i < BaseTurnOrder.Count; i++)
+            {
+                if (BaseTurnOrder[i] == god)
+                    return i;
+            }
+            throw new ArgumentOutOfRangeException(nameof(god), god, null);
         }
 
-        /// <summary>Rolls Destiny for round 1 and begins Zeus's turn. All four nations start alive.</summary>
+        /// <summary>Rolls Destiny for round 1 and begins the opener's turn. All four nations start alive.</summary>
         public void Start()
         {
             RequirePhase(TurnPhase.NotStarted, "start the match");
@@ -193,44 +226,79 @@ namespace GameJam.Core
         {
             RequirePhase(TurnPhase.Attack, "end the turn");
 
-            int next = _turnIndex;
-            bool wrapped = false;
-            do
+            if (TryFindNextInRound(out int next))
             {
-                next++;
-                if (next == TurnOrder.Count)
-                {
-                    next = 0;
-                    wrapped = true;
-                }
-            } while (IsEliminated(TurnOrder[next]));
-
-            if (wrapped && Round >= RoundLimit)
-            {
-                Win(RoundLimitWinner(), VictoryReason.RoundLimit);
+                _turnIndex = next;
+                StartTurn();
                 return;
             }
 
-            // Set first so round events (Destiny, bad omen) already see the new round's first god.
-            _turnIndex = next;
-            if (wrapped)
-                StartRound(Round + 1);
+            if (Round >= RoundLimit)
+            {
+                God winner = RoundLimitWinner();
+                RoundLimitDecider = DecidingStep(winner);
+                Win(winner, VictoryReason.RoundLimit);
+                return;
+            }
+
+            StartRound(Round + 1);
             StartTurn();
+        }
+
+        // Walks the cycle from the current god. Reaching the opener's seat again means every living
+        // god has played; checking the seat (not the god) also works if the opener died this round.
+        private bool TryFindNextInRound(out int next)
+        {
+            for (int step = 1; step <= BaseTurnOrder.Count; step++)
+            {
+                int candidate = (_turnIndex + step) % BaseTurnOrder.Count;
+                if (candidate == _openerIndex)
+                    break;
+                if (!IsEliminated(BaseTurnOrder[candidate]))
+                {
+                    next = candidate;
+                    return true;
+                }
+            }
+            next = -1;
+            return false;
         }
 
         private void StartRound(int round)
         {
             Round = round;
             DestinyFace = Die.Roll(_random);
+
+            // Set before the event so round listeners already see who opens the new round.
+            _openerIndex = FirstLivingFrom(DestinyOpener(round));
+            _turnIndex = _openerIndex;
             RoundStarted?.Invoke(Round, DestinyFace);
 
             if (Destiny.IsBadOmen(DestinyFace))
                 ApplyBadOmen();
         }
 
+        // A god's face lets that god open the round. 3 and 4 belong to everyone, so the opener just
+        // rotates one seat; round 1 has no previous opener and starts with Zeus.
+        private int DestinyOpener(int round)
+        {
+            God? favored = Pantheon.GodOfFace(DestinyFace);
+            if (favored != null)
+                return BaseTurnIndex(favored.Value);
+            return round == 1 ? 0 : (_openerIndex + 1) % BaseTurnOrder.Count;
+        }
+
+        // The match ends before fewer than two gods are alive, so a living god is always found.
+        private int FirstLivingFrom(int index)
+        {
+            while (IsEliminated(BaseTurnOrder[index]))
+                index = (index + 1) % BaseTurnOrder.Count;
+            return index;
+        }
+
         private void ApplyBadOmen()
         {
-            foreach (God god in TurnOrder)
+            foreach (God god in BaseTurnOrder)
             {
                 Territory largest = LargestArmy(god);
                 if (largest == null || largest.Troops < Destiny.BadOmenMinTroops)
@@ -266,11 +334,12 @@ namespace GameJam.Core
                 return;
             }
 
-            ReinforcementsLeft = CalculateReinforcements(
+            TurnReinforcements = new Reinforcements(
                 Board.TerritoryCount(god),
                 Board.TempleCount(god),
                 Destiny.ReinforcementModifier(god, DestinyFace)
             );
+            ReinforcementsLeft = TurnReinforcements.Total;
             Phase = TurnPhase.Reinforce;
             TurnStarted?.Invoke(god, ReinforcementsLeft);
         }
@@ -279,8 +348,12 @@ namespace GameJam.Core
         {
             God? previousOwner = to.Owner;
             to.Owner = CurrentGod;
-            to.Troops = from.Troops - 1;
-            from.Troops = 1;
+
+            // A won combat moves in all but one. An empty territory is free, so it only takes a third:
+            // grabbing land never strips the front line.
+            int moved = previousOwner == null ? EmptyCaptureTroops(from.Troops) : from.Troops - 1;
+            to.Troops = moved;
+            from.Troops -= moved;
             TerritoryChanged?.Invoke(from);
             TerritoryChanged?.Invoke(to);
             TerritoryCaptured?.Invoke(to, CurrentGod, previousOwner);
@@ -293,13 +366,13 @@ namespace GameJam.Core
                 Win(CurrentGod, VictoryReason.LastStanding);
         }
 
-        // Most territories, then most troops; iterating in turn order makes the earlier god win full ties.
+        // Most territories, then most troops; iterating the base cycle makes the earlier god win full ties.
         private God RoundLimitWinner()
         {
             God best = CurrentGod;
             int bestTerritories = -1;
             int bestTroops = -1;
-            foreach (God god in TurnOrder)
+            foreach (God god in BaseTurnOrder)
             {
                 int territories = Board.TerritoryCount(god);
                 int troops = Board.TotalTroops(god);
@@ -316,10 +389,31 @@ namespace GameJam.Core
             return best;
         }
 
+        // The first ranking step where nobody else matches the winner is the one that decided it.
+        private RoundLimitDecider DecidingStep(God winner)
+        {
+            int territories = Board.TerritoryCount(winner);
+            int troops = Board.TotalTroops(winner);
+            bool tiedOnTerritories = false;
+            bool tiedOnTroops = false;
+            foreach (God god in BaseTurnOrder)
+            {
+                if (god == winner || Board.TerritoryCount(god) != territories)
+                    continue;
+                tiedOnTerritories = true;
+                if (Board.TotalTroops(god) == troops)
+                    tiedOnTroops = true;
+            }
+
+            if (!tiedOnTerritories)
+                return Core.RoundLimitDecider.Territories;
+            return tiedOnTroops ? Core.RoundLimitDecider.TurnOrder : Core.RoundLimitDecider.Troops;
+        }
+
         private int LivingNationCount()
         {
             int count = 0;
-            foreach (God god in TurnOrder)
+            foreach (God god in BaseTurnOrder)
             {
                 if (!IsEliminated(god))
                     count++;
