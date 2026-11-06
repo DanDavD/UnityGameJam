@@ -3,8 +3,8 @@
 Solo entry for the **Official 2026 Unity Game Jam** (theme **"Lucky Number"**) and a **portfolio piece**: it must show interest in board games, a deliberate AI-assisted workflow, solid Unity/C# skill, and a finished, polished product. Code quality, architecture and commit history are read by studio recruiters.
 
 - **Talk to the developer in Spanish.** Code, comments, commits, docs and in-game text are in **English**.
-- Working title TBD (codename `GameJam`). Never put "Unity" in the game's name.
-- The developer must understand and be able to explain every line that lands. When writing non-trivial code, briefly explain the design choice.
+- Game name: **GodBoard** (repo and project codename `GameJam`). Never put "Unity" in the game's name.
+- The developer is an **expert C# developer who reviews and debugs but does not hand-write code**. Claude (through the subagents) writes all code; the developer does the final review, testing and approval.
 
 ## Dates (UTC-6)
 
@@ -55,9 +55,26 @@ Docs/                  design-system.md, ai-usage.md, credits.md
 - **Data and tuning in ScriptableObjects** (nations, colors, icons, balance numbers). No magic numbers in logic.
 - **UI: UI Toolkit** (UXML + USS) for all screen-space UI. Design tokens are USS variables mirroring `Docs/design-system.md`. Board and pieces are sprites (URP 2D).
 
+## Simplicity first
+
+This is a small, simple game. **Prefer the most direct solution.**
+
+- No elaborate patterns or unnecessary abstractions: no interfaces with a single implementation (except `IRandom`, needed for deterministic tests), no service locators, DI frameworks, event buses, reflection, complex generics or advanced math when a plain solution exists.
+- Static helper classes are fine for pure rules (for example reading a die face).
+- Enums and plain classes over class hierarchies. A `switch` is fine.
+- If a reviewer can delete code or a type without losing behavior, delete it.
+
+**Layers (keep consistent in every file):**
+
+| Layer | Folder | Contains | May reference |
+|---|---|---|---|
+| Model + Rules | `Scripts/Core` | Data types and game rules, plain C# | nothing (no `UnityEngine`) |
+| Bots | `Scripts/AI` | Bot decisions | Core |
+| Presentation | `Scripts/Gameplay`, `Scripts/UI` | MonoBehaviours, UI Toolkit views | Core, AI |
+
 ## C# conventions
 
-- One public type per file; file name = type name; namespaces mirror folders (`GameJam.Core`, `GameJam.UI`, ...).
+- One class per file; file name = type name; namespaces mirror folders (`GameJam.Core`, `GameJam.UI`, ...).
 - `PascalCase` types/methods/properties/events, `_camelCase` private fields, `camelCase` locals/params.
 - `[SerializeField] private` instead of public fields.
 - No `Find*`, `GetComponent` or allocations (LINQ, string concat, `new` lists) in `Update`/hot paths: cache references in `Awake`.
@@ -101,7 +118,20 @@ Subagents in `.claude/agents/`:
 | `ux-reviewer` | Clarity, feedback, onboarding, readability, contrast | No (read-only) |
 | `jam-producer` | Scope, time, priorities vs the rubric | No (read-only) |
 
-**Standard flow:** `unity-developer` implements → `code-reviewer` reviews → if UI/UX is touched, `ui-designer` + `ux-reviewer` validate → fix → commit.
+**Standard flow (every phase):**
+
+1. `unity-developer` writes all the code and tests.
+2. **Before the developer sees anything**, `code-reviewer` checks compile errors, logic bugs, architecture violations and unnecessary complexity. When possible, also compile and run the Core tests (with the Unity Test Runner or a throwaway `dotnet test` project outside the repo). If UI/UX is touched, `ui-designer` + `ux-reviewer` validate too.
+3. Fix every finding, then review again if the fixes were significant.
+4. Deliver to the developer, who reviews, tests and approves. Commit after approval.
+
+**Delivery format for each phase** (in Spanish):
+
+- Short summary of what was implemented and why
+- Complete files (never fragments), each with its path
+- What the reviewers found and how it was fixed
+- How to test it
+- Proposed next phase
 
 Commands: `/feature <description>` (whole flow), `/review-code` (review current changes), `/ui-check <screen or system>`, `/scope` (what's left, what to cut).
 
