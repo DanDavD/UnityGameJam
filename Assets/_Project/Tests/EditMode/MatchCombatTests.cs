@@ -1,14 +1,15 @@
 using System;
+using GameJam.Core;
 using NUnit.Framework;
 
-namespace GameJam.Core.Tests
+namespace GameJam.Tests
 {
-    // Unless a test says otherwise: Destiny face 2 gives Zeus 3 reinforcements, all placed on
-    // Zeus Village (2 + 3 = 5 troops), which then attacks the North Temple.
+    // Unless a test says otherwise: Destiny face 3 lets Zeus open round 1 with 4 reinforcements,
+    // all placed on Zeus Village (2 + 4 = 6 troops), which then attacks the North Temple.
     // Zeus: sacred 1, cursed 6. Ra: sacred 2, cursed 5.
     public sealed class MatchCombatTests
     {
-        private const int DestinyFace = MatchSetup.NeutralForZeus;
+        private const int DestinyFace = MatchSetup.ZeusOpensFace;
 
         private Board _board;
         private Territory _village;
@@ -23,7 +24,7 @@ namespace GameJam.Core.Tests
         }
 
         [Test]
-        public void Attack_EmptyTemple_CapturesWithoutRollingAndMovesAllButOne()
+        public void Attack_EmptyTemple_CapturesWithoutRollingAndMovesAThird()
         {
             // Only the Destiny roll is queued: any combat roll would make FakeRandom throw.
             Match match = StartInAttackPhase();
@@ -38,11 +39,32 @@ namespace GameJam.Core.Tests
             match.Attack(_village, _temple);
 
             Assert.AreEqual(God.Zeus, _temple.Owner);
-            Assert.AreEqual(4, _temple.Troops);
-            Assert.AreEqual(1, _village.Troops);
+            Assert.AreEqual(2, _temple.Troops); // 6 / 3
+            Assert.AreEqual(4, _village.Troops);
             Assert.AreSame(_temple, captured);
             Assert.IsNull(previousOwner);
             Assert.AreEqual(TurnPhase.Attack, match.Phase);
+        }
+
+        [TestCase(2, 1)] // the minimum: one moves, one stays
+        [TestCase(3, 1)]
+        [TestCase(5, 1)] // integer division rounds down
+        [TestCase(6, 2)]
+        [TestCase(9, 3)]
+        public void Attack_EmptyTemple_MovesAThirdOfTheSourceAndKeepsTheRest(
+            int sourceTroops,
+            int expectedMoved
+        )
+        {
+            Match match = StartReinforcingOn(Board.ZeusCapital);
+            MatchSetup.Set(_board, Board.ZeusVillage, God.Zeus, sourceTroops);
+
+            match.Attack(_village, _temple);
+
+            Assert.AreEqual(expectedMoved, Match.EmptyCaptureTroops(sourceTroops));
+            Assert.AreEqual(expectedMoved, _temple.Troops);
+            Assert.AreEqual(sourceTroops - expectedMoved, _village.Troops);
+            Assert.GreaterOrEqual(_village.Troops, 1);
         }
 
         [Test]
@@ -54,8 +76,9 @@ namespace GameJam.Core.Tests
             match.Attack(_village, _temple);
             match.Attack(_temple, altar);
 
+            // The temple received 2 and sends max(1, 2 / 3) = 1 on.
             Assert.AreEqual(God.Zeus, altar.Owner);
-            Assert.AreEqual(3, altar.Troops);
+            Assert.AreEqual(1, altar.Troops);
             Assert.AreEqual(1, _temple.Troops);
         }
 
@@ -80,7 +103,7 @@ namespace GameJam.Core.Tests
             Assert.AreEqual(3, pending.Result.DefenderRoll);
             Assert.AreEqual(CombatSide.Attacker, pending.Result.Winner);
             Assert.IsFalse(pending.OfferingMade);
-            Assert.AreEqual(5, _village.Troops);
+            Assert.AreEqual(6, _village.Troops);
             Assert.AreEqual(2, _temple.Troops);
         }
 
@@ -97,7 +120,7 @@ namespace GameJam.Core.Tests
 
             Assert.AreEqual(1, _temple.Troops);
             Assert.AreEqual(God.Ra, _temple.Owner);
-            Assert.AreEqual(5, _village.Troops);
+            Assert.AreEqual(6, _village.Troops);
             Assert.AreEqual(CombatSide.Attacker, resolved.Result.Winner);
             Assert.AreEqual(TurnPhase.Attack, match.Phase);
             Assert.IsNull(match.PendingCombat);
@@ -112,7 +135,7 @@ namespace GameJam.Core.Tests
 
             match.ConfirmCombat();
 
-            Assert.AreEqual(4, _village.Troops);
+            Assert.AreEqual(5, _village.Troops);
             Assert.AreEqual(2, _temple.Troops);
             Assert.AreEqual(TurnPhase.Attack, match.Phase);
         }
@@ -129,7 +152,7 @@ namespace GameJam.Core.Tests
             match.ConfirmCombat();
 
             Assert.AreEqual(God.Zeus, _temple.Owner);
-            Assert.AreEqual(4, _temple.Troops);
+            Assert.AreEqual(5, _temple.Troops);
             Assert.AreEqual(1, _village.Troops);
             Assert.AreEqual(God.Ra, previousOwner);
             Assert.IsFalse(match.IsEliminated(God.Ra));
@@ -152,7 +175,7 @@ namespace GameJam.Core.Tests
             match.MakeOffering();
 
             Combat pending = match.PendingCombat;
-            Assert.AreEqual(4, _village.Troops);
+            Assert.AreEqual(5, _village.Troops);
             Assert.AreEqual(1, pending.Result.AttackerRoll);
             Assert.AreEqual(3, pending.Result.DefenderRoll);
             Assert.AreEqual(CombatSide.Attacker, pending.Result.Winner);
@@ -164,7 +187,7 @@ namespace GameJam.Core.Tests
             match.ConfirmCombat();
 
             Assert.AreEqual(1, _temple.Troops);
-            Assert.AreEqual(4, _village.Troops);
+            Assert.AreEqual(5, _village.Troops);
         }
 
         [Test]
@@ -178,7 +201,7 @@ namespace GameJam.Core.Tests
 
             Assert.AreEqual(CombatSide.Defender, match.PendingCombat.Result.Winner);
             Assert.Throws<InvalidOperationException>(() => match.MakeOffering());
-            Assert.AreEqual(4, _village.Troops);
+            Assert.AreEqual(5, _village.Troops);
         }
 
         [Test]
@@ -205,7 +228,7 @@ namespace GameJam.Core.Tests
 
             Assert.IsFalse(match.CanMakeOffering);
             Assert.Throws<InvalidOperationException>(() => match.MakeOffering());
-            Assert.AreEqual(5, _village.Troops);
+            Assert.AreEqual(6, _village.Troops);
             Assert.IsFalse(match.PendingCombat.OfferingMade);
         }
 

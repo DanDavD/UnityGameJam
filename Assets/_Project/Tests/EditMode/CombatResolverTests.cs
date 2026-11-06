@@ -1,7 +1,8 @@
 using System;
+using GameJam.Core;
 using NUnit.Framework;
 
-namespace GameJam.Core.Tests
+namespace GameJam.Tests
 {
     // Unless a test says otherwise, Zeus (sacred 1, cursed 6) attacks Ra (sacred 2, cursed 5).
     public sealed class CombatResolverTests
@@ -82,7 +83,9 @@ namespace GameJam.Core.Tests
         [Test]
         public void Resolve_SameGod_Throws()
         {
-            Assert.Throws<ArgumentException>(() => CombatResolver.Resolve(God.Thor, 3, God.Thor, 4));
+            Assert.Throws<ArgumentException>(() =>
+                CombatResolver.Resolve(God.Thor, 3, God.Thor, 4)
+            );
         }
 
         [TestCase(0, 3)]

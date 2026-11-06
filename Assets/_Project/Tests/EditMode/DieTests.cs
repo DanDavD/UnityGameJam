@@ -1,7 +1,8 @@
 using System;
+using GameJam.Core;
 using NUnit.Framework;
 
-namespace GameJam.Core.Tests
+namespace GameJam.Tests
 {
     public sealed class DieTests
     {

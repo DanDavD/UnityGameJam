@@ -1,0 +1,62 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <ui:Style src="Styles/Tokens.uss" />
+    <ui:Style src="Match.uss" />
+    <ui:VisualElement name="hud" class="hud" picking-mode="Ignore">
+        <ui:VisualElement name="identity-card" class="card hud__identity" picking-mode="Ignore">
+            <ui:VisualElement name="identity-chip" class="god-chip god--zeus" picking-mode="Ignore">
+                <ui:VisualElement class="god-chip__icon" picking-mode="Ignore" />
+            </ui:VisualElement>
+            <ui:VisualElement class="hud__identity-text" picking-mode="Ignore">
+                <ui:Label name="identity-label" class="hud__identity-line" picking-mode="Ignore" text="YOU: ZEUS · ✦ 1 sacred · ✖ 6 cursed" />
+                <ui:Label name="goal-label" class="hud__goal" picking-mode="Ignore" text="Goal: hold 3 temples at your turn start" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement class="hud__top" picking-mode="Ignore">
+            <ui:Label name="round-label" class="card hud__round" picking-mode="Ignore" text="Round 1 · Destiny 2: Ra favored +2, Morrígan weakened -2" />
+        </ui:VisualElement>
+        <ui:VisualElement class="hud__bottom" picking-mode="Ignore">
+            <ui:Label name="prompt-label" class="hud__prompt" picking-mode="Ignore" text="" />
+            <ui:VisualElement class="hud__actions" picking-mode="Ignore">
+                <ui:Button name="offering-button" text="OFFER 1 TROOP · RE-ROLL" class="button button--primary" />
+                <ui:Button name="accept-button" text="ACCEPT LOSS" class="button button--secondary" />
+                <ui:Button name="end-turn-button" text="END TURN" class="button button--primary" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="dice-panel" class="card dice-panel" picking-mode="Ignore">
+            <ui:Label name="dice-title" class="dice-panel__title" picking-mode="Ignore" />
+            <ui:VisualElement class="dice-panel__row" picking-mode="Ignore">
+                <ui:VisualElement class="die-slot" picking-mode="Ignore">
+                    <ui:Label name="attacker-name" class="die-slot__name" picking-mode="Ignore" />
+                    <ui:VisualElement name="attacker-die" class="die" picking-mode="Ignore">
+                        <ui:VisualElement class="die__crack" picking-mode="Ignore" />
+                        <ui:Label name="attacker-face" class="die__face" picking-mode="Ignore" text="1" />
+                        <ui:Label class="die__mark die__mark--sacred" picking-mode="Ignore" text="✦" />
+                        <ui:Label class="die__mark die__mark--cursed" picking-mode="Ignore" text="✖" />
+                    </ui:VisualElement>
+                    <ui:Label name="attacker-outcome" class="outcome" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement class="die-slot" picking-mode="Ignore">
+                    <ui:Label name="defender-name" class="die-slot__name" picking-mode="Ignore" />
+                    <ui:VisualElement name="defender-die" class="die" picking-mode="Ignore">
+                        <ui:VisualElement class="die__crack" picking-mode="Ignore" />
+                        <ui:Label name="defender-face" class="die__face" picking-mode="Ignore" text="1" />
+                        <ui:Label class="die__mark die__mark--sacred" picking-mode="Ignore" text="✦" />
+                        <ui:Label class="die__mark die__mark--cursed" picking-mode="Ignore" text="✖" />
+                    </ui:VisualElement>
+                    <ui:Label name="defender-outcome" class="outcome" picking-mode="Ignore" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:Label name="dice-verdict" class="dice-panel__verdict" picking-mode="Ignore" />
+        </ui:VisualElement>
+        <ui:VisualElement name="end-banner" class="end-banner">
+            <ui:VisualElement name="end-card" class="card end-banner__card" picking-mode="Ignore">
+                <ui:VisualElement name="winner-chip" class="god-chip god-chip--lg god--zeus" picking-mode="Ignore">
+                    <ui:VisualElement class="god-chip__icon" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:Label name="winner-label" class="end-banner__title" picking-mode="Ignore" />
+                <ui:Label name="reason-label" class="end-banner__reason" picking-mode="Ignore" />
+                <ui:Button name="play-again-button" text="PLAY AGAIN" class="button button--primary" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

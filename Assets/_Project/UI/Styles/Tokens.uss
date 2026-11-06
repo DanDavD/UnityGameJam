@@ -1,0 +1,72 @@
+/* Design tokens. Mirrors Docs/design-system.md: if a value changes, change both. */
+:root {
+    /* Nations (Okabe-Ito) */
+    --nation-zeus: #56B4E9;
+    --nation-thor: #D55E00;
+    --nation-ra: #E69F00;
+    --nation-morrigan: #1A1A1A;
+    --nation-zeus-tint: #D6E9F0;
+    --nation-thor-tint: #EBCDB4;
+    --nation-ra-tint: #F2DDB0;
+    --nation-morrigan-tint: #CFC7BA;
+
+    /* Paper and ink */
+    --parchment: #F2E8D5;
+    --paper: #FBF6EC;
+    --paper-shade: #E4D7BF;
+    --wood: #8B5E3C;
+    --wood-dark: #6B4529;
+    --ink: #2B2118;
+    --ink-soft: #6E5F4E;
+    --ink-faint: #A89580;
+    --scrim: rgba(43, 33, 24, 0.45);
+    --clear: rgba(43, 33, 24, 0);
+    /* Flat paper shadow: drawn as a thicker bottom border (USS has no box-shadow) */
+    --shadow: #D2C2A4;
+    --shadow-offset: 4px;
+
+    /* Type scale */
+    --font-size-display: 64px;
+    --font-size-h1: 40px;
+    --font-size-h2: 28px;
+    --font-size-body: 20px;
+    --font-size-label: 16px;
+    --font-size-caption: 14px;
+    --font-size-die: 96px;
+    --letter-spacing-label: 1px;
+
+    /* Spacing and shape */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-6: 24px;
+    --space-8: 32px;
+    --space-12: 48px;
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 16px;
+    --border-width: 2px;
+
+    /* Component sizes */
+    --button-min-height: 48px;
+    --icon-md: 32px;
+    --icon-lg: 48px;
+    --chip-lg: 80px;
+    --die-size: 112px;
+    --die-border: 4px;
+    --die-border-sacred: 8px;
+    --dice-panel-text-width: 240px;
+    --round-line-width: 800px;
+    --end-card-width: 480px;
+
+    /* Motion */
+    --duration-fast: 120ms;
+    --duration-base: 200ms;
+    --duration-slow: 400ms;
+    /* Things arriving decelerate; things leaving accelerate */
+    --ease-enter: ease-out-cubic;
+    --ease-exit: ease-in-cubic;
+    --hover-lift: 0 -2px;
+    --press-scale: 0.97 0.97;
+}

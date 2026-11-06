@@ -11,6 +11,8 @@ Every external asset is recorded here **when it is added**, with its source and 
 | Asset | Type | Author | Source | License |
 |---|---|---|---|---|
 | *(example)* Cinzel | Font | Natanael Gama | Google Fonts | SIL OFL 1.1 |
+| Placeholder shapes and god icons (`Assets/_Project/Art/Placeholder/`: circle, rounded square, diamond, ring, selected ring, dashed target ring, lightning bolt, hammer, sun disc, crow) | Sprites | Made for this project (generated procedurally in the Editor) | No external source | Project-owned |
+| LiberationSans SDF (TextMesh Pro Essential Resources) | Font | Liberation Fonts project, packaged by Unity | Unity TextMesh Pro (`com.unity.ugui`) | SIL OFL 1.1 |
 
 ## Tools and libraries
 

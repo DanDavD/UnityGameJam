@@ -1,7 +1,8 @@
 using System.Text;
+using GameJam.Core;
 using NUnit.Framework;
 
-namespace GameJam.Core.Tests
+namespace GameJam.Tests
 {
     // Whole matches with a seeded SystemRandom and a naive greedy player for every god.
     // They prove the state machine always reaches a winner, keeps the board valid,

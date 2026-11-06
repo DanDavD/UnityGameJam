@@ -39,6 +39,11 @@ Key product, game-design and architecture decisions behind **GodBoard**, with th
 **Decision:** the god on the rolled face gets +2 reinforcements and its rival −2; 3 gives everyone +1; 4 removes one troop from each nation's largest army (never emptying a territory).
 **Why:** the lucky number drives the economy too, not just combat, and the whole table feels every roll.
 
+### Balanced with data: the Destiny Die opens the round
+**Decision:** the god on the Destiny face plays first that round (on 3 or 4 the opener rotates), and moving into an empty territory sends only a third of the source's troops.
+**Why:** 2000 simulated bot-vs-bot matches per variant. With a fixed order and "all but one" moves, one god won 60% of matches: whole armies chained into empty temples, and whoever played last picked off the leftovers. Part of the skew came from the bot's own tie-break, which was made symmetric. Nine variants were compared; this one keeps every god between 22% and 27% with matches of about 7-8 rounds.
+**Alternatives:** an opening roll-off ritual was the fairest per god but made matches longer and only mattered once; "favored god plays last" introduced its own seat bias.
+
 ### Temple victory checked at the start of your own turn
 **Decision:** holding 3 of the 4 temples wins only if you still hold them when your next turn begins.
 **Why:** rivals get one full round to respond, which creates tension and comebacks.
@@ -58,6 +63,18 @@ Key product, game-design and architecture decisions behind **GodBoard**, with th
 ### Always explain why
 **Decision:** every combat result carries the winner, the reason, both rolls and both omens, so the UI can always say *why* something happened.
 **Why:** the game must teach itself within the first minute.
+
+### Identity always on screen
+**Decision:** a fixed HUD card shows the player's god, sacred and cursed numbers and the goal ("hold 3 temples at your turn start").
+**Why:** a UX review found that first-time players never connected the die to *their* god. The lucky number must be readable before the first combat.
+
+### Readable pieces and highlights without color
+**Decision:** pieces are layered like painted wooden tokens (offset shadow, ink outline, nation border, tint fill) with the god icon in ink. "Selected" is a thick solid ring with a slight lift; "legal target" is a thin dashed ring that gently pulses. Both are checked in a grayscale capture.
+**Why:** gold-on-gold or blue-on-blue icons were hard to read, and two rings that differed only by color failed the "never color alone" rule.
+
+### Explain every number
+**Decision:** the reinforcement prompt shows its breakdown ("2 base + 1 for 2 territories + 2 Destiny"), every combat shows both omens and the reason, and a round-limit victory says which tie-break decided it.
+**Why:** the game must always show *why* something happened.
 
 ### UI Toolkit with design tokens
 **Decision:** UI Toolkit (UXML + USS) for all screen-space UI. The colors, sizes, spacing and motion values in [`design-system.md`](design-system.md) map 1:1 to USS variables.
@@ -89,6 +106,14 @@ Key product, game-design and architecture decisions behind **GodBoard**, with th
 ### Derived rules over hand-written tables
 **Decision:** a cursed face is computed as `Die.Opposite(SacredFace(god))`, and the enum order of `RollOutcome` is the combat rank.
 **Why:** the core rule lives in one line, and data cannot contradict itself.
+
+### Bots use the same rules as the player
+**Decision:** `BotPlayer` is a stateless, deterministic static class in its own assembly (AI → Core only). It reads only `CanAttack` / `CanMakeOffering` and returns choices; the presentation issues the commands. Ties are broken as if the board were seen from the bot's own corner.
+**Why:** bots can't cheat, can be tested headlessly, and the same code drives thousands of balance simulations. An earlier "lowest id" tie-break made two corners fight over the same temple and skewed win rates.
+
+### Commands only from the game loop
+**Decision:** a single coroutine in `MatchController` issues every command for humans and bots; Core event handlers only update visuals, and UI buttons only set flags the loop consumes.
+**Why:** no re-entrancy into `Match` from inside its own events, and one flow for every player.
 
 ### Simplicity first
 **Decision:** no frameworks, DI containers, event buses, reflection or complex generics. Static functions for pure rules, enums and plain classes elsewhere. If something can be deleted without losing behavior, it is deleted.

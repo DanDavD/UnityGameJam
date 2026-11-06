@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
+using GameJam.Core;
 using NUnit.Framework;
 
-namespace GameJam.Core.Tests
+namespace GameJam.Tests
 {
     // Elimination and the three victory conditions.
     public sealed class MatchVictoryTests
     {
-        private const int NeutralForZeus = MatchSetup.NeutralForZeus;
+        private const int ZeusOpens = MatchSetup.ZeusOpensFace;
 
         private Board _board;
 
@@ -81,7 +82,7 @@ namespace GameJam.Core.Tests
             MatchSetup.Set(_board, Board.NorthTemple, God.Ra, 1);
             MatchSetup.Set(_board, Board.EastTemple, God.Ra, 1);
             MatchSetup.Set(_board, Board.WestTemple, God.Ra, 1);
-            Match match = MatchSetup.Start(_board, NeutralForZeus);
+            Match match = MatchSetup.Start(_board, ZeusOpens);
             God? winner = null;
             VictoryReason? reason = null;
             bool raTurnStarted = false;
@@ -106,14 +107,14 @@ namespace GameJam.Core.Tests
         {
             MatchSetup.Set(_board, Board.NorthTemple, God.Ra, 1);
             MatchSetup.Set(_board, Board.EastTemple, God.Ra, 1);
-            Match match = MatchSetup.Start(_board, NeutralForZeus);
+            Match match = MatchSetup.Start(_board, ZeusOpens);
 
             MatchSetup.PlayPassiveTurn(match);
 
             Assert.IsNull(match.Winner);
             Assert.AreEqual(God.Ra, match.CurrentGod);
             Assert.AreEqual(TurnPhase.Reinforce, match.Phase);
-            Assert.AreEqual(8, match.ReinforcementsLeft); // 2 + 4/2 + 2 temples + 2 favored
+            Assert.AreEqual(7, match.ReinforcementsLeft); // 2 + 4/2 + 2 temples + 1 good fortune
         }
 
         [Test]
@@ -121,7 +122,8 @@ namespace GameJam.Core.Tests
         {
             MatchSetup.Set(_board, Board.EastTemple, God.Zeus, 1);
             MatchSetup.Set(_board, Board.WestTemple, God.Zeus, 1);
-            Match match = MatchSetup.Start(_board, NeutralForZeus, NeutralForZeus);
+            // Zeus also opens round 2 (his sacred face), so his next turn is the first one of it.
+            Match match = MatchSetup.Start(_board, ZeusOpens, Pantheon.SacredFace(God.Zeus));
             MatchSetup.PlaceAllOn(match, Board.ZeusVillage);
 
             match.Attack(_board.Get(Board.ZeusVillage), _board.Get(Board.NorthTemple));
@@ -137,6 +139,7 @@ namespace GameJam.Core.Tests
             Assert.AreEqual(2, match.Round);
             Assert.AreEqual(God.Zeus, match.Winner);
             Assert.AreEqual(VictoryReason.Temples, match.WinReason);
+            Assert.IsNull(match.RoundLimitDecider);
         }
 
         [Test]
@@ -158,6 +161,7 @@ namespace GameJam.Core.Tests
 
             Assert.AreEqual(God.Thor, winner);
             Assert.AreEqual(VictoryReason.RoundLimit, reason);
+            Assert.AreEqual(RoundLimitDecider.Territories, match.RoundLimitDecider);
             Assert.AreEqual(TurnPhase.MatchOver, match.Phase);
             Assert.AreEqual(Match.RoundLimit, match.Round);
         }
@@ -172,6 +176,7 @@ namespace GameJam.Core.Tests
             match.EndTurn();
 
             Assert.AreEqual(God.Morrigan, match.Winner);
+            Assert.AreEqual(RoundLimitDecider.Troops, match.RoundLimitDecider);
         }
 
         [Test]
@@ -184,7 +189,10 @@ namespace GameJam.Core.Tests
 
             match.EndTurn();
 
-            Assert.AreEqual(God.Ra, match.Winner); // Ra plays before Thor
+            // Thor opened round 15, but the tie-break uses the base cycle, where Ra comes first.
+            Assert.AreEqual(God.Thor, match.RoundOpener);
+            Assert.AreEqual(God.Ra, match.Winner);
+            Assert.AreEqual(RoundLimitDecider.TurnOrder, match.RoundLimitDecider);
         }
 
         // Ra keeps only the North Temple (1 troop); Zeus attacks it from his Village.
@@ -196,13 +204,14 @@ namespace GameJam.Core.Tests
 
         private Match StartAndAttackNorthTemple(int attackerRoll, int defenderRoll)
         {
-            Match match = MatchSetup.Start(_board, NeutralForZeus, attackerRoll, defenderRoll);
+            Match match = MatchSetup.Start(_board, ZeusOpens, attackerRoll, defenderRoll);
             MatchSetup.PlaceAllOn(match, Board.ZeusVillage);
             match.Attack(_board.Get(Board.ZeusVillage), _board.Get(Board.NorthTemple));
             return match;
         }
 
-        // Every round rolls good fortune, so no bad omen interferes. Exactly 15 rolls are queued.
+        // Every round rolls good fortune, so no bad omen interferes and the opener rotates one seat
+        // per round: round 15 is opened by Thor and closed by Ra. Exactly 15 rolls are queued.
         private Match PlayUntilLastTurnOfFinalRound()
         {
             var rolls = new int[Match.RoundLimit];
@@ -210,10 +219,10 @@ namespace GameJam.Core.Tests
                 rolls[i] = Destiny.GoodFortuneFace;
 
             Match match = MatchSetup.Start(_board, rolls);
-            while (!(match.Round == Match.RoundLimit && match.CurrentGod == God.Morrigan))
+            while (!(match.Round == Match.RoundLimit && match.CurrentGod == God.Ra))
                 MatchSetup.PlayPassiveTurn(match);
 
-            MatchSetup.PlaceAllOn(match, Board.MorriganCapital);
+            MatchSetup.PlaceAllOn(match, Board.RaCapital);
             return match;
         }
 

@@ -1,0 +1,20 @@
+{
+  "name": "GameJam.Gameplay",
+  "rootNamespace": "GameJam.Gameplay",
+  "references": [
+    "GameJam.Core",
+    "GameJam.AI",
+    "GameJam.UI",
+    "Unity.InputSystem",
+    "Unity.TextMeshPro"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

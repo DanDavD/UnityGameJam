@@ -1,12 +1,15 @@
 using System.Collections.Generic;
+using GameJam.Core;
 
-namespace GameJam.Core.Tests
+namespace GameJam.Tests
 {
     /// <summary>Small helpers to arrange board states and drive a match in tests.</summary>
     internal static class MatchSetup
     {
-        // Destiny face 2 favors Ra and weakens Morrigan, so it leaves Zeus and Thor unmodified.
-        public const int NeutralForZeus = 2;
+        // Good fortune favors no god, so round 1 is opened by Zeus and every god gets +1:
+        // Zeus starts with 2 + 2/2 + 1 = 4 reinforcements.
+        public const int ZeusOpensFace = Destiny.GoodFortuneFace;
+        public const int ZeusOpeningReinforcements = 4;
 
         public static void Set(Board board, int id, God? owner, int troops)
         {

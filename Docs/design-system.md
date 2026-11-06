@@ -42,7 +42,10 @@ Each nation also has a **tint** (15% of the color on parchment) for territory fi
 | `--wood-dark` | Button hover/pressed, borders | `#6B4529` |
 | `--ink` | Primary text, outlines | `#2B2118` |
 | `--ink-soft` | Secondary text, hints | `#6E5F4E` |
-| `--ink-faint` | Disabled text, placeholders | `#A89580` |
+| `--ink-faint` | Disabled text, placeholders, cursed die border and crack | `#A89580` |
+| `--scrim` | Dims the board behind modal cards (end banner) | `rgba(43, 33, 24, 0.45)` (`--ink` at 45%) |
+| `--clear` | Transparent fill (secondary buttons) | `rgba(43, 33, 24, 0)` |
+| `--shadow` | Flat paper shadow under panels and cards | `#D2C2A4` |
 
 ### Roll outcome (sacred / cursed / neutral)
 
@@ -50,8 +53,8 @@ Outcomes are communicated with **shape + label + motion**, not a new color. The 
 
 | Outcome | Symbol | Label | Motion |
 |---|---|---|---|
-| Sacred | ✦ star burst | `SACRED` | die pulses and glows in the nation color |
-| Cursed | ✖ cracked die | `CURSED` | die shakes, desaturates, crack overlay |
+| Sacred | ✦ star burst | `SACRED` | die pulses and glows in the nation color (thicker nation border, nation-tint face, ✦ in the corner) |
+| Cursed | ✖ cracked die | `CURSED` | die shakes, desaturates (`--paper-shade` face, `--ink-faint` border, `--ink-soft` number), diagonal crack, ✖ in the corner. Never fade the number |
 | Neutral | ● plain | `NEUTRAL` | none, just the number |
 | Good fortune (3) | four-leaf clover | `GOOD FORTUNE` | soft rise |
 | Bad omen (4) | skull | `BAD OMEN` | soft sink, slight vignette |
@@ -78,8 +81,9 @@ Type scale (at 1080p reference resolution; the PanelSettings scale mode handles 
 | `--font-size-label` | 16 px | Inter SemiBold, uppercase, +1 px letter spacing | Buttons, tags, outcome labels |
 | `--font-size-caption` | 14 px | Inter Regular | Hints, secondary info (never below 14 px) |
 | `--font-size-die` | 96 px | Cinzel Bold | Die faces in the roll overlay |
+| `--letter-spacing-label` | 1 px | | Letter spacing of label-style text |
 
-Max 3 sizes visible on one screen at a time, besides the die.
+Max 3 sizes visible on one screen at a time, besides the die. Match HUD: h2 for the round / Destiny line, body for identity, goal, prompt and the combat "why", label for buttons and tags. Modal cards (end banner) count as their own screen: h1, body, label. Explanations are always sentence case at body size; only labels are uppercase.
 
 ## Spacing and shape
 
@@ -98,7 +102,22 @@ Max 3 sizes visible on one screen at a time, besides the die.
 | `--radius-md` | 8 px (buttons, cards) |
 | `--radius-lg` | 16 px (panels, dialogs) |
 | `--border-width` | 2 px |
-| `--shadow` | 0 4 px 0 `--paper-shade` (flat "paper" offset, no blur) |
+| `--shadow-offset` | 4 px. Flat "paper" shadow, no blur: USS has no box-shadow, so cards draw it as a thicker bottom border in `--shadow` |
+
+Component sizes:
+
+| Token | Value | Use |
+|---|---|---|
+| `--button-min-height` | 48 px | Every button (touch-friendly at 1280×720) |
+| `--icon-md` | 32 px | Icon inside a nation chip |
+| `--icon-lg` | 48 px | Nation chip; icon inside the large chip |
+| `--chip-lg` | 80 px | Winner chip on the end banner |
+| `--die-size` | 112 px | Combat die (keeps the dice panel clear of the board frame at 1280×720) |
+| `--die-border` | 4 px | Die outline and cursed crack thickness |
+| `--die-border-sacred` | 8 px | Sacred die outline |
+| `--dice-panel-text-width` | 240 px | Max width of the combat "why" line (two dice wide) |
+| `--end-card-width` | 480 px | Min width of the end banner card |
+| `--round-line-width` | 800 px | Max width of the round / Destiny line; longer lines wrap so they never reach the identity card |
 
 Screen padding: `--space-8`. Gap between panel sections: `--space-6`. Gap inside groups: `--space-2` to `--space-3`.
 
@@ -108,7 +127,24 @@ Screen padding: `--space-8`. Gap between panel sections: `--space-6`. Gap inside
 
 **Secondary button:** transparent fill, 2 px `--wood` border, text `--wood`. Same states.
 
-**Panel / card:** fill `--paper`, 2 px `--paper-shade` border, radius `--radius-lg`, padding `--space-6`, `--shadow`.
+**Panel / card:** fill `--paper`, 2 px `--paper-shade` border, radius `--radius-lg`, padding `--space-6`, flat shadow (bottom border `--shadow-offset` in `--shadow`). USS class `.card`.
+
+**Nation chip:** small rounded square in the nation color with the god icon (`--ink`, or `--paper` on Morrígan) and a 2 px `--ink` outline. Used wherever a god is named on screen (identity card, end banner) so the god is never color alone.
+
+**Identity card (top left):** nation chip + "YOU: ZEUS · ✦ 1 sacred · ✖ 6 cursed" (body, bold) + the goal line (body, `--ink-soft`).
+
+**End banner:** `--scrim` over the board, centered card whose top edge (`--space-2`) takes the winner's color, winner chip (`--chip-lg`) above the title. If there is no winner yet (human eliminated), the card stays neutral and the chip is hidden.
+
+**Territory piece (board, sprites):** a painted wooden token. Layers from back to front: offset shadow (`--ink` at 22%, offset down-right), 2 px `--ink` outline (keeps gold and blue borders ≥ 3:1 against the board), nation-color border, nation-tint fill, god icon in `--ink` (about 40% of the smallest piece) and the troop count bold in `--ink`. Unowned pieces are `--paper` with an `--ink` border and no icon or count.
+
+**Board highlights (never color alone):**
+
+| State | Ring | Motion | Lift |
+|---|---|---|---|
+| Selected (attack from) | thick solid `--ink` ring | none | piece scales 1.1 and its shadow lengthens |
+| Legal target | thin **dashed** `--wood` ring | gentle breath: alpha 50-100% and +5% scale over 1.4 s, all targets in sync | none |
+
+**Board frame:** the board sits on a `--wood` frame (0.2 units wide) with a soft `--ink` shadow, like an altar board on a table. Connection lines are `--ink` at 50%, slightly thicker than a hairline.
 
 **God card:** same frame for all four gods (consistency is the point). Top band in the nation color with the icon; god name in Cinzel; sacred and cursed numbers shown as two small die faces with ✦ / ✖ symbols; one-line power text.
 
@@ -134,7 +170,10 @@ Subtle, fast, purposeful: motion should explain cause and effect.
 | `--duration-fast` | 120 ms | Hover, press |
 | `--duration-base` | 200 ms | Panels, banners, highlights |
 | `--duration-slow` | 400 ms | Screen transitions, victory |
-| Easing | `ease-out-cubic` in, `ease-in-cubic` out | |
+| `--ease-enter` | `ease-out-cubic` | Things arriving or reacting (hover, press, banners in) |
+| `--ease-exit` | `ease-in-cubic` | Things leaving (banners out) |
+| `--hover-lift` | `0 -2px` (translate) | Button hover |
+| `--press-scale` | `0.97 0.97` (scale) | Button press |
 
 - UI motion: USS `transition` on `translate`, `scale`, `opacity`, `background-color`.
 - Board motion (sprites): a small tween helper in code. Pieces hop when moved (scale 1 → 1.15 → 1, 200 ms).
