@@ -57,6 +57,10 @@ namespace GameJam.Gameplay
         [SerializeField]
         private Sprite _altarShape;
 
+        [Tooltip("Shown on empty temples, so the player spots the goal before anyone owns one.")]
+        [SerializeField]
+        private Sprite _emptyTempleIcon;
+
         [Tooltip(
             "World size of the icon and troop count, the same on every shape so counts read alike."
         )]
@@ -242,10 +246,10 @@ namespace GameJam.Gameplay
             {
                 _fill.color = _visuals.UnownedFill;
                 _border.color = _visuals.UnownedBorder;
-                _icon.sprite = null;
+                _icon.sprite = Territory.Kind == TerritoryKind.Temple ? _emptyTempleIcon : null;
             }
 
-            // Unowned territories are always empty; a blank piece reads as "free to take".
+            // Unowned territories always have 0 troops and show no count: no number reads as "free to take".
             _troops.enabled = _shownTroops > 0;
             _troops.SetText("{0}", _shownTroops);
         }

@@ -53,8 +53,8 @@ Outcomes are communicated with **shape + label + motion**, not a new color. The 
 
 | Outcome | Symbol | Label | Motion |
 |---|---|---|---|
-| Sacred | ✦ star burst | `SACRED` | die pulses and glows in the nation color (thicker nation border, nation-tint face, ✦ in the corner) |
-| Cursed | ✖ cracked die | `CURSED` | die shakes, desaturates (`--paper-shade` face, `--ink-faint` border, `--ink-soft` number), diagonal crack, ✖ in the corner. Never fade the number |
+| Sacred | star burst icon (★ in sentences) | `SACRED` | die pulses and glows in the nation color (thicker nation border, nation-tint face, star burst icon in the corner) |
+| Cursed | cracked die icon (✗ in sentences) | `CURSED` | die shakes, desaturates (`--paper-shade` face, `--ink-faint` border, `--ink-soft` number), diagonal crack, cracked die icon in the corner. Never fade the number |
 | Neutral | ● plain | `NEUTRAL` | none, just the number |
 | Good fortune (3) | four-leaf clover | `GOOD FORTUNE` | soft rise |
 | Bad omen (4) | skull | `BAD OMEN` | soft sink, slight vignette |
@@ -63,12 +63,26 @@ Contrast rule: text on `--parchment` / `--paper` uses `--ink` or `--ink-soft` (b
 
 ## Typography
 
+**Numbers never use Cinzel** (its "1" reads like "I"): die faces, round numbers and stats use Inter SemiBold.
+
 Fonts are free under the SIL Open Font License; credit them in `Docs/credits.md`.
 
 | Role | Font | Notes |
 |---|---|---|
 | Display (titles, god names, big numbers) | **Cinzel** (Bold) | Carved, mythic capitals. Use only at 24 px and up. |
 | Body / UI | **Inter** (Regular, SemiBold) | Highly legible at small sizes. |
+
+Font tokens (UI Toolkit font assets in `Assets/_Project/Fonts/`, applied only through these tokens):
+
+| Token | Asset | Use |
+|---|---|---|
+| `--font-display` | `Cinzel SDF` | Display, h1, h2 titles and names. Never for numbers (die faces, round line, stats use Inter SemiBold; Cinzel's 1 reads as an I). The HUD round line is Inter at body size so its longest variant fits on one line. Cinzel ships as a variable font; the asset uses its default (Regular) instance and `-unity-font-style: bold` synthesizes the weight. Falls back to Inter Regular for symbols |
+| `--font-body` | `Inter-Regular SDF` | Default for the whole HUD (set on `.hud`). Its weight table maps **bold** to Inter SemiBold, so bold body text is a real weight, not a faux one |
+| `--font-strong` | `Inter-SemiBold SDF` | Label style (buttons, tags, stat names), menu prompt, winner name |
+
+The board's troop counts (TextMesh Pro) use `Inter-SemiBold TMP`.
+
+**Glyph rule (WebGL):** use only glyphs that Inter or Cinzel actually contain. The browser build has no OS font fallback, so a missing glyph shows as an empty box. That is why the outcome symbols are ★ and ✗ (in Inter) and fast-forward is ▶▶, not ✦ ✖ ⏩. The font assets are **Dynamic** with every glyph we use pre-filled (ASCII, `· − … × ★ ☆ ✗ ▶ ● ○ í` and common Latin accents) and *Clear Dynamic Data on Build* off, so the build ships a ready atlas and can still add a stray glyph at runtime from the included source font.
 
 Type scale (at 1080p reference resolution; the PanelSettings scale mode handles other sizes):
 
@@ -81,9 +95,17 @@ Type scale (at 1080p reference resolution; the PanelSettings scale mode handles 
 | `--font-size-label` | 16 px | Inter SemiBold, uppercase, +1 px letter spacing | Buttons, tags, outcome labels |
 | `--font-size-caption` | 14 px | Inter Regular | Hints, secondary info (never below 14 px) |
 | `--font-size-die` | 96 px | Cinzel Bold | Die faces in the roll overlay |
+| `--font-size-die-destiny` | 128 px | Cinzel Bold | The Destiny Die face |
 | `--letter-spacing-label` | 1 px | | Letter spacing of label-style text |
 
-Max 3 sizes visible on one screen at a time, besides the die. Match HUD: h2 for the round / Destiny line, body for identity, goal, prompt and the combat "why", label for buttons and tags. Modal cards (end banner) count as their own screen: h1, body, label. Explanations are always sentence case at body size; only labels are uppercase.
+Max 3 sizes visible on one screen at a time, besides the die. Explanations are always sentence case at body size; only labels are uppercase.
+
+| Screen | Sizes |
+|---|---|
+| Match HUD | h2 (round / Destiny line, turn banner, temple dots), body (identity, goal, prompt, hint, combat "why", nation names), label (buttons, tags, nation stats) |
+| Main menu | display (title), h2 (god names), body (tagline, "Choose your god", card lines) |
+| Destiny Die (modal) | h1 (round), body (effect line), caption ("Click to skip") |
+| End banner (modal) | h1 (verdict, stat values), body (winner name, reason), label (stat names, buttons) |
 
 ## Spacing and shape
 
@@ -117,6 +139,13 @@ Component sizes:
 | `--die-border-sacred` | 8 px | Sacred die outline |
 | `--dice-panel-text-width` | 240 px | Max width of the combat "why" line (two dice wide) |
 | `--end-card-width` | 480 px | Min width of the end banner card |
+| `--icon-sm` | 20 px | Icon inside the small nation chip of the nations panel |
+| `--nations-panel-width` | 300 px | Width of the nations panel (left column) |
+| `--god-card-width` | 200 px | Width of each god card on the main menu |
+| `--die-size-destiny` | 200 px | The Destiny Die at each round start |
+| `--die-edge-destiny` | 16 px | Bottom edge of the Destiny Die, drawn in `--ink`: the side of a real die seen slightly from above |
+| `--turn-banner-top` | 144 px | Turn banner position, below the round line (even when it wraps to two lines) |
+| `--turn-banner-hidden-offset` | -240 px | How far above its spot the turn banner waits before sliding in |
 | `--round-line-width` | 800 px | Max width of the round / Destiny line; longer lines wrap so they never reach the identity card |
 
 Screen padding: `--space-8`. Gap between panel sections: `--space-6`. Gap inside groups: `--space-2` to `--space-3`.
@@ -131,9 +160,17 @@ Screen padding: `--space-8`. Gap between panel sections: `--space-6`. Gap inside
 
 **Nation chip:** small rounded square in the nation color with the god icon (`--ink`, or `--paper` on Morrígan) and a 2 px `--ink` outline. Used wherever a god is named on screen (identity card, end banner) so the god is never color alone.
 
-**Identity card (top left):** nation chip + "YOU: ZEUS · ✦ 1 sacred · ✖ 6 cursed" (body, bold) + the goal line (body, `--ink-soft`).
+**Identity card (top left):** nation chip + "YOU: ZEUS · ★ 1 sacred · ✗ 6 cursed" (body, bold) + the goal line (body, `--ink-soft`).
 
-**End banner:** `--scrim` over the board, centered card whose top edge (`--space-2`) takes the winner's color, winner chip (`--chip-lg`) above the title. If there is no winner yet (human eliminated), the card stays neutral and the chip is hidden.
+**Nations panel (left, under the identity card):** one row per god in base cycle order: nation chip, name (body, bold) with a YOU tag on the human, stats (label, `--ink-soft`) and the temple line (temple icon + one h2-size dot per temple, ● held / ○ not; the 3rd dot, the one that wins, is ringed in `--wood` as the goal). Whose turn: `--wood` frame, `--paper-shade` fill and a ▶ mark. Eliminated: 50% opacity, "eliminated" text, no temple line.
+
+**End banner:** `--scrim` over the board, centered card whose top edge (`--space-2`) takes the winner's color. Under the verdict (h1) sits the **winner card**: the winner's chip (`--chip-lg`), name (body, SemiBold) and the reason, on the winner's tint with a nation-color border. Then three stats (h1 value, label name) split by `--paper-shade` dividers, then Play again / Main menu. If there is no winner yet (human eliminated), the card stays neutral: chip and name hide and only the reason remains.
+
+**Destiny Die (modal, round start):** `--scrim`, a card with "ROUND N" (h1), a `--die-size-destiny` die (thick border, `--die-edge-destiny` ink bottom edge) that tumbles and lands. On a god's face the die takes the favored god's color (border) and tint (face) and shows that god's chip on its top-right corner, so the favor is never color alone. 3 and 4 land as a plain paper die. Effect line (body) and "Click to skip" (caption) below.
+
+**Hint toast:** a paper note above the prompt: `--paper` fill, `--paper-shade` border, a `--space-2` `--wood` left edge, flat shadow, body text. One at a time; it hides itself or on the next action.
+
+**Fast bots button:** secondary button, top right. Hidden while the main menu is open (it only means something during a match) and on the end banner.
 
 **Territory piece (board, sprites):** a painted wooden token. Layers from back to front: offset shadow (`--ink` at 22%, offset down-right), 2 px `--ink` outline (keeps gold and blue borders ≥ 3:1 against the board), nation-color border, nation-tint fill, god icon in `--ink` (about 40% of the smallest piece) and the troop count bold in `--ink`. Unowned pieces are `--paper` with an `--ink` border and no icon or count.
 
@@ -146,20 +183,22 @@ Screen padding: `--space-8`. Gap between panel sections: `--space-6`. Gap inside
 
 **Board frame:** the board sits on a `--wood` frame (0.2 units wide) with a soft `--ink` shadow, like an altar board on a table. Connection lines are `--ink` at 50%, slightly thicker than a hairline.
 
-**God card:** same frame for all four gods (consistency is the point). Top band in the nation color with the icon; god name in Cinzel; sacred and cursed numbers shown as two small die faces with ✦ / ✖ symbols; one-line power text.
+**God card:** same frame for all four gods (consistency is the point). Top band in the nation **tint** with the nation chip (color + icon); god name in Cinzel (h2); sacred and cursed numbers as two small die-like tags in the dice language, each icon + number + word: star burst icon + "1 sacred" on the nation tint with a nation-color border, cracked die icon + "6 cursed" desaturated (`--paper-shade`, `--ink-faint` border); rival line in `--ink-soft`. Hover lifts the card (`--hover-lift`) and frames it in `--wood`; press scales to `--press-scale`. Later: one-line power text if god powers ship.
 
 **Tooltip:** `--paper`, radius `--radius-md`, padding `--space-3`, caption or body size, appears after 300 ms hover, never covers the hovered element.
 
-**Turn banner:** top center, h1, slides down 200 ms, stays 1.2 s, slides up. Shows nation icon + "ZEUS'S TURN" / "ROUND 3".
+**Turn banner:** top center, h2, slides down, stays 1.2 s, slides up. Shows the nation chip + "YOUR TURN" / "ZEUS'S TURN", with a `--space-2` left edge in the nation color.
 
-**Die:** rounded square, `--paper` face, `--ink` pips/number, 2 px outline. In the roll overlay, both dice side by side with the outcome label under each.
+**Die:** rounded square, `--paper` face, `--ink` pips/number, 2 px outline. In the roll overlay, both dice side by side with the outcome tag under each: sacred / cursed icon + word ("SACRED", "CURSED"); neutral is the word alone.
 
 ## Iconography
 
 - One flat, single-color line style for every icon: 2 px stroke at 24 px, rounded caps.
 - Icon sizes: 16, 24, 32, 48 px.
-- Nation icons: lightning bolt (Zeus), hammer (Thor), sun disc (Ra), crow (Morrígan). Game icons: temple, troop, die, clover, skull.
-- One icon pack or one hand-drawn set only. Never mix sources.
+- Nation icons: lightning bolt (Zeus), hammer (Thor), sun disc (Ra), crow (Morrígan). Game icons: temple, troop, die, clover, skull, sacred, cursed.
+- One icon pack or one hand-drawn set only. Never mix sources. All current icons are flat white silhouettes on transparent (`Assets/_Project/Art/Placeholder/icon_*.png`, 256 px), tinted with `-unity-background-image-tint-color`.
+- **Sacred icon** (`icon_sacred.png`): an 8-point star burst (4 long rays, 4 short). **Cursed icon** (`icon_cursed.png`): a rounded die with two pips split by a jagged vertical crack (never an ×, so it can't be read as "wrong" or "close"). Both read at 16 px.
+- **Glyph vs icon:** where the sacred / cursed mark **stands on its own** it is the drawn icon: die corner marks, combat outcome tags (icon + `SACRED` / `CURSED`), god card tags (icon + number + word). **Inside sentences** it stays the ★ / ✗ text glyph, so it flows with the text: identity line ("★ 1 sacred · ✗ 6 cursed"), hints. USS: `.omen-icon` (size `--icon-sm`, tint `--ink`) + `.omen-icon--sacred` or `.omen-icon--cursed` (cursed tints `--ink-soft`, desaturated like the cursed die). The word always stays next to the icon: never icon alone.
 
 ## Motion and juice
 
@@ -187,7 +226,7 @@ Wooden and tactile: dice clacks on wood, soft paper swishes for panels, a low dr
 
 ## Layout (1920×1080 reference, must work down to 1280×720)
 
-- **Center:** the board. Always the largest element.
+- **Center:** the board. Always the largest element. The camera frames it (orthographic size 8.4) so the left column and the combat panel keep at least `--space-8` of clear table between them and the board frame.
 - **Top center:** round number, current Destiny Die result and turn banner.
 - **Left:** the four nations stacked (icon, territory count, troops); current player highlighted.
 - **Bottom center:** current action prompt ("Choose a territory to attack") and the main action button.

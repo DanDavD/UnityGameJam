@@ -10,6 +10,16 @@ namespace GameJam.UI
     {
         private const string YourTurn = "YOUR TURN · ";
 
+        // Outcome symbols. Only glyphs our fonts (Inter) ship: WebGL has no OS font fallback.
+        private const string SacredMark = "★";
+        private const string CursedMark = "✗";
+
+        // Cached so the dice can show a face every tumble frame without allocating a string.
+        private static readonly string[] FaceTexts = { "", "1", "2", "3", "4", "5", "6" };
+
+        private const string HeldTempleDot = "●";
+        private const string EmptyTempleDot = "○";
+
         public const string AttackPrompt =
             YourTurn + "Choose a territory to attack from, or end your turn";
         public const string OfferingPrompt = "You are losing. Offer 1 troop to re-roll your die?";
@@ -21,6 +31,17 @@ namespace GameJam.UI
         public const string AcceptButton = "ACCEPT LOSS";
         public const string EndTurnButton = "END TURN";
         public const string PlayAgainButton = "PLAY AGAIN";
+        public const string MainMenuButton = "MAIN MENU";
+
+        public const string GameTitle = "GodBoard";
+        public const string Tagline = "Your lucky number is your rival's curse.";
+        public const string ChooseGodPrompt = "Choose your god";
+        public const string YouTag = "YOU";
+        public const string EliminatedTag = "eliminated";
+        public const string SkipHint = "Click to skip";
+
+        public const string RoundsStat = "rounds";
+        public const string CombatsWonStat = "combats you won";
 
         public const string WinTitle = "YOU WIN";
         public const string LoseTitle = "YOU LOSE";
@@ -35,15 +56,90 @@ namespace GameJam.UI
                 _ => god.ToString(),
             };
 
-        /// <summary>"Round 3 · Destiny 1: Zeus favored +2, Thor weakened -2 · Zeus opens".</summary>
-        public static string RoundLine(int round, int destinyFace, God opener) =>
-            $"Round {round} · Destiny {destinyFace}: {DestinyEffect(destinyFace)}"
-            + $" · {GodName(opener)} opens";
+        /// <summary>A die face as text ("1".."6"), without allocating.</summary>
+        public static string FaceText(int face) => FaceTexts[face];
 
-        /// <summary>"YOU: ZEUS · ✦ 1 sacred · ✖ 6 cursed": the human's lucky and unlucky numbers.</summary>
+        /// <summary>
+        /// "Round 3 · Destiny 1: Zeus +2, Thor -2 · Zeus opens": the HUD's one-line reminder, so it
+        /// uses the short effect; the Destiny Die popup already spelled it out.
+        /// </summary>
+        public static string RoundLine(int round, int destinyFace, God opener) =>
+            $"Round {round} · Destiny {destinyFace}: {ShortDestinyEffect(destinyFace)} · {GodName(opener)} opens";
+
+        /// <summary>
+        /// "You: +2" / "You: lose 1 troop" / "You: no change": what this Destiny face does to the human.
+        /// <paramref name="losesTroop"/> is whether the bad omen takes one of their troops.
+        /// </summary>
+        public static string DestinyYouLine(int modifier, bool losesTroop)
+        {
+            if (losesTroop)
+                return "You: lose 1 troop";
+            if (modifier > 0)
+                return $"You: +{modifier}";
+            if (modifier < 0)
+                return $"You: -{-modifier}";
+            return "You: no change";
+        }
+
+        /// <summary>
+        /// "Zeus favored +2, Thor weakened -2 · Zeus opens": what the Destiny face does this round.
+        /// Stands alone under the Destiny Die, so it starts with a capital ("Bad omen, …").
+        /// </summary>
+        public static string DestinyLine(int destinyFace, God opener) =>
+            $"{Capitalized(DestinyEffect(destinyFace))} · {GodName(opener)} opens";
+
+        public static string RoundTitle(int round) => $"ROUND {round}";
+
+        /// <summary>"YOUR TURN" for the human, "THOR'S TURN" for a bot.</summary>
+        public static string TurnBanner(God god, bool isHuman) =>
+            isHuman ? "YOUR TURN" : $"{GodName(god).ToUpperInvariant()}'S TURN";
+
+        public static string FastBotsButton(bool on) =>
+            on ? "▶▶ FAST BOTS: ON" : "▶▶ FAST BOTS: OFF";
+
+        // God card on the main menu: the god's lucky number, unlucky number and rival.
+        // The tags draw the sacred / cursed icon beside this text, so it carries no glyph.
+        public static string SacredLine(God god) => $"{Pantheon.SacredFace(god)} sacred";
+
+        public static string CursedLine(God god) => $"{Pantheon.CursedFace(god)} cursed";
+
+        public static string RivalLine(God god) => $"Rival: {GodName(Pantheon.Rival(god))}";
+
+        /// <summary>"5 territories · 12 troops": one nation's size in the nations panel.</summary>
+        public static string NationStats(int territories, int troops) =>
+            $"{territories} {Plural(territories, "territory", "territories")} · {troops} {Troops(troops)}";
+
+        /// <summary>One dot of the nations panel temple line: ● held, ○ not.</summary>
+        public static string TempleDot(bool held) => held ? HeldTempleDot : EmptyTempleDot;
+
+        /// <summary>"Thor's temples": the end-screen stat names whose temples it counts.</summary>
+        public static string WinnerTemplesStat(God winner) => $"{GodName(winner)}'s temples";
+
+        /// <summary>"Thor wins": the winner line of the end card, above the reason.</summary>
+        public static string WinnerName(God winner) => $"{GodName(winner)} wins";
+
+        public static string HintText(Hint hint, God human) =>
+            hint switch
+            {
+                Hint.Destiny =>
+                    "Each round the Destiny Die picks who is favored, who is weakened and who opens.",
+                Hint.Reinforce => "Click your territories to place troops",
+                Hint.Attack =>
+                    $"Select a territory with {Match.MinTroopsToAttack}+ troops, then a ringed target",
+                // Mirrors CombatResolver: sacred > neutral > cursed, then the higher neutral, else the defender.
+                Hint.Combat =>
+                    $"Your {SacredMark}{Pantheon.SacredFace(human)} beats neutral, neutral beats your {CursedMark}{Pantheon.CursedFace(human)}. "
+                        + "Both neutral: higher wins. Ties go to the defender.",
+                Hint.Offering =>
+                    "Offering: lose 1 troop to re-roll once. The new roll counts, even if worse.",
+                _ =>
+                    $"Hold {Match.TemplesToWin} of {Board.TotalTemples} temples at the start of your turn to win",
+            };
+
+        /// <summary>"YOU: ZEUS · ★ 1 sacred · ✗ 6 cursed": the human's lucky and unlucky numbers.</summary>
         public static string IdentityLine(God god) =>
-            $"YOU: {GodName(god).ToUpperInvariant()} · ✦ {Pantheon.SacredFace(god)} sacred"
-            + $" · ✖ {Pantheon.CursedFace(god)} cursed";
+            $"YOU: {GodName(god).ToUpperInvariant()} · {SacredMark} {Pantheon.SacredFace(god)} sacred"
+            + $" · {CursedMark} {Pantheon.CursedFace(god)} cursed";
 
         /// <summary>Remaining troops plus where this turn's total came from, so the formula teaches itself.</summary>
         public static string ReinforcePrompt(int troopsLeft, Reinforcements received)
@@ -94,22 +190,24 @@ namespace GameJam.UI
             }
         }
 
+        /// <summary>The word of an outcome tag; the tag draws the sacred / cursed icon beside it.</summary>
         public static string OutcomeLabel(RollOutcome outcome) =>
             outcome switch
             {
-                RollOutcome.Sacred => "✦ SACRED",
-                RollOutcome.Cursed => "✖ CURSED",
+                RollOutcome.Sacred => "SACRED",
+                RollOutcome.Cursed => "CURSED",
                 _ => "NEUTRAL",
             };
 
         public static string EndTitle(bool humanWon) => humanWon ? WinTitle : LoseTitle;
 
-        /// <summary><paramref name="decider"/> is only read for a round-limit win (see <see cref="Match.RoundLimitDecider"/>).</summary>
-        public static string VictoryLine(
-            God winner,
-            VictoryReason reason,
-            RoundLimitDecider? decider
-        ) => $"{GodName(winner)} wins: {VictoryReasonText(reason, decider)}";
+        /// <summary>
+        /// "Held 3 temples at the start of the turn": why the winner won. The end card already names
+        /// the winner (<see cref="WinnerName"/>), so the reason does not repeat it.
+        /// <paramref name="decider"/> is only read for a round-limit win (see <see cref="Match.RoundLimitDecider"/>).
+        /// </summary>
+        public static string VictoryLine(VictoryReason reason, RoundLimitDecider? decider) =>
+            Capitalized(VictoryReasonText(reason, decider));
 
         public static string EliminatedLine(God god) => $"{GodName(god)} was eliminated";
 
@@ -154,6 +252,9 @@ namespace GameJam.UI
             return terms;
         }
 
+        private static string Capitalized(string text) =>
+            char.ToUpperInvariant(text[0]) + text.Substring(1);
+
         private static string Troops(int count) => Plural(count, "troop", "troops");
 
         private static string Plural(int count, string one, string many) => count == 1 ? one : many;
@@ -177,6 +278,19 @@ namespace GameJam.UI
             God favored = Pantheon.GodOfFace(face).Value;
             return $"{GodName(favored)} favored +{Destiny.FavoredBonus}, "
                 + $"{GodName(Pantheon.Rival(favored))} weakened -{Destiny.WeakenedPenalty}";
+        }
+
+        // Same facts as DestinyEffect, short enough for the HUD round line to stay on one line.
+        private static string ShortDestinyEffect(int face)
+        {
+            if (face == Destiny.GoodFortuneFace)
+                return $"everyone +{Destiny.GoodFortuneBonus}";
+            if (Destiny.IsBadOmen(face))
+                return "bad omen, biggest army -1";
+
+            God favored = Pantheon.GodOfFace(face).Value;
+            return $"{GodName(favored)} +{Destiny.FavoredBonus}, "
+                + $"{GodName(Pantheon.Rival(favored))} -{Destiny.WeakenedPenalty}";
         }
     }
 }

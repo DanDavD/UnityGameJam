@@ -66,7 +66,7 @@ A nation with no territories is **eliminated**.
 | 1 | Core: dice, pantheon, combat resolution | Done |
 | 2 | Core: board, territories, turn state machine, reinforcements, Destiny Die, Offering, victory | Done |
 | 3 | Presentation: altar-shaped parchment board, pieces, dice view, input; simple bots (AI); first WebGL build | Done |
-| 4 | UI Toolkit HUD, combat panel with "why", self-teaching onboarding, main menu, end screen | |
+| 4 | UI Toolkit HUD, combat panel with "why", self-teaching onboarding, main menu, end screen | In progress |
 | 5 | Audio, juice, balance via headless bot-vs-bot simulations | |
 | 6 | WebGL build, bug fixing, polish (finish by Wed Nov 11) | |
 
@@ -80,6 +80,19 @@ A nation with no territories is **eliminated**.
 - Bots (`Scripts/AI`, pure C#, tested headlessly): reinforce next to the best target; attack priority empty temples → empty territories → enemies with fewer troops; keep attacking while they have the troop advantage; make an Offering when losing with 4+ troops. Bot turns play with short pauses so the player can follow.
 - `MatchController` wires `Match` to the scene, listens to events and runs bot turns. The human plays Zeus for now.
 - Finish the phase with the first WebGL build uploaded to itch as a draft.
+
+#### Phase 4 plan (approved)
+
+- **Main menu with god choice**, as a panel inside the `Match` scene (no extra scene): title GodBoard and four god cards with the same frame (icon, name, ★ sacred, ✗ cursed, rival). Clicking a card starts the match as that god.
+- **Nations panel** (left): each god with icon, territories, troops and temples held (●●○○); current turn highlighted, eliminated greyed out.
+- **Turn banner**: "YOUR TURN" / "THOR'S TURN" with the god icon slides in at the top for about 1.2 s.
+- **Destiny Die animation** at each round start: a large die tumbles in the center and lands with its effect line ("Zeus favored +2 · Thor weakened −2 · Zeus opens"), about 1.5 s, click to skip.
+- **Onboarding without a text tutorial**: one short contextual hint the first time each situation happens in a match (first reinforce, first attack, first combat, first Offering available, first Destiny); empty temples show a small temple icon.
+- **Combat panel**: kept, polished with the design system.
+- **End screen**: YOU WIN / YOU LOSE, winner card, reason, 3 stats (rounds, temples, combats won), **Play again** and **Main menu**.
+- **Fast bots**: a ▶▶ toggle speeds up bot turns (x3).
+- **Fonts**: Cinzel (display) and Inter (body), SIL Open Font License, in `Assets/_Project/Fonts/`, credited in `Docs/credits.md`.
+- Out of scope: audio, juice, final art (phase 5).
 
 **If time allows:** unique god powers (Zeus lightning, Thor auto-win, Ra double production, Morrígan converts the dead), hot-seat mode, per-god VFX.
 

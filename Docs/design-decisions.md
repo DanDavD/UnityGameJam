@@ -64,6 +64,18 @@ Key product, game-design and architecture decisions behind **GodBoard**, with th
 **Decision:** every combat result carries the winner, the reason, both rolls and both omens, so the UI can always say *why* something happened.
 **Why:** the game must teach itself within the first minute.
 
+### Teach with true, one-line hints
+**Decision:** six contextual hints, each shown once per match the first time its situation happens (first Destiny, reinforce, attack, combat, Offering, temple). Every hint must be true in every case, e.g. "Your ★1 beats neutral, neutral beats your ✗6. Both neutral: higher wins. Ties go to the defender."
+**Why:** no text tutorial; the first minute teaches itself. A review caught an early hint ("★ beats everything") that the combat result could contradict.
+
+### Destiny speaks to the player
+**Decision:** the Destiny Die gets a large animated roll at each round start (skippable) that ends with what it means for you ("You: +2", "You: lose 1 troop"), and nothing on the board changes until it lands.
+**Why:** it is the lucky-number moment of every round, and a result is only meaningful if the player sees how it affects them.
+
+### Glyphs that exist in the shipped fonts
+**Decision:** ★ for sacred, ✗ for cursed (always next to a number or the word "cursed"), ▶▶ for fast bots; numbers in the HUD use Inter, Cinzel only for titles.
+**Why:** WebGL has no system font fallback, so missing glyphs would render as boxes; in Cinzel a "1" reads like "I".
+
 ### Identity always on screen
 **Decision:** a fixed HUD card shows the player's god, sacred and cursed numbers and the goal ("hold 3 temples at your turn start").
 **Why:** a UX review found that first-time players never connected the die to *their* god. The lucky number must be readable before the first combat.

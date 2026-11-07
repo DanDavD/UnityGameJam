@@ -1,0 +1,21 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <!-- One god on the main menu. Every card uses this same frame; MenuView fills the text and god class. -->
+    <ui:VisualElement class="god-card">
+        <ui:VisualElement class="god-card__band" picking-mode="Ignore">
+            <ui:VisualElement class="god-chip god-chip--lg god-card__chip" picking-mode="Ignore">
+                <ui:VisualElement class="god-chip__icon" picking-mode="Ignore" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:Label class="god-card__name" picking-mode="Ignore" text="Zeus" />
+        <!-- Tags: drawn icon + number + word (the icon stands alone here, so it is not a text glyph). -->
+        <ui:VisualElement class="god-card__tag god-card__sacred" picking-mode="Ignore">
+            <ui:VisualElement class="omen-icon omen-icon--sacred god-card__tag-icon" picking-mode="Ignore" />
+            <ui:Label class="god-card__tag-text god-card__sacred-text" picking-mode="Ignore" text="1 sacred" />
+        </ui:VisualElement>
+        <ui:VisualElement class="god-card__tag god-card__cursed" picking-mode="Ignore">
+            <ui:VisualElement class="omen-icon omen-icon--cursed god-card__tag-icon" picking-mode="Ignore" />
+            <ui:Label class="god-card__tag-text god-card__cursed-text" picking-mode="Ignore" text="6 cursed" />
+        </ui:VisualElement>
+        <ui:Label class="god-card__rival" picking-mode="Ignore" text="Rival: Thor" />
+    </ui:VisualElement>
+</ui:UXML>
