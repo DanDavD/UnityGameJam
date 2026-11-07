@@ -25,6 +25,12 @@
     --shadow: #D2C2A4;
     --shadow-offset: 4px;
 
+    /* Typefaces (UI Toolkit font assets, Dynamic atlas pre-filled with every glyph the game uses).
+       Inter Regular maps bold to Inter SemiBold through its weight table. */
+    --font-display: url("/Assets/_Project/Fonts/Cinzel SDF.asset");
+    --font-body: url("/Assets/_Project/Fonts/Inter-Regular SDF.asset");
+    --font-strong: url("/Assets/_Project/Fonts/Inter-SemiBold SDF.asset");
+
     /* Type scale */
     --font-size-display: 64px;
     --font-size-h1: 40px;
@@ -33,6 +39,7 @@
     --font-size-label: 16px;
     --font-size-caption: 14px;
     --font-size-die: 96px;
+    --font-size-die-destiny: 128px;
     --letter-spacing-label: 1px;
 
     /* Spacing and shape */
@@ -59,6 +66,14 @@
     --dice-panel-text-width: 240px;
     --round-line-width: 800px;
     --end-card-width: 480px;
+    --icon-sm: 20px;
+    --nations-panel-width: 300px;
+    --god-card-width: 200px;
+    --die-size-destiny: 200px;
+    /* Thicker bottom edge of the Destiny Die: the side of a real die seen slightly from above */
+    --die-edge-destiny: 16px;
+    --turn-banner-top: 144px;
+    --turn-banner-hidden-offset: -240px;
 
     /* Motion */
     --duration-fast: 120ms;

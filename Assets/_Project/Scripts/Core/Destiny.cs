@@ -31,5 +31,25 @@ namespace GameJam.Core
             Die.EnsureValidFace(destinyFace);
             return destinyFace == BadOmenFace;
         }
+
+        /// <summary>
+        /// The territory a bad omen takes a troop from: the god's largest army, lowest id on ties.
+        /// Null when that army has fewer than <see cref="BadOmenMinTroops"/> or the god owns nothing.
+        /// Public so the UI can say what the omen does to a nation before it is applied.
+        /// </summary>
+        public static Territory BadOmenTarget(Board board, God god)
+        {
+            // Territories are ordered by id, so a strict comparison keeps the lowest id on ties.
+            Territory largest = null;
+            foreach (Territory territory in board.Territories)
+            {
+                if (
+                    territory.Owner == god
+                    && (largest == null || territory.Troops > largest.Troops)
+                )
+                    largest = territory;
+            }
+            return largest != null && largest.Troops >= BadOmenMinTroops ? largest : null;
+        }
     }
 }

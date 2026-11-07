@@ -15,8 +15,8 @@ namespace GameJam.UI
     {
         private const string DieSacredClass = "die--sacred";
         private const string DieCursedClass = "die--cursed";
-
-        private static readonly string[] FaceTexts = { "", "1", "2", "3", "4", "5", "6" };
+        private const string OutcomeSacredClass = "outcome--sacred";
+        private const string OutcomeCursedClass = "outcome--cursed";
 
         [Header("Tumble")]
         [SerializeField, Min(0f)]
@@ -45,11 +45,13 @@ namespace GameJam.UI
         private Label _attackerName;
         private VisualElement _attackerDie;
         private Label _attackerFace;
-        private Label _attackerOutcome;
+        private VisualElement _attackerOutcome;
+        private Label _attackerOutcomeLabel;
         private Label _defenderName;
         private VisualElement _defenderDie;
         private Label _defenderFace;
-        private Label _defenderOutcome;
+        private VisualElement _defenderOutcome;
+        private Label _defenderOutcomeLabel;
 
         /// <summary>True while the dice are tumbling or landing; the result is not readable yet.</summary>
         public bool IsAnimating { get; private set; }
@@ -68,11 +70,13 @@ namespace GameJam.UI
             _attackerName = root.Q<Label>("attacker-name");
             _attackerDie = root.Q<VisualElement>("attacker-die");
             _attackerFace = root.Q<Label>("attacker-face");
-            _attackerOutcome = root.Q<Label>("attacker-outcome");
+            _attackerOutcome = root.Q<VisualElement>("attacker-outcome");
+            _attackerOutcomeLabel = root.Q<Label>("attacker-outcome-label");
             _defenderName = root.Q<Label>("defender-name");
             _defenderDie = root.Q<VisualElement>("defender-die");
             _defenderFace = root.Q<Label>("defender-face");
-            _defenderOutcome = root.Q<Label>("defender-outcome");
+            _defenderOutcome = root.Q<VisualElement>("defender-outcome");
+            _defenderOutcomeLabel = root.Q<Label>("defender-outcome-label");
             Hide();
         }
 
@@ -114,12 +118,22 @@ namespace GameJam.UI
             yield return Tumble(rollDefender);
 
             CombatResult result = combat.Result;
-            _attackerFace.text = FaceTexts[result.AttackerRoll];
-            _defenderFace.text = FaceTexts[result.DefenderRoll];
+            _attackerFace.text = MatchText.FaceText(result.AttackerRoll);
+            _defenderFace.text = MatchText.FaceText(result.DefenderRoll);
             yield return Land(rollDefender);
 
-            ShowOutcome(_attackerDie, _attackerOutcome, result.AttackerOutcome);
-            ShowOutcome(_defenderDie, _defenderOutcome, result.DefenderOutcome);
+            ShowOutcome(
+                _attackerDie,
+                _attackerOutcome,
+                _attackerOutcomeLabel,
+                result.AttackerOutcome
+            );
+            ShowOutcome(
+                _defenderDie,
+                _defenderOutcome,
+                _defenderOutcomeLabel,
+                result.DefenderOutcome
+            );
             _verdict.text = MatchText.CombatVerdict(combat);
             IsAnimating = false;
         }
@@ -165,35 +179,49 @@ namespace GameJam.UI
 
         private void RandomFace(VisualElement die, Label face)
         {
-            face.text = FaceTexts[Random.Range(1, Die.Faces + 1)];
+            face.text = MatchText.FaceText(Random.Range(1, Die.Faces + 1));
             die.style.rotate = new Rotate(Random.Range(-_tumbleAngle, _tumbleAngle));
         }
 
         private static void SetScale(VisualElement element, float scale) =>
             element.style.scale = new Scale(new Vector3(scale, scale, 1f));
 
-        private static void SetGod(VisualElement die, Label outcome, God god)
+        private static void SetGod(VisualElement die, VisualElement outcome, God god)
         {
             GodUss.Apply(die, god);
             GodUss.Apply(outcome, god);
         }
 
-        private static void ClearOutcome(VisualElement die, Label outcome)
+        private static void ClearOutcome(VisualElement die, VisualElement outcome)
         {
             die.RemoveFromClassList(DieSacredClass);
             die.RemoveFromClassList(DieCursedClass);
+            outcome.RemoveFromClassList(OutcomeSacredClass);
+            outcome.RemoveFromClassList(OutcomeCursedClass);
             outcome.style.visibility = Visibility.Hidden;
         }
 
-        private static void ShowOutcome(VisualElement die, Label outcome, RollOutcome value)
+        // The outcome classes show the matching drawn icon on the die corner and beside the word.
+        private static void ShowOutcome(
+            VisualElement die,
+            VisualElement outcome,
+            Label label,
+            RollOutcome value
+        )
         {
             ClearOutcome(die, outcome);
             if (value == RollOutcome.Sacred)
+            {
                 die.AddToClassList(DieSacredClass);
+                outcome.AddToClassList(OutcomeSacredClass);
+            }
             else if (value == RollOutcome.Cursed)
+            {
                 die.AddToClassList(DieCursedClass);
+                outcome.AddToClassList(OutcomeCursedClass);
+            }
 
-            outcome.text = MatchText.OutcomeLabel(value);
+            label.text = MatchText.OutcomeLabel(value);
             outcome.style.visibility = Visibility.Visible;
         }
     }

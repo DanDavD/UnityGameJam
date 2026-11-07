@@ -1,0 +1,21 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <!-- One god in the nations panel. NationsView fills the text and toggles the turn / eliminated classes. -->
+    <ui:VisualElement class="nation-row" picking-mode="Ignore">
+        <ui:Label class="nation-row__turn-mark" picking-mode="Ignore" text="▶" />
+        <ui:VisualElement class="god-chip nation-row__chip" picking-mode="Ignore">
+            <ui:VisualElement class="god-chip__icon" picking-mode="Ignore" />
+        </ui:VisualElement>
+        <ui:VisualElement class="nation-row__text" picking-mode="Ignore">
+            <ui:VisualElement class="nation-row__head" picking-mode="Ignore">
+                <ui:Label class="nation-row__name" picking-mode="Ignore" text="Zeus" />
+                <ui:Label class="nation-row__you" picking-mode="Ignore" text="YOU" />
+            </ui:VisualElement>
+            <ui:Label class="nation-row__stats" picking-mode="Ignore" text="2 territories · 5 troops" />
+            <ui:VisualElement class="nation-row__temple-line" picking-mode="Ignore">
+                <ui:VisualElement class="nation-row__temple-icon" picking-mode="Ignore" />
+                <!-- One dot label per temple, created by NationsView. -->
+                <ui:VisualElement class="nation-row__temples" picking-mode="Ignore" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

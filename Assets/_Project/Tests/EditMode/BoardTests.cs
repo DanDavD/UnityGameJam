@@ -86,6 +86,18 @@ namespace GameJam.Tests
         // Together with the explicit links above, this proves there are no extra links:
         // 4 Capital-Village + 8 Village-Temple + 4 Altar-Temple = 16 two-way links = 32 entries.
         [Test]
+        public void TotalTemples_MatchesTheTemplesOnTheStandardBoard()
+        {
+            int temples = 0;
+            foreach (Territory territory in _board.Territories)
+            {
+                if (territory.Kind == TerritoryKind.Temple)
+                    temples++;
+            }
+            Assert.AreEqual(Board.TotalTemples, temples);
+        }
+
+        [Test]
         public void CreateStandard_HasExactlyTheApprovedLinks()
         {
             int neighborEntries = 0;

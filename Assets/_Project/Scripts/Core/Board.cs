@@ -28,6 +28,9 @@ namespace GameJam.Core
         public const int WestTemple = 11; // Morrigan - Zeus
         public const int Altar = 12;
 
+        /// <summary>Temples on the standard board (North, East, South, West).</summary>
+        public const int TotalTemples = 4;
+
         private readonly List<Territory> _territories;
 
         private Board(List<Territory> territories)

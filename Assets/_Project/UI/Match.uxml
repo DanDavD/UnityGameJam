@@ -1,20 +1,34 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <ui:Template name="GodCard" src="GodCard.uxml" />
+    <ui:Template name="NationRow" src="NationRow.uxml" />
     <ui:Style src="Styles/Tokens.uss" />
     <ui:Style src="Match.uss" />
     <ui:VisualElement name="hud" class="hud" picking-mode="Ignore">
-        <ui:VisualElement name="identity-card" class="card hud__identity" picking-mode="Ignore">
-            <ui:VisualElement name="identity-chip" class="god-chip god--zeus" picking-mode="Ignore">
-                <ui:VisualElement class="god-chip__icon" picking-mode="Ignore" />
+        <!-- Left column: who you are, then every nation at a glance. -->
+        <ui:VisualElement class="hud__left" picking-mode="Ignore">
+            <ui:VisualElement name="identity-card" class="card hud__identity" picking-mode="Ignore">
+                <ui:VisualElement name="identity-chip" class="god-chip god--zeus" picking-mode="Ignore">
+                    <ui:VisualElement class="god-chip__icon" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement class="hud__identity-text" picking-mode="Ignore">
+                    <ui:Label name="identity-label" class="hud__identity-line" picking-mode="Ignore" text="YOU: ZEUS · ★ 1 sacred · ✗ 6 cursed" />
+                    <ui:Label name="goal-label" class="hud__goal" picking-mode="Ignore" text="Goal: hold 3 temples at your turn start" />
+                </ui:VisualElement>
             </ui:VisualElement>
-            <ui:VisualElement class="hud__identity-text" picking-mode="Ignore">
-                <ui:Label name="identity-label" class="hud__identity-line" picking-mode="Ignore" text="YOU: ZEUS · ✦ 1 sacred · ✖ 6 cursed" />
-                <ui:Label name="goal-label" class="hud__goal" picking-mode="Ignore" text="Goal: hold 3 temples at your turn start" />
+            <!-- Rows in base cycle order, named after the God enum. -->
+            <ui:VisualElement name="nations-panel" class="card nations-panel" picking-mode="Ignore">
+                <ui:Instance template="NationRow" name="nation-zeus" picking-mode="Ignore" />
+                <ui:Instance template="NationRow" name="nation-ra" picking-mode="Ignore" />
+                <ui:Instance template="NationRow" name="nation-thor" picking-mode="Ignore" />
+                <ui:Instance template="NationRow" name="nation-morrigan" picking-mode="Ignore" />
             </ui:VisualElement>
         </ui:VisualElement>
+        <ui:Button name="fast-bots-button" text="▶▶ FAST BOTS: OFF" class="button button--secondary hud__fast-bots" />
         <ui:VisualElement class="hud__top" picking-mode="Ignore">
-            <ui:Label name="round-label" class="card hud__round" picking-mode="Ignore" text="Round 1 · Destiny 2: Ra favored +2, Morrígan weakened -2" />
+            <ui:Label name="round-label" class="card hud__round" picking-mode="Ignore" text="Round 1 · Destiny 2: Ra +2, Morrígan -2 · Ra opens" />
         </ui:VisualElement>
         <ui:VisualElement class="hud__bottom" picking-mode="Ignore">
+            <ui:Label name="hint-label" class="hud__hint" picking-mode="Ignore" text="Click your territories to place troops" />
             <ui:Label name="prompt-label" class="hud__prompt" picking-mode="Ignore" text="" />
             <ui:VisualElement class="hud__actions" picking-mode="Ignore">
                 <ui:Button name="offering-button" text="OFFER 1 TROOP · RE-ROLL" class="button button--primary" />
@@ -30,32 +44,102 @@
                     <ui:VisualElement name="attacker-die" class="die" picking-mode="Ignore">
                         <ui:VisualElement class="die__crack" picking-mode="Ignore" />
                         <ui:Label name="attacker-face" class="die__face" picking-mode="Ignore" text="1" />
-                        <ui:Label class="die__mark die__mark--sacred" picking-mode="Ignore" text="✦" />
-                        <ui:Label class="die__mark die__mark--cursed" picking-mode="Ignore" text="✖" />
+                        <ui:VisualElement class="omen-icon omen-icon--sacred die__mark die__mark--sacred" picking-mode="Ignore" />
+                        <ui:VisualElement class="omen-icon omen-icon--cursed die__mark die__mark--cursed" picking-mode="Ignore" />
                     </ui:VisualElement>
-                    <ui:Label name="attacker-outcome" class="outcome" picking-mode="Ignore" />
+                    <!-- Outcome tag: drawn icon (sacred / cursed only) + word. Outcome class set by DiceView. -->
+                    <ui:VisualElement name="attacker-outcome" class="outcome" picking-mode="Ignore">
+                        <ui:VisualElement class="omen-icon omen-icon--sacred outcome__icon outcome__icon--sacred" picking-mode="Ignore" />
+                        <ui:VisualElement class="omen-icon omen-icon--cursed outcome__icon outcome__icon--cursed" picking-mode="Ignore" />
+                        <ui:Label name="attacker-outcome-label" class="outcome__label" picking-mode="Ignore" />
+                    </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement class="die-slot" picking-mode="Ignore">
                     <ui:Label name="defender-name" class="die-slot__name" picking-mode="Ignore" />
                     <ui:VisualElement name="defender-die" class="die" picking-mode="Ignore">
                         <ui:VisualElement class="die__crack" picking-mode="Ignore" />
                         <ui:Label name="defender-face" class="die__face" picking-mode="Ignore" text="1" />
-                        <ui:Label class="die__mark die__mark--sacred" picking-mode="Ignore" text="✦" />
-                        <ui:Label class="die__mark die__mark--cursed" picking-mode="Ignore" text="✖" />
+                        <ui:VisualElement class="omen-icon omen-icon--sacred die__mark die__mark--sacred" picking-mode="Ignore" />
+                        <ui:VisualElement class="omen-icon omen-icon--cursed die__mark die__mark--cursed" picking-mode="Ignore" />
                     </ui:VisualElement>
-                    <ui:Label name="defender-outcome" class="outcome" picking-mode="Ignore" />
+                    <ui:VisualElement name="defender-outcome" class="outcome" picking-mode="Ignore">
+                        <ui:VisualElement class="omen-icon omen-icon--sacred outcome__icon outcome__icon--sacred" picking-mode="Ignore" />
+                        <ui:VisualElement class="omen-icon omen-icon--cursed outcome__icon outcome__icon--cursed" picking-mode="Ignore" />
+                        <ui:Label name="defender-outcome-label" class="outcome__label" picking-mode="Ignore" />
+                    </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:Label name="dice-verdict" class="dice-panel__verdict" picking-mode="Ignore" />
         </ui:VisualElement>
+        <!-- Slides in at the top center when a turn starts (shown class added by TurnBannerView). -->
+        <ui:VisualElement name="turn-banner" class="card turn-banner" picking-mode="Ignore">
+            <ui:VisualElement name="turn-banner-chip" class="god-chip god--zeus" picking-mode="Ignore">
+                <ui:VisualElement class="god-chip__icon" picking-mode="Ignore" />
+            </ui:VisualElement>
+            <ui:Label name="turn-banner-label" class="turn-banner__label" picking-mode="Ignore" text="YOUR TURN" />
+        </ui:VisualElement>
+        <!-- Round start: the Destiny Die. Pickable while shown, so a click anywhere skips it. -->
+        <ui:VisualElement name="destiny-overlay" class="destiny-overlay">
+            <ui:VisualElement class="card destiny-card" picking-mode="Ignore">
+                <ui:Label name="destiny-title" class="destiny-card__title" picking-mode="Ignore" text="ROUND 1" />
+                <ui:VisualElement name="destiny-die" class="die die--destiny" picking-mode="Ignore">
+                    <ui:Label name="destiny-face" class="die__face" picking-mode="Ignore" text="2" />
+                    <!-- The favored god's chip, shown only on a god's face (USS keys it on the god class). -->
+                    <ui:VisualElement name="destiny-chip" class="god-chip destiny-card__chip" picking-mode="Ignore">
+                        <ui:VisualElement class="god-chip__icon" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:Label name="destiny-effect" class="destiny-card__effect" picking-mode="Ignore" text="Ra favored +2, Morrígan weakened -2 · Ra opens" />
+                <!-- What the face does to the human, in their color (god class set by DestinyView). -->
+                <ui:Label name="destiny-you" class="destiny-card__you god--zeus" picking-mode="Ignore" text="You: no change" />
+                <ui:Label name="destiny-skip" class="destiny-card__skip" picking-mode="Ignore" text="Click to skip" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <!-- Main menu over the board. Card instances are named after the God enum. -->
+        <ui:VisualElement name="menu" class="menu">
+            <ui:VisualElement class="card menu__card" picking-mode="Ignore">
+                <ui:Label name="menu-title" class="menu__title" picking-mode="Ignore" text="GodBoard" />
+                <ui:Label name="menu-tagline" class="menu__tagline" picking-mode="Ignore" text="Your lucky number is your rival's curse." />
+                <ui:Label name="menu-prompt" class="menu__prompt" picking-mode="Ignore" text="Choose your god" />
+                <ui:VisualElement class="menu__cards" picking-mode="Ignore">
+                    <ui:Instance template="GodCard" name="god-card-zeus" picking-mode="Ignore" />
+                    <ui:Instance template="GodCard" name="god-card-ra" picking-mode="Ignore" />
+                    <ui:Instance template="GodCard" name="god-card-thor" picking-mode="Ignore" />
+                    <ui:Instance template="GodCard" name="god-card-morrigan" picking-mode="Ignore" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
         <ui:VisualElement name="end-banner" class="end-banner">
             <ui:VisualElement name="end-card" class="card end-banner__card" picking-mode="Ignore">
-                <ui:VisualElement name="winner-chip" class="god-chip god-chip--lg god--zeus" picking-mode="Ignore">
-                    <ui:VisualElement class="god-chip__icon" picking-mode="Ignore" />
+                <ui:Label name="winner-label" class="end-banner__title" picking-mode="Ignore" text="YOU WIN" />
+                <!-- Winner card: chip, name and why. Tinted by the god class on end-card. -->
+                <ui:VisualElement class="end-winner" picking-mode="Ignore">
+                    <ui:VisualElement name="winner-chip" class="god-chip god-chip--lg god--zeus" picking-mode="Ignore">
+                        <ui:VisualElement class="god-chip__icon" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="end-winner__text" picking-mode="Ignore">
+                        <ui:Label name="winner-name" class="end-banner__winner" picking-mode="Ignore" text="Zeus wins" />
+                        <ui:Label name="reason-label" class="end-banner__reason" picking-mode="Ignore" text="Held 3 temples at the start of the turn" />
+                    </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:Label name="winner-label" class="end-banner__title" picking-mode="Ignore" />
-                <ui:Label name="reason-label" class="end-banner__reason" picking-mode="Ignore" />
-                <ui:Button name="play-again-button" text="PLAY AGAIN" class="button button--primary" />
+                <ui:VisualElement class="end-stats" picking-mode="Ignore">
+                    <ui:VisualElement name="stat-rounds" class="end-stat" picking-mode="Ignore">
+                        <ui:Label name="stat-rounds-value" class="end-stat__value" picking-mode="Ignore" text="7" />
+                        <ui:Label name="stat-rounds-label" class="end-stat__label" picking-mode="Ignore" text="rounds" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="stat-temples" class="end-stat" picking-mode="Ignore">
+                        <ui:Label name="stat-temples-value" class="end-stat__value" picking-mode="Ignore" text="3" />
+                        <ui:Label name="stat-temples-label" class="end-stat__label" picking-mode="Ignore" text="Zeus's temples" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="stat-combats" class="end-stat" picking-mode="Ignore">
+                        <ui:Label name="stat-combats-value" class="end-stat__value" picking-mode="Ignore" text="5" />
+                        <ui:Label name="stat-combats-label" class="end-stat__label" picking-mode="Ignore" text="combats you won" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement class="end-banner__actions" picking-mode="Ignore">
+                    <ui:Button name="play-again-button" text="PLAY AGAIN" class="button button--primary" />
+                    <ui:Button name="main-menu-button" text="MAIN MENU" class="button button--secondary" />
+                </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>

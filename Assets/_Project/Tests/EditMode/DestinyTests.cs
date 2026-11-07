@@ -38,6 +38,44 @@ namespace GameJam.Tests
             Assert.AreEqual(expected, Destiny.IsBadOmen(face));
         }
 
+        [Test]
+        public void BadOmenTarget_StartingBoard_IsTheCapital()
+        {
+            Board board = Board.CreateStandard();
+
+            Assert.AreEqual(Board.ZeusCapital, Destiny.BadOmenTarget(board, God.Zeus).Id);
+        }
+
+        [Test]
+        public void BadOmenTarget_TiedLargestArmies_IsLowestId()
+        {
+            Board board = Board.CreateStandard();
+            MatchSetup.Set(board, Board.ZeusVillage, God.Zeus, 4);
+            MatchSetup.Set(board, Board.NorthTemple, God.Zeus, 4);
+
+            Assert.AreEqual(Board.ZeusVillage, Destiny.BadOmenTarget(board, God.Zeus).Id);
+        }
+
+        [Test]
+        public void BadOmenTarget_LargestArmyBelowMinimum_IsNull()
+        {
+            Board board = Board.CreateStandard();
+            MatchSetup.Set(board, Board.RaCapital, God.Ra, 1);
+            MatchSetup.Set(board, Board.RaVillage, God.Ra, 1);
+
+            Assert.IsNull(Destiny.BadOmenTarget(board, God.Ra));
+        }
+
+        [Test]
+        public void BadOmenTarget_NoTerritories_IsNull()
+        {
+            Board board = Board.CreateStandard();
+            MatchSetup.Set(board, Board.ThorCapital, God.Zeus, 3);
+            MatchSetup.Set(board, Board.ThorVillage, God.Zeus, 2);
+
+            Assert.IsNull(Destiny.BadOmenTarget(board, God.Thor));
+        }
+
         [TestCase(0)]
         [TestCase(7)]
         public void InvalidFace_Throws(int face)

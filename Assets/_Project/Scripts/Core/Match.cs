@@ -300,28 +300,13 @@ namespace GameJam.Core
         {
             foreach (God god in BaseTurnOrder)
             {
-                Territory largest = LargestArmy(god);
-                if (largest == null || largest.Troops < Destiny.BadOmenMinTroops)
+                Territory target = Destiny.BadOmenTarget(Board, god);
+                if (target == null)
                     continue;
 
-                largest.Troops--;
-                TerritoryChanged?.Invoke(largest);
+                target.Troops--;
+                TerritoryChanged?.Invoke(target);
             }
-        }
-
-        // Territories are ordered by id, so a strict comparison keeps the lowest id on ties.
-        private Territory LargestArmy(God god)
-        {
-            Territory largest = null;
-            foreach (Territory territory in Board.Territories)
-            {
-                if (
-                    territory.Owner == god
-                    && (largest == null || territory.Troops > largest.Troops)
-                )
-                    largest = territory;
-            }
-            return largest;
         }
 
         private void StartTurn()
