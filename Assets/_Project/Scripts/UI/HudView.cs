@@ -7,7 +7,7 @@ namespace GameJam.UI
 {
     /// <summary>
     /// The match HUD: the human's god chip and numbers, round and Destiny line, goal, action prompt,
-    /// onboarding hint, action buttons, the fast-bots toggle and the end screen.
+    /// onboarding hint, action buttons, the sound and fast-bots toggles and the end screen.
     /// A pure view: it shows what it is told and reports button clicks as C# events.
     /// </summary>
     [RequireComponent(typeof(UIDocument))]
@@ -21,6 +21,8 @@ namespace GameJam.UI
         private VisualElement _identityCard;
         private VisualElement _identityChip;
         private Label _identityLabel;
+        private Label _identitySacredLabel;
+        private Label _identityCursedLabel;
         private Label _roundLabel;
         private Label _goalLabel;
         private Label _promptLabel;
@@ -28,6 +30,8 @@ namespace GameJam.UI
         private Button _offeringButton;
         private Button _acceptButton;
         private Button _endTurnButton;
+        private VisualElement _toggles;
+        private Button _muteButton;
         private Button _fastBotsButton;
         private VisualElement _endBanner;
         private VisualElement _endCard;
@@ -48,6 +52,7 @@ namespace GameJam.UI
         public event Action AcceptClicked;
         public event Action EndTurnClicked;
         public event Action FastBotsClicked;
+        public event Action MuteClicked;
         public event Action PlayAgainClicked;
         public event Action MainMenuClicked;
 
@@ -65,6 +70,8 @@ namespace GameJam.UI
             _identityCard = root.Q<VisualElement>("identity-card");
             _identityChip = root.Q<VisualElement>("identity-chip");
             _identityLabel = root.Q<Label>("identity-label");
+            _identitySacredLabel = root.Q<Label>("identity-sacred-label");
+            _identityCursedLabel = root.Q<Label>("identity-cursed-label");
             _roundLabel = root.Q<Label>("round-label");
             _goalLabel = root.Q<Label>("goal-label");
             _promptLabel = root.Q<Label>("prompt-label");
@@ -72,6 +79,8 @@ namespace GameJam.UI
             _offeringButton = root.Q<Button>("offering-button");
             _acceptButton = root.Q<Button>("accept-button");
             _endTurnButton = root.Q<Button>("end-turn-button");
+            _toggles = root.Q<VisualElement>("hud-toggles");
+            _muteButton = root.Q<Button>("mute-button");
             _fastBotsButton = root.Q<Button>("fast-bots-button");
             _endBanner = root.Q<VisualElement>("end-banner");
             _endCard = root.Q<VisualElement>("end-card");
@@ -101,11 +110,14 @@ namespace GameJam.UI
             _acceptButton.clicked += HandleAcceptClicked;
             _endTurnButton.clicked += HandleEndTurnClicked;
             _fastBotsButton.clicked += HandleFastBotsClicked;
+            _muteButton.clicked += HandleMuteClicked;
             _playAgainButton.clicked += HandlePlayAgainClicked;
             _mainMenuButton.clicked += HandleMainMenuClicked;
 
             // Nothing about the match shows until a god is chosen and the first round starts.
             SetVisible(_identityCard, false);
+            // The sound toggle already works on the main menu; fast bots only means something in a match.
+            SetVisible(_toggles, true);
             SetVisible(_fastBotsButton, false);
             SetRound(string.Empty);
             SetPrompt(string.Empty);
@@ -121,18 +133,20 @@ namespace GameJam.UI
             _acceptButton.clicked -= HandleAcceptClicked;
             _endTurnButton.clicked -= HandleEndTurnClicked;
             _fastBotsButton.clicked -= HandleFastBotsClicked;
+            _muteButton.clicked -= HandleMuteClicked;
             _playAgainButton.clicked -= HandlePlayAgainClicked;
             _mainMenuButton.clicked -= HandleMainMenuClicked;
             _hintTimeout?.Pause();
         }
 
         /// <summary>The human's god: its chip (color + icon) and the line with its sacred / cursed numbers.</summary>
-        public void SetIdentity(God god, string text)
+        public void SetIdentity(God god)
         {
             GodUss.Apply(_identityChip, god);
-            _identityLabel.text = text;
+            _identityLabel.text = MatchText.IdentityName(god);
+            _identitySacredLabel.text = MatchText.IdentitySacred(god);
+            _identityCursedLabel.text = MatchText.IdentityCursed(god);
             SetVisible(_identityCard, true);
-            // Hidden while the menu is open: it only means something once a match is running.
             SetVisible(_fastBotsButton, true);
         }
 
@@ -166,6 +180,8 @@ namespace GameJam.UI
         }
 
         public void SetFastBots(bool on) => _fastBotsButton.text = MatchText.FastBotsButton(on);
+
+        public void SetMuted(bool muted) => _muteButton.text = MatchText.MuteButton(muted);
 
         public void ShowCombatChoice(bool visible)
         {
@@ -205,7 +221,7 @@ namespace GameJam.UI
             _templesValue.text = winnerTemples.ToString();
             _combatsValue.text = combatsWon.ToString();
             HideHint();
-            SetVisible(_fastBotsButton, false);
+            SetVisible(_toggles, false);
             SetVisible(_endBanner, true);
         }
 
@@ -234,6 +250,8 @@ namespace GameJam.UI
         private void HandleEndTurnClicked() => EndTurnClicked?.Invoke();
 
         private void HandleFastBotsClicked() => FastBotsClicked?.Invoke();
+
+        private void HandleMuteClicked() => MuteClicked?.Invoke();
 
         private void HandlePlayAgainClicked() => PlayAgainClicked?.Invoke();
 

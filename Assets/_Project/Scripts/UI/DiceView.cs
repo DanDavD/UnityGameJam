@@ -1,7 +1,9 @@
+using System;
 using System.Collections;
 using GameJam.Core;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Random = UnityEngine.Random;
 
 namespace GameJam.UI
 {
@@ -9,6 +11,7 @@ namespace GameJam.UI
     /// The combat dice: attacker left, defender right. They tumble, land with a small overshoot,
     /// then show each roll as SACRED / CURSED / NEUTRAL for its god and the verdict explaining why.
     /// After an Offering only the attacker's die rolls again, matching the rule.
+    /// A die that just landed sacred pulses; one that landed cursed shakes, so the omen reads before the words.
     /// </summary>
     [RequireComponent(typeof(UIDocument))]
     public sealed class DiceView : MonoBehaviour
@@ -38,6 +41,25 @@ namespace GameJam.UI
         [SerializeField, Min(1f)]
         private float _landOvershoot = 1.2f;
 
+        [Header("Outcome emphasis, right after landing")]
+        [Tooltip("Seconds of the sacred pulse and the cursed shake.")]
+        [SerializeField, Min(0.01f)]
+        private float _emphasisDuration = 0.4f;
+
+        [Tooltip("Extra scale at the top of each sacred pulse.")]
+        [SerializeField, Min(0f)]
+        private float _sacredPulseScale = 0.08f;
+
+        [SerializeField, Min(1)]
+        private int _sacredPulses = 2;
+
+        [Tooltip("Peak sideways offset of the cursed shake, in panel pixels; it dies out.")]
+        [SerializeField, Min(0f)]
+        private float _cursedShakePixels = 6f;
+
+        [SerializeField, Min(1)]
+        private int _cursedShakes = 3;
+
         private UIDocument _document;
         private VisualElement _panel;
         private Label _title;
@@ -55,6 +77,9 @@ namespace GameJam.UI
 
         /// <summary>True while the dice are tumbling or landing; the result is not readable yet.</summary>
         public bool IsAnimating { get; private set; }
+
+        /// <summary>Raised the moment the dice land and their outcomes show, so sound can match the motion.</summary>
+        public event Action<CombatResult> Landed;
 
         private void Awake()
         {
@@ -97,12 +122,17 @@ namespace GameJam.UI
             StopAllCoroutines();
             IsAnimating = false;
             _panel.style.display = DisplayStyle.None;
+            ResetMotion(_attackerDie);
+            ResetMotion(_defenderDie);
         }
 
         private IEnumerator Roll(Combat combat)
         {
             IsAnimating = true;
             bool rollDefender = !combat.OfferingMade;
+            // A new roll can cut the previous one's emphasis mid-motion.
+            ResetMotion(_attackerDie);
+            ResetMotion(_defenderDie);
 
             _panel.style.display = DisplayStyle.Flex;
             _title.text = MatchText.CombatTitle(combat);
@@ -136,6 +166,47 @@ namespace GameJam.UI
             );
             _verdict.text = MatchText.CombatVerdict(combat);
             IsAnimating = false;
+            Landed?.Invoke(result);
+
+            // Only the dice that just landed react; the defender's kept die already did.
+            yield return Emphasize(result, rollDefender);
+        }
+
+        private IEnumerator Emphasize(CombatResult result, bool rollDefender)
+        {
+            for (float elapsed = 0f; elapsed < _emphasisDuration; elapsed += Time.deltaTime)
+            {
+                float t = elapsed / _emphasisDuration;
+                Emphasize(_attackerDie, result.AttackerOutcome, t);
+                if (rollDefender)
+                    Emphasize(_defenderDie, result.DefenderOutcome, t);
+                yield return null;
+            }
+            ResetMotion(_attackerDie);
+            ResetMotion(_defenderDie);
+        }
+
+        // Sacred: smooth breaths of scale (the tint and thick border are the glow). Cursed: a
+        // sideways shake that dies out. Neutral: still. t runs 0 to 1.
+        private void Emphasize(VisualElement die, RollOutcome outcome, float t)
+        {
+            if (outcome == RollOutcome.Sacred)
+            {
+                float breath = 0.5f - 0.5f * Mathf.Cos(t * 2f * Mathf.PI * _sacredPulses);
+                SetScale(die, 1f + _sacredPulseScale * breath);
+            }
+            else if (outcome == RollOutcome.Cursed)
+            {
+                float offset =
+                    _cursedShakePixels * (1f - t) * Mathf.Sin(t * 2f * Mathf.PI * _cursedShakes);
+                die.style.translate = new Translate(offset, 0f);
+            }
+        }
+
+        private static void ResetMotion(VisualElement die)
+        {
+            SetScale(die, 1f);
+            die.style.translate = new Translate(0f, 0f);
         }
 
         // The faces shown while tumbling are cosmetic, so they use Unity's random, not the match's.

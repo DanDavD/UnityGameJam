@@ -1,0 +1,68 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1966cb4ff2e647945a3fe68cd9e81d80, type: 3}
+  m_Name: AudioCues
+  m_EditorClassIdentifier: GameJam.Gameplay::GameJam.Gameplay.AudioCues
+  _combatRoll:
+    _clips:
+    - {fileID: 8300000, guid: 0e27077e00063664f9bfb1e31106ec4a, type: 3}
+    - {fileID: 8300000, guid: 24b84feba19abac4cabc87c99c67c530, type: 3}
+    - {fileID: 8300000, guid: 3774cfff14a708042a4cd17991b5fb70, type: 3}
+    _volume: 0.9
+  _destinyRoll:
+    _clips:
+    - {fileID: 8300000, guid: f1964e7812361f44eb25377ea0e6bc78, type: 3}
+    - {fileID: 8300000, guid: a0b49bf324f30d040bb7bab461bac591, type: 3}
+    _volume: 1
+  _offering:
+    _clips:
+    - {fileID: 8300000, guid: cc55fa63fd765804bba43a452ac28f72, type: 3}
+    _volume: 0.8
+  _sacred:
+    _clips:
+    - {fileID: 8300000, guid: 5b2a4c2baf5027743a6840024e8da52d, type: 3}
+    _volume: 0.7
+  _cursed:
+    _clips:
+    - {fileID: 8300000, guid: 6d5725e820ce6d74e8b475860ea56e9b, type: 3}
+    _volume: 0.8
+  _troopPlaced:
+    _clips:
+    - {fileID: 8300000, guid: a0b76e57c4f39f24ca27a7afe600c70d, type: 3}
+    - {fileID: 8300000, guid: 6e24c51e44e70114991e74a0c6667749, type: 3}
+    - {fileID: 8300000, guid: 76d9fcc109247ca498b0027ccc954f4d, type: 3}
+    _volume: 0.6
+  _capture:
+    _clips:
+    - {fileID: 8300000, guid: 74b3c06d6c678ac4ebed51998a9da079, type: 3}
+    - {fileID: 8300000, guid: f224a44edabf2ff4b9e62f0283199ed1, type: 3}
+    _volume: 0.9
+  _turnChange:
+    _clips:
+    - {fileID: 8300000, guid: ef40f0b45fbf3f847af09d8a3b18bf38, type: 3}
+    _volume: 0.5
+  _victory:
+    _clips:
+    - {fileID: 8300000, guid: a6525e2d2c121b647b0f39a43b7be822, type: 3}
+    _volume: 0.9
+  _defeat:
+    _clips:
+    - {fileID: 8300000, guid: db294b8357e35e743b162e0dd5034c4d, type: 3}
+    _volume: 0.9
+  _click:
+    _clips:
+    - {fileID: 8300000, guid: 9e8d5e99629be6d4f82650ede2442100, type: 3}
+    _volume: 0.6
+  _invalid:
+    _clips:
+    - {fileID: 8300000, guid: ebe776532b52500419f8932e807b46f6, type: 3}
+    _volume: 0.5

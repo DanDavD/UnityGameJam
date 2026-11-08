@@ -12,6 +12,10 @@ namespace GameJam.AI
         // One more than the rules minimum: the bot only gambles a troop when it can afford it.
         public const int MinTroopsToOffer = Match.MinTroopsToOffer + 1;
 
+        // An Offering pays 1 troop for a re-roll that wins with chance q: it costs (1 - q) own
+        // troops on average and takes q enemy troops, so it only pays off when q is at least 1/2.
+        public const int MinWinningRerollFaces = 3;
+
         // Lower is better. Temples win the match, so they come first in both groups.
         private const int EmptyTemple = 0;
         private const int EmptyTerritory = 1;
@@ -78,8 +82,27 @@ namespace GameJam.AI
         }
 
         /// <summary>Phase CombatPending. Only true when <see cref="Match.CanMakeOffering"/> is true.</summary>
-        public static bool ShouldMakeOffering(Match match) =>
-            match.CanMakeOffering && match.PendingCombat.From.Troops >= MinTroopsToOffer;
+        public static bool ShouldMakeOffering(Match match)
+        {
+            if (!match.CanMakeOffering || match.PendingCombat.From.Troops < MinTroopsToOffer)
+                return false;
+
+            Combat combat = match.PendingCombat;
+            int winningFaces = 0;
+            for (int face = 1; face <= Die.Faces; face++)
+            {
+                CombatResult reroll = CombatResolver.Resolve(
+                    combat.Attacker,
+                    face,
+                    combat.Defender,
+                    combat.Result.DefenderRoll
+                );
+                if (reroll.Winner == CombatSide.Attacker)
+                    winningFaces++;
+            }
+
+            return winningFaces >= MinWinningRerollFaces;
+        }
 
         // Empty territories are free; enemies only when the bot has more troops on its side.
         // Every combat or capture spends troops or territories, so a turn of attacks always ends.

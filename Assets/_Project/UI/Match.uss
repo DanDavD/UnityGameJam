@@ -76,12 +76,22 @@
     margin-left: var(--space-3);
 }
 
+/* Label, icon, label, icon, label: the omen icons replace the ★ / ✗ glyphs (Inter's ✗ reads as "×"). */
+.hud__identity-row {
+    flex-direction: row;
+    align-items: center;
+}
+
 .hud__identity-line {
     font-size: var(--font-size-body);
     -unity-font-style: bold;
     color: var(--ink);
     padding: 0;
     margin: 0;
+}
+
+.hud__identity-icon {
+    margin: 0 var(--space-1);
 }
 
 .hud__goal {
@@ -288,8 +298,8 @@
     margin: 0;
 }
 
-/* Sacred / cursed marks that stand on their own (die corners, outcome tags, god card tags) are drawn
-   icons, white on transparent and tinted here. Inside sentences the ★ / ✗ glyphs stay. */
+/* Sacred / cursed marks that stand on their own (die corners, outcome tags, god card tags, HUD identity
+   line) are drawn icons, white on transparent and tinted here. Inside hint sentences the ★ / ✗ glyphs stay. */
 .omen-icon {
     width: var(--icon-sm);
     height: var(--icon-sm);
@@ -481,12 +491,16 @@
     margin: var(--space-1) 0 0 0;
 }
 
-/* Fast bots toggle, top right */
-.hud__fast-bots {
+/* Sound and fast bots toggles, side by side at the top right */
+.hud__toggles {
     position: absolute;
     right: var(--space-8);
     top: var(--space-8);
-    margin: 0;
+    flex-direction: row;
+}
+
+.hud__toggle {
+    margin: 0 0 0 var(--space-2);
 }
 
 /* Nations panel: one row per god */

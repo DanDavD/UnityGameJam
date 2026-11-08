@@ -97,6 +97,8 @@ namespace GameJam.UI
         public static string FastBotsButton(bool on) =>
             on ? "▶▶ FAST BOTS: ON" : "▶▶ FAST BOTS: OFF";
 
+        public static string MuteButton(bool muted) => muted ? "SOUND: OFF" : "SOUND: ON";
+
         // God card on the main menu: the god's lucky number, unlucky number and rival.
         // The tags draw the sacred / cursed icon beside this text, so it carries no glyph.
         public static string SacredLine(God god) => $"{Pantheon.SacredFace(god)} sacred";
@@ -136,10 +138,17 @@ namespace GameJam.UI
                     $"Hold {Match.TemplesToWin} of {Board.TotalTemples} temples at the start of your turn to win",
             };
 
-        /// <summary>"YOU: ZEUS · ★ 1 sacred · ✗ 6 cursed": the human's lucky and unlucky numbers.</summary>
-        public static string IdentityLine(God god) =>
-            $"YOU: {GodName(god).ToUpperInvariant()} · {SacredMark} {Pantheon.SacredFace(god)} sacred"
-            + $" · {CursedMark} {Pantheon.CursedFace(god)} cursed";
+        // The identity line is split in three labels so the HUD can place the drawn sacred / cursed icons
+        // between them: "YOU: ZEUS ·" [sacred] "1 sacred ·" [cursed] "6 cursed".
+
+        /// <summary>"YOU: ZEUS ·": who the human plays.</summary>
+        public static string IdentityName(God god) => $"YOU: {GodName(god).ToUpperInvariant()} ·";
+
+        /// <summary>"1 sacred ·": the human's lucky number, shown after the sacred icon.</summary>
+        public static string IdentitySacred(God god) => $"{Pantheon.SacredFace(god)} sacred ·";
+
+        /// <summary>"6 cursed": the human's unlucky number, shown after the cursed icon.</summary>
+        public static string IdentityCursed(God god) => $"{Pantheon.CursedFace(god)} cursed";
 
         /// <summary>Remaining troops plus where this turn's total came from, so the formula teaches itself.</summary>
         public static string ReinforcePrompt(int troopsLeft, Reinforcements received)

@@ -1,7 +1,9 @@
+using System;
 using System.Collections;
 using GameJam.Core;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Random = UnityEngine.Random;
 
 namespace GameJam.UI
 {
@@ -51,6 +53,9 @@ namespace GameJam.UI
 
         /// <summary>True from the first tumble until the hold ends or a click skips it.</summary>
         public bool IsPlaying { get; private set; }
+
+        /// <summary>Raised when the die lands on its face; not raised when a click skips it.</summary>
+        public event Action Landed;
 
         private void Awake()
         {
@@ -120,6 +125,7 @@ namespace GameJam.UI
 
             _effect.style.visibility = Visibility.Visible;
             _you.style.visibility = Visibility.Visible;
+            Landed?.Invoke();
             yield return _holdWait;
             Hide();
         }

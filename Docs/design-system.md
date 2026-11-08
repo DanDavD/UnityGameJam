@@ -160,7 +160,7 @@ Screen padding: `--space-8`. Gap between panel sections: `--space-6`. Gap inside
 
 **Nation chip:** small rounded square in the nation color with the god icon (`--ink`, or `--paper` on Morrígan) and a 2 px `--ink` outline. Used wherever a god is named on screen (identity card, end banner) so the god is never color alone.
 
-**Identity card (top left):** nation chip + "YOU: ZEUS · ★ 1 sacred · ✗ 6 cursed" (body, bold) + the goal line (body, `--ink-soft`).
+**Identity card (top left):** nation chip + "YOU: ZEUS ·" [sacred icon] "1 sacred ·" [cursed icon] "6 cursed" (body, bold; drawn omen icons at `--icon-sm`) + the goal line (body, `--ink-soft`).
 
 **Nations panel (left, under the identity card):** one row per god in base cycle order: nation chip, name (body, bold) with a YOU tag on the human, stats (label, `--ink-soft`) and the temple line (temple icon + one h2-size dot per temple, ● held / ○ not; the 3rd dot, the one that wins, is ringed in `--wood` as the goal). Whose turn: `--wood` frame, `--paper-shade` fill and a ▶ mark. Eliminated: 50% opacity, "eliminated" text, no temple line.
 
@@ -183,6 +183,16 @@ Screen padding: `--space-8`. Gap between panel sections: `--space-6`. Gap inside
 
 **Board frame:** the board sits on a `--wood` frame (0.2 units wide) with a soft `--ink` shadow, like an altar board on a table. Connection lines are `--ink` at 50%, slightly thicker than a hairline.
 
+**Materials (board sprites, `Assets/_Project/Art/Textures/`):** texture is felt, not seen. Colors are baked from the tokens, so each sprite renders with a white tint and the token stays the average color.
+
+| Surface | Sprite | Base token | Texture | Contrast |
+|---|---|---|---|---|
+| Table (screen background, `Table` object, tiled 48 × 32 units behind everything; the camera's flat `--parchment` is only a fallback) | `parchment_tile` (512 px, 64 px/unit = 8-unit tile, seamless) | `--parchment` | soft mottling + short paper fibers | about ±3% luminance; fibers at most -2% |
+| Board inner area (`Outer`) and altar steps (`Steps`) | `board_inner`, `board_steps` (48 px/unit) | `--paper-shade`, `--parchment` | the same parchment pattern, sampled in world space so it lines up with the table | 60% of the table's: troop counts and lines must win every time |
+| Board frame (`Frame`) | `board_frame_wood` (48 px/unit) | `--wood`, grain lines toward `--wood-dark` | grain runs along each side; the four sides meet in mitered corners with a thin dark joint | grain lines up to about 1/3 of the way to `--wood-dark` |
+
+Rules: no texture on pieces, icons, lines or UI cards (they stay flat paint and ink). Baked sprites match the scene sizes (frame 17.8 × 10.8, inner 17.4 × 10.4, steps 9 × 9 units, rounded corners matching `rounded_square`); if the board frame is resized, regenerate them. Import: Sprite, Full Rect mesh, no mipmaps, max 1024, default compression (DXT1 for the opaque tile, DXT5 for the rest).
+
 **God card:** same frame for all four gods (consistency is the point). Top band in the nation **tint** with the nation chip (color + icon); god name in Cinzel (h2); sacred and cursed numbers as two small die-like tags in the dice language, each icon + number + word: star burst icon + "1 sacred" on the nation tint with a nation-color border, cracked die icon + "6 cursed" desaturated (`--paper-shade`, `--ink-faint` border); rival line in `--ink-soft`. Hover lifts the card (`--hover-lift`) and frames it in `--wood`; press scales to `--press-scale`. Later: one-line power text if god powers ship.
 
 **Tooltip:** `--paper`, radius `--radius-md`, padding `--space-3`, caption or body size, appears after 300 ms hover, never covers the hovered element.
@@ -198,7 +208,7 @@ Screen padding: `--space-8`. Gap between panel sections: `--space-6`. Gap inside
 - Nation icons: lightning bolt (Zeus), hammer (Thor), sun disc (Ra), crow (Morrígan). Game icons: temple, troop, die, clover, skull, sacred, cursed.
 - One icon pack or one hand-drawn set only. Never mix sources. All current icons are flat white silhouettes on transparent (`Assets/_Project/Art/Placeholder/icon_*.png`, 256 px), tinted with `-unity-background-image-tint-color`.
 - **Sacred icon** (`icon_sacred.png`): an 8-point star burst (4 long rays, 4 short). **Cursed icon** (`icon_cursed.png`): a rounded die with two pips split by a jagged vertical crack (never an ×, so it can't be read as "wrong" or "close"). Both read at 16 px.
-- **Glyph vs icon:** where the sacred / cursed mark **stands on its own** it is the drawn icon: die corner marks, combat outcome tags (icon + `SACRED` / `CURSED`), god card tags (icon + number + word). **Inside sentences** it stays the ★ / ✗ text glyph, so it flows with the text: identity line ("★ 1 sacred · ✗ 6 cursed"), hints. USS: `.omen-icon` (size `--icon-sm`, tint `--ink`) + `.omen-icon--sacred` or `.omen-icon--cursed` (cursed tints `--ink-soft`, desaturated like the cursed die). The word always stays next to the icon: never icon alone.
+- **Glyph vs icon:** where the sacred / cursed mark **stands on its own** it is the drawn icon: die corner marks, combat outcome tags (icon + `SACRED` / `CURSED`), god card tags (icon + number + word), and the HUD identity line ("YOU: ZEUS ·" [sacred icon] "1 sacred ·" [cursed icon] "6 cursed": a row of three labels with `.omen-icon` between them, because Inter's ✗ reads as "×" at body size). **Inside hint sentences** it stays the ★ / ✗ text glyph, so it flows with the text. USS: `.omen-icon` (size `--icon-sm`, tint `--ink`) + `.omen-icon--sacred` or `.omen-icon--cursed` (cursed tints `--ink-soft`, desaturated like the cursed die). The word always stays next to the icon: never icon alone.
 
 ## Motion and juice
 
@@ -215,14 +225,32 @@ Subtle, fast, purposeful: motion should explain cause and effect.
 | `--press-scale` | `0.97 0.97` (scale) | Button press |
 
 - UI motion: USS `transition` on `translate`, `scale`, `opacity`, `background-color`.
-- Board motion (sprites): a small tween helper in code. Pieces hop when moved (scale 1 → 1.15 → 1, 200 ms).
-- Dice roll: about 600 ms tumble, then land with a small overshoot. This is the moment of the game, so it gets the most love (sound + motion).
-- Screen shake only for captures and Thor/Zeus powers: 2-4 px, under 150 ms.
+- Board motion (sprites): small coroutines in `TerritoryView`, durations in serialized fields. A piece hops (scale 1 → 1.15 → 1, 200 ms) when it gains a troop or changes owner; a loss never hops, it shows the "-1" instead, so one thing moves per piece.
+- Capture: a ring in the new owner's color expands (+45%) and fades over 350 ms, drawn above the piece.
+- Troop loss: "-1" in `--ink` at 85% of the count size, above the count; rises with an ease-out, stays opaque for the first 40% of 1 s, then fades.
+- Dice roll: about 600 ms tumble, then land with a small overshoot. This is the moment of the game, so it gets the most love (sound + motion). On landing (400 ms): a sacred die pulses twice (+8% scale; its tint and thick border are the glow), a cursed die shakes sideways (6 px, dying out). Only the dice that just rolled react.
+- Screen shake only when a territory is taken from a rival (empty captures do not shake), and later for Thor/Zeus powers: 3 px (2-4), 120 ms, measured in screen pixels.
 - Respect restraint: at most one strong animation on screen at once.
 
 ## Audio identity (for coherence)
 
-Wooden and tactile: dice clacks on wood, soft paper swishes for panels, a low drum for combat, a bright chime for sacred, a dull thud plus crack for cursed. One short music loop with ancient-instrument flavor (lyre, frame drum), kept low under SFX.
+Wooden and tactile: dice clacks on wood, soft paper swishes for panels, a low drum for combat, a bright chime for sacred, a dull thud plus crack for cursed. One short music loop with ancient-instrument flavor (lyre, frame drum), kept low under SFX (not in the jam build: no music yet).
+
+Shipped cues (Kenney CC0, clips and volumes in the `AudioCues` asset; variations picked at random):
+
+| Moment | Sound | Sync |
+|---|---|---|
+| Combat roll | dice thrown on wood (3 variations) | starts with the tumble, stops when the dice land |
+| Offering re-roll | dice shaken in the hand | same, replaces the throw |
+| Destiny Die | single die thrown (2 variations) | starts with the tumble, stops on landing |
+| Landing sting | bright chime (sacred) / dull bong (cursed) | on landing; one per roll: a sacred winner chimes, any cursed die bongs, plain numbers stay quiet. For Destiny: chime if it helps the player, bong if it hurts them |
+| Troop placed | chip laid (3 variations) | each troop |
+| Capture | chips stacked (2 variations) | with the ring |
+| Turn change | card slide | with the turn banner |
+| Victory / defeat | rising confirmation / falling minimize | with the end screen, once |
+| Button / invalid click | soft click / short error | on the click |
+
+Rules: rolls share one voice (a new roll replaces the last, landing stops it) so clatter never stacks; everything else is a one-shot. Mute toggle ("SOUND: ON/OFF") next to fast bots, kept for the session. On the web, audio starts after the first click (choosing a god).
 
 ## Layout (1920×1080 reference, must work down to 1280×720)
 

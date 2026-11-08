@@ -110,16 +110,44 @@ namespace GameJam.Gameplay
         [SerializeField, Min(0f)]
         private float _pulseGrow = 0.05f;
 
-        [Header("Hop when troops or owner change")]
+        [Header("Hop when troops are gained or the owner changes")]
         [SerializeField, Min(0.01f)]
         private float _hopDuration = 0.2f;
 
         [SerializeField, Min(1f)]
         private float _hopScale = 1.15f;
 
+        [Header("Capture ring")]
+        [Tooltip("Seconds the ring in the new owner's color takes to expand and fade.")]
+        [SerializeField, Min(0.01f)]
+        private float _captureRingDuration = 0.35f;
+
+        [Tooltip("Extra ring scale at the end of the expansion.")]
+        [SerializeField, Min(0f)]
+        private float _captureRingGrow = 0.45f;
+
+        [Tooltip("Drawn above the piece and its troop count.")]
+        [SerializeField]
+        private int _effectSortingOrder = 6;
+
         [Header("Troop loss (-1) floating text")]
         [SerializeField, Min(0.01f)]
         private float _lossDuration = 1f;
+
+        [Tooltip("Share of the duration the -1 stays fully opaque before it fades.")]
+        // Below 1, so the fade that follows always has time to run.
+        [SerializeField, Range(0f, 0.95f)]
+        private float _lossHold = 0.4f;
+
+        [Tooltip(
+            "Size of the -1 relative to the troop count, so the number itself stays the focus."
+        )]
+        [SerializeField, Range(0.3f, 1f)]
+        private float _lossScale = 0.85f;
+
+        [Tooltip("--ink, like the count: a loss is never shown in a nation color.")]
+        [SerializeField]
+        private Color _lossColor = Color.gray;
 
         [Tooltip("How far the -1 rises, in the content's local units.")]
         [SerializeField, Min(0f)]
@@ -134,11 +162,16 @@ namespace GameJam.Gameplay
         private GodVisuals _visuals;
         private TextMeshPro _lossText;
         private Coroutine _lossFloat;
+
+        // When the current "-1" starts to fade; a capture ring waits for it.
+        private float _lossHoldEnd;
         private float _size;
         private float _restScale;
         private int _shownTroops;
         private God? _shownOwner;
         private Coroutine _hop;
+        private SpriteRenderer _captureRing;
+        private Coroutine _captureRingRoutine;
         private Vector3 _ringRestScale;
         private bool _pulsing;
 
@@ -181,12 +214,15 @@ namespace GameJam.Gameplay
             Draw();
         }
 
-        /// <summary>Redraws from the territory and hops if its troops or owner changed.</summary>
+        /// <summary>
+        /// Redraws from the territory. It hops when it gains troops or changes owner; a loss shows
+        /// the "-1" instead, so only one thing moves on a piece at a time.
+        /// </summary>
         public void Refresh()
         {
-            bool changed = Territory.Troops != _shownTroops || Territory.Owner != _shownOwner;
+            bool gained = Territory.Troops > _shownTroops || Territory.Owner != _shownOwner;
             Draw();
-            if (!changed || !isActiveAndEnabled)
+            if (!gained || !isActiveAndEnabled)
                 return;
 
             if (_hop != null)
@@ -200,17 +236,47 @@ namespace GameJam.Gameplay
             if (!isActiveAndEnabled)
                 return;
 
-            // Placeholder: a copy of the troop count, created on first use. Final look comes with the art pass.
+            // A copy of the troop count (same font and layout), created on first use: most
+            // territories never lose a troop, so the prefab does not carry one each.
             if (_lossText == null)
             {
                 _lossText = Instantiate(_troops, _content);
                 _lossText.name = "Troop Loss";
                 _lossText.SetText("-1");
+                _lossText.transform.localScale = _troops.transform.localScale * _lossScale;
+                _lossText.sortingOrder = _effectSortingOrder;
             }
 
             if (_lossFloat != null)
                 StopCoroutine(_lossFloat);
+            _lossHoldEnd = Time.time + _lossDuration * _lossHold;
             _lossFloat = StartCoroutine(FloatLoss());
+        }
+
+        /// <summary>
+        /// A ring in the new owner's color expands and fades: this territory just changed hands.
+        /// If a "-1" is still being read on this piece, the ring waits for its hold to end, so only
+        /// one strong animation plays at a time.
+        /// </summary>
+        public void ShowCaptureRing()
+        {
+            if (!isActiveAndEnabled || !Territory.Owner.HasValue)
+                return;
+
+            // A copy of the highlight ring, created on first use, so the selection ring stays untouched.
+            if (_captureRing == null)
+            {
+                _captureRing = Instantiate(_highlight, _highlight.transform.parent);
+                _captureRing.name = "Capture Ring";
+                _captureRing.sprite = _selectedRing;
+                _captureRing.sortingOrder = _effectSortingOrder;
+            }
+
+            if (_captureRingRoutine != null)
+                StopCoroutine(_captureRingRoutine);
+            _captureRingRoutine = StartCoroutine(
+                ExpandRing(_visuals.Get(Territory.Owner.Value).Color)
+            );
         }
 
         public void SetHighlight(TerritoryHighlight highlight)
@@ -268,23 +334,48 @@ namespace GameJam.Gameplay
             _hop = null;
         }
 
+        // Rises with an ease-out (fast, then settling) and stays opaque for the hold, so it is read
+        // before it fades.
         private IEnumerator FloatLoss()
         {
             Vector3 start = _troops.transform.localPosition + Vector3.up * _lossStartOffset;
-            Color color = _troops.color;
+            Color color = _lossColor;
             _lossText.enabled = true;
             float elapsed = 0f;
             while (elapsed < _lossDuration)
             {
                 elapsed += Time.deltaTime;
                 float t = Mathf.Clamp01(elapsed / _lossDuration);
-                _lossText.transform.localPosition = start + Vector3.up * (_lossRise * t);
-                color.a = 1f - t;
+                float rise = 1f - (1f - t) * (1f - t) * (1f - t);
+                _lossText.transform.localPosition = start + Vector3.up * (_lossRise * rise);
+                color.a = 1f - Mathf.Clamp01((t - _lossHold) / (1f - _lossHold));
                 _lossText.color = color;
                 yield return null;
             }
             _lossText.enabled = false;
             _lossFloat = null;
+        }
+
+        private IEnumerator ExpandRing(Color color)
+        {
+            Vector3 restScale = _ringRestScale;
+            // Hidden while waiting, in case a previous ring was cut off mid-expansion.
+            _captureRing.enabled = false;
+            while (Time.time < _lossHoldEnd)
+                yield return null;
+            _captureRing.enabled = true;
+            float elapsed = 0f;
+            while (elapsed < _captureRingDuration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / _captureRingDuration);
+                _captureRing.transform.localScale = restScale * (1f + _captureRingGrow * t);
+                color.a = 1f - t;
+                _captureRing.color = color;
+                yield return null;
+            }
+            _captureRing.enabled = false;
+            _captureRingRoutine = null;
         }
 
         private Sprite ShapeFor(TerritoryKind kind) =>

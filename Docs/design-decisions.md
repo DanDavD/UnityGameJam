@@ -44,6 +44,15 @@ Key product, game-design and architecture decisions behind **GodBoard**, with th
 **Why:** 2000 simulated bot-vs-bot matches per variant. With a fixed order and "all but one" moves, one god won 60% of matches: whole armies chained into empty temples, and whoever played last picked off the leftovers. Part of the skew came from the bot's own tie-break, which was made symmetric. Nine variants were compared; this one keeps every god between 22% and 27% with matches of about 7-8 rounds.
 **Alternatives:** an opening roll-off ritual was the fairest per god but made matches longer and only mattered once; "favored god plays last" introduced its own seat bias.
 
+### Sound is about you
+**Decision:** combat stings are player-relative (a chime when you win a combat, a dull bong when you lose; bot-vs-bot combats only sound like dice), the turn-change cue plays only on your turn, and temple captures add a soft chime.
+**Why:** audio should explain cause and effect for the player. Stings that followed the die's omen sounded "bad" on the player's good luck and turned bot turns into noise.
+
+### Bots only pray when it pays
+**Decision:** a bot makes an Offering only if the re-roll wins on at least 3 of the 6 faces.
+**Why:** an Offering trades (1 − q) own troops for q enemy troops, so it only pays when q ≥ 1/2. Bots used to "pray" against a sacred face they could never beat, which looked foolish and amplified a small asymmetry in how the Offering favors some gods. In a controlled simulation (40000 matches) win rates went from 23–27% to 25% each.
+**Known asymmetry kept:** on a 3 or 4 in round 1 Zeus opens, and opening first is a slight disadvantage. Rules were frozen by then, so it is documented rather than changed.
+
 ### Temple victory checked at the start of your own turn
 **Decision:** holding 3 of the 4 temples wins only if you still hold them when your next turn begins.
 **Why:** rivals get one full round to respond, which creates tension and comebacks.
@@ -126,6 +135,14 @@ Key product, game-design and architecture decisions behind **GodBoard**, with th
 ### Commands only from the game loop
 **Decision:** a single coroutine in `MatchController` issues every command for humans and bots; Core event handlers only update visuals, and UI buttons only set flags the loop consumes.
 **Why:** no re-entrancy into `Match` from inside its own events, and one flow for every player.
+
+### Sound follows the dice, not the rules
+**Decision:** an `AudioCues` ScriptableObject maps a small `SfxCue` enum to clips and volumes; one `SfxPlayer` with two sources plays them (rolls share a single voice that the landing stops, everything else is a one-shot). `MatchController` decides when each cue plays, and the dice views raise a `Landed` event so the chime or bong lands with the die. One sting per roll: a sacred winner chimes, any cursed die bongs, plain numbers stay quiet.
+**Why:** sound repeats what the dice already show, at the exact moment they show it; tuning happens in the Inspector; no audio manager, pooling or global state. Muting the sources (not `AudioListener.volume`) keeps the setting inside the scene.
+
+### Shake only when a rival loses land
+**Decision:** captures hop the piece and expand a ring in the new owner's color; only taking a rival's territory also shakes the screen (3 px, 120 ms). Losses show a "-1" and never hop.
+**Why:** restraint: empty temples are grabbed every turn, and shaking for them would make the strongest effect meaningless. One motion per piece keeps each change readable.
 
 ### Simplicity first
 **Decision:** no frameworks, DI containers, event buses, reflection or complex generics. Static functions for pure rules, enums and plain classes elsewhere. If something can be deleted without losing behavior, it is deleted.

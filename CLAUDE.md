@@ -66,8 +66,8 @@ A nation with no territories is **eliminated**.
 | 1 | Core: dice, pantheon, combat resolution | Done |
 | 2 | Core: board, territories, turn state machine, reinforcements, Destiny Die, Offering, victory | Done |
 | 3 | Presentation: altar-shaped parchment board, pieces, dice view, input; simple bots (AI); first WebGL build | Done |
-| 4 | UI Toolkit HUD, combat panel with "why", self-teaching onboarding, main menu, end screen | In progress |
-| 5 | Audio, juice, balance via headless bot-vs-bot simulations | |
+| 4 | UI Toolkit HUD, combat panel with "why", self-teaching onboarding, main menu, end screen | Done |
+| 5 | Audio, juice, balance via headless bot-vs-bot simulations | In progress |
 | 6 | WebGL build, bug fixing, polish (finish by Wed Nov 11) | |
 
 #### Phase 3 plan (approved)
@@ -93,6 +93,13 @@ A nation with no territories is **eliminated**.
 - **Fast bots**: a ▶▶ toggle speeds up bot turns (x3).
 - **Fonts**: Cinzel (display) and Inter (body), SIL Open Font License, in `Assets/_Project/Fonts/`, credited in `Docs/credits.md`.
 - Out of scope: audio, juice, final art (phase 5).
+
+#### Phase 5 plan (approved; feature freeze: no new rules)
+
+- **Audio**: Kenney CC0 packs (Casino Audio, Interface Sounds), selected clips in `Assets/_Project/Audio/` with their licenses. Cues: dice roll, sacred result (bright chime), cursed result (dull bong), Destiny Die, troop placed, capture, turn change, Offering, victory, defeat, UI click. **No music** for now. A mute toggle next to the fast-bots button.
+- **Juice** (subtle, per the design system): pieces hop when they gain a troop or are captured, a small flash on a captured territory, a 2–4 px screen shake only on captures, sacred die glows and cursed die shakes on landing; one strong animation at a time.
+- **Art polish**: keep the current style; procedural parchment texture on the background and wood grain on the frame (no downloads); cleaner "-1".
+- **Balance**: Zeus wins ~22% vs 25–27%; only the bot may be tuned (rules are frozen).
 
 **If time allows:** unique god powers (Zeus lightning, Thor auto-win, Ra double production, Morrígan converts the dead), hot-seat mode, per-god VFX.
 

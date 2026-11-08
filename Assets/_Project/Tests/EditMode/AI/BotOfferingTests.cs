@@ -12,15 +12,54 @@ namespace GameJam.Tests.AI
         private const int ZeusSacred = 1;
         private const int RaNeutral = 3;
 
+        // Zeus 2 loses to Ra 3; a re-roll wins on 1 (sacred), 4 and 5 (higher): 3 of 6 faces.
+        private const int ZeusLow = 2;
+        private const int RaThree = 3;
+
+        // Zeus 3 loses to Ra 4; a re-roll wins only on 1 (sacred) and 5 (higher): 2 of 6 faces.
+        private const int RaFour = 4;
+
+        // Zeus's cursed 6 loses to Ra 3; a re-roll wins on 1 (sacred), 4 and 5 (higher): 3 of 6 faces.
+        private const int ZeusCursed = 6;
+
         [TestCase(3, false)]
         [TestCase(4, true)]
         [TestCase(6, true)]
-        public void Losing_OffersOnlyWithFourOrMoreTroops(int troops, bool expected)
+        public void Losing_WithAGoodReroll_OffersOnlyWithFourOrMoreTroops(int troops, bool expected)
         {
-            Match match = StartCombat(troops, ZeusNeutral, RaSacred);
+            Match match = StartCombat(troops, ZeusLow, RaThree);
 
             Assert.IsTrue(match.CanMakeOffering);
             Assert.AreEqual(expected, BotPlayer.ShouldMakeOffering(match));
+        }
+
+        [Test]
+        public void AgainstTheDefendersSacredFace_NeverOffers()
+        {
+            // Sacred beats everything but sacred, and a tie goes to the defender: 0 of 6 faces win.
+            Match match = StartCombat(6, ZeusNeutral, RaSacred);
+
+            Assert.IsTrue(match.CanMakeOffering);
+            Assert.IsFalse(BotPlayer.ShouldMakeOffering(match));
+        }
+
+        [Test]
+        public void RerollWinsOnlyTwoFaces_DoesNotOffer()
+        {
+            Match match = StartCombat(6, ZeusNeutral, RaFour);
+
+            Assert.IsTrue(match.CanMakeOffering);
+            Assert.IsFalse(BotPlayer.ShouldMakeOffering(match));
+        }
+
+        [Test]
+        public void CursedAttacker_RerollWinsHalfTheFaces_Offers()
+        {
+            Match match = StartCombat(6, ZeusCursed, RaThree);
+
+            Assert.IsTrue(match.CanMakeOffering);
+            Assert.AreEqual(3, BotPlayer.MinWinningRerollFaces);
+            Assert.IsTrue(BotPlayer.ShouldMakeOffering(match));
         }
 
         [Test]
