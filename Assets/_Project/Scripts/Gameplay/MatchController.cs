@@ -40,6 +40,13 @@ namespace GameJam.Gameplay
         [SerializeField]
         private DestinyView _destiny;
 
+        [Header("Audio and juice")]
+        [SerializeField]
+        private SfxPlayer _sfx;
+
+        [SerializeField]
+        private CameraShake _cameraShake;
+
         [Header("Players")]
         [Tooltip("Debug: a bot also plays the human's nation, so a whole match plays by itself.")]
         [SerializeField]
@@ -89,6 +96,15 @@ namespace GameJam.Gameplay
         // The human is out: the match is over for them even though the bots could keep playing.
         private bool _humanEliminated;
 
+        // Set once the god is chosen and Match.Start has run; before that, board clicks mean nothing.
+        private bool _matchStarted;
+
+        // What the Destiny Die means for the human, played when it lands (null: neutral, no sting).
+        private SfxCue? _destinyLandCue;
+
+        // The end banner can show twice (human eliminated, then the last bot wins); the sting plays once.
+        private bool _endCuePlayed;
+
         // End-screen stat and one-time onboarding hints; both live only for this match (scene load).
         private int _combatsWonByHuman;
         private readonly HashSet<Hint> _shownHints = new HashSet<Hint>();
@@ -120,8 +136,11 @@ namespace GameJam.Gameplay
             _hud.AcceptClicked += HandleAcceptClicked;
             _hud.EndTurnClicked += HandleEndTurnClicked;
             _hud.FastBotsClicked += HandleFastBotsClicked;
+            _hud.MuteClicked += HandleMuteClicked;
             _hud.PlayAgainClicked += HandlePlayAgainClicked;
             _hud.MainMenuClicked += HandleMainMenuClicked;
+            _dice.Landed += HandleDiceLanded;
+            _destiny.Landed += HandleDestinyLanded;
         }
 
         private void OnDisable()
@@ -139,15 +158,30 @@ namespace GameJam.Gameplay
             _hud.AcceptClicked -= HandleAcceptClicked;
             _hud.EndTurnClicked -= HandleEndTurnClicked;
             _hud.FastBotsClicked -= HandleFastBotsClicked;
+            _hud.MuteClicked -= HandleMuteClicked;
             _hud.PlayAgainClicked -= HandlePlayAgainClicked;
             _hud.MainMenuClicked -= HandleMainMenuClicked;
+            _dice.Landed -= HandleDiceLanded;
+            _destiny.Landed -= HandleDestinyLanded;
         }
 
         // In Start, not Awake: the views query their elements in their own OnEnable.
         private void Start()
         {
             _hud.SetFastBots(MatchSession.FastBots);
+            _hud.SetMuted(MatchSession.Muted);
+            _sfx.SetMuted(MatchSession.Muted);
             StartCoroutine(Run());
+        }
+
+        // The loop reads board clicks only on the human's turn; during a bot's turn a click on the
+        // board answers "not now" instead of doing nothing.
+        private void Update()
+        {
+            if (!_matchStarted || IsHumanTurn || _humanEliminated)
+                return;
+            if (_match.Phase != TurnPhase.MatchOver && TryGetClickedTerritory(out _))
+                _sfx.Play(SfxCue.Invalid);
         }
 
         // The turn state machine lives in Match; this loop only asks who acts in the current phase.
@@ -155,6 +189,7 @@ namespace GameJam.Gameplay
         {
             yield return ChooseGod();
             _match.Start();
+            _matchStarted = true;
             // Stopping when the human is eliminated also stops every remaining bot pause.
             while (_match.Phase != TurnPhase.MatchOver && !_humanEliminated)
             {
@@ -193,7 +228,7 @@ namespace GameJam.Gameplay
             }
 
             _humanGod = _chosenGod.Value;
-            _hud.SetIdentity(_humanGod, MatchText.IdentityLine(_humanGod));
+            _hud.SetIdentity(_humanGod);
             _nations.SetHuman(_humanGod);
             _nations.Refresh(_match);
         }
@@ -206,9 +241,13 @@ namespace GameJam.Gameplay
             bool roundStarted = _pendingRoundLine != null;
             ApplyPendingRoundLine();
             ShowOmenLosses();
-            // After the die, not under its overlay, so the hint is readable when it explains the roll.
             if (roundStarted)
+            {
+                // A skipped Destiny Die never lands, so its roll would otherwise keep rattling.
+                _sfx.StopRoll();
+                // After the die, not under its overlay, so the hint is readable when it explains the roll.
                 ShowHintOnce(Hint.Destiny);
+            }
 
             if (_pendingTurnBanner == null)
                 yield break;
@@ -219,6 +258,9 @@ namespace GameJam.Gameplay
             _nations.Refresh(_match);
             bool human = IsHumanTurn;
             _turnBanner.Show(god, MatchText.TurnBanner(god, human), human ? 1f : BotPaceFactor);
+            // Only "YOUR TURN" is announced by sound; bot turns change often and stay silent.
+            if (human)
+                _sfx.Play(SfxCue.TurnChange);
             while (_turnBanner.IsPlaying)
                 yield return null;
         }
@@ -272,11 +314,13 @@ namespace GameJam.Gameplay
                             MatchText.PickOwnTerritoryHint
                         )
                     );
+                    _sfx.Play(SfxCue.Invalid);
                     continue;
                 }
 
                 _hud.HideHint();
                 _match.PlaceTroop(territory);
+                _sfx.Play(SfxCue.TroopPlaced);
                 yield break;
             }
         }
@@ -363,6 +407,7 @@ namespace GameJam.Gameplay
         {
             yield return BotPause(_botPlacePause);
             _match.PlaceTroop(BotPlayer.ChooseReinforcement(_match));
+            _sfx.Play(SfxCue.TroopPlaced);
         }
 
         private IEnumerator BotAttack()
@@ -433,13 +478,16 @@ namespace GameJam.Gameplay
             if (clicked != _selected && HasTarget(clicked))
             {
                 Select(clicked);
+                _sfx.Play(SfxCue.Click);
                 return;
             }
 
             bool clickedSelection = clicked == _selected;
             Select(null);
-            if (!clickedSelection)
-                _hud.SetPrompt(WhyCannotAttackFrom(clicked));
+            if (clickedSelection)
+                return;
+            _hud.SetPrompt(WhyCannotAttackFrom(clicked));
+            _sfx.Play(SfxCue.Invalid);
         }
 
         private string WhyCannotAttackFrom(Territory territory)
@@ -497,6 +545,15 @@ namespace GameJam.Gameplay
                 _humanGod,
                 MatchText.DestinyYouLine(modifier, humanLosesTroop)
             );
+            _sfx.Play(SfxCue.DestinyRoll);
+            _destinyLandCue = SfxCueChooser.DestinyLanding(modifier, humanLosesTroop);
+        }
+
+        private void HandleDestinyLanded()
+        {
+            _sfx.StopRoll();
+            if (_destinyLandCue.HasValue)
+                _sfx.Play(_destinyLandCue.Value);
         }
 
         private void HandleTurnStarted(God god, int reinforcements)
@@ -529,10 +586,42 @@ namespace GameJam.Gameplay
             _nations.Refresh(_match);
         }
 
+        // Taking land from a rival is the strongest board moment, so only it shakes the screen; an
+        // empty territory just changes color with its ring.
         private void HandleTerritoryCaptured(Territory territory, God newOwner, God? previousOwner)
         {
-            if (territory.Kind == TerritoryKind.Temple)
+            _board.ShowCaptureRing(territory);
+            if (previousOwner.HasValue)
+                _cameraShake.Shake();
+            bool temple = territory.Kind == TerritoryKind.Temple;
+            if (temple)
                 ShowHintOnce(Hint.Temple);
+
+            // Fired before NationEliminated and MatchWon: when this capture ends the match for the
+            // human, the end sting that follows plays alone.
+            if (previousOwner.HasValue && EndsMatchForHuman(previousOwner.Value))
+                return;
+            _sfx.Play(SfxCue.Capture);
+            // A temple is the goal, so its capture carries a quiet chime under the capture cue.
+            if (temple)
+                _sfx.PlaySubtle(SfxCue.Sacred);
+        }
+
+        /// <summary>True when this god is now out and that ends the match for the human: it was the human, or one nation is left.</summary>
+        private bool EndsMatchForHuman(God eliminated)
+        {
+            if (!_match.IsEliminated(eliminated))
+                return false;
+            if (!_botPlaysHuman && eliminated == _humanGod)
+                return true;
+
+            int living = 0;
+            foreach (God god in Match.BaseTurnOrder)
+            {
+                if (!_match.IsEliminated(god))
+                    living++;
+            }
+            return living == 1;
         }
 
         private void HandleCombatRolled(Combat combat)
@@ -541,6 +630,21 @@ namespace GameJam.Gameplay
             if (combat.OfferingMade)
                 _board.ShowTroopLoss(combat.From);
             _dice.Show(combat);
+            // The Offering re-roll is the die shaken in the hand; a normal roll is thrown.
+            _sfx.Play(combat.OfferingMade ? SfxCue.Offering : SfxCue.CombatRoll);
+        }
+
+        private void HandleDiceLanded(CombatResult result)
+        {
+            _sfx.StopRoll();
+            // The dice of the pending combat; null if the match ended while they were still tumbling.
+            Combat combat = _match.PendingCombat;
+            if (combat == null)
+                return;
+            God? human = _botPlaysHuman ? null : _humanGod;
+            SfxCue? cue = SfxCueChooser.CombatLanding(combat, result, human);
+            if (cue.HasValue)
+                _sfx.Play(cue.Value);
         }
 
         // The dice panel is not hidden here, so the verdict stays readable after the troop is lost.
@@ -561,7 +665,13 @@ namespace GameJam.Gameplay
         {
             _nations.Refresh(_match);
             if (_botPlaysHuman || god != _humanGod)
+            {
+                // A rival falling is news, not the end: a quiet defeat cue. When it leaves one
+                // nation, MatchWon follows and its end sting plays alone.
+                if (!EndsMatchForHuman(god))
+                    _sfx.PlaySubtle(SfxCue.Defeat);
                 return;
+            }
 
             _humanEliminated = true;
             // No winner yet: the bots could keep playing, so the banner stays neutral.
@@ -589,6 +699,7 @@ namespace GameJam.Gameplay
             _hud.ShowEndTurn(false);
             _hud.ShowCombatChoice(false);
             _hud.SetPrompt(string.Empty);
+            PlayEndCueOnce(winner == _humanGod);
             int winnerTemples = winner.HasValue ? _match.Board.TempleCount(winner.Value) : 0;
             _hud.ShowEndBanner(
                 title,
@@ -600,18 +711,54 @@ namespace GameJam.Gameplay
             );
         }
 
-        private void HandleGodChosen(God god) => _chosenGod = god;
+        private void PlayEndCueOnce(bool humanWon)
+        {
+            if (_endCuePlayed)
+                return;
+            _endCuePlayed = true;
+            _sfx.StopRoll();
+            _sfx.Play(humanWon ? SfxCue.Victory : SfxCue.Defeat);
+        }
 
-        private void HandleOfferingClicked() => _offeringRequested = true;
+        // On WebGL the browser only allows audio after a user gesture; this first click provides it.
+        private void HandleGodChosen(God god)
+        {
+            _chosenGod = god;
+            _sfx.Play(SfxCue.Click);
+        }
 
-        private void HandleAcceptClicked() => _acceptRequested = true;
+        private void HandleOfferingClicked()
+        {
+            _offeringRequested = true;
+            _sfx.Play(SfxCue.Click);
+        }
 
-        private void HandleEndTurnClicked() => _endTurnRequested = true;
+        private void HandleAcceptClicked()
+        {
+            _acceptRequested = true;
+            _sfx.Play(SfxCue.Click);
+        }
+
+        private void HandleEndTurnClicked()
+        {
+            _endTurnRequested = true;
+            _sfx.Play(SfxCue.Click);
+        }
 
         private void HandleFastBotsClicked()
         {
             MatchSession.FastBots = !MatchSession.FastBots;
             _hud.SetFastBots(MatchSession.FastBots);
+            _sfx.Play(SfxCue.Click);
+        }
+
+        // The click plays after the change, so unmuting is confirmed by a sound and muting is silent.
+        private void HandleMuteClicked()
+        {
+            MatchSession.Muted = !MatchSession.Muted;
+            _hud.SetMuted(MatchSession.Muted);
+            _sfx.SetMuted(MatchSession.Muted);
+            _sfx.Play(SfxCue.Click);
         }
 
         // Restarting is a scene reload: Match, board and views are rebuilt from scratch, so no

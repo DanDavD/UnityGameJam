@@ -844,7 +844,13 @@ MonoBehaviour:
   _pulseGrow: 0.05
   _hopDuration: 0.2
   _hopScale: 1.15
+  _captureRingDuration: 0.35
+  _captureRingGrow: 0.45
+  _effectSortingOrder: 6
   _lossDuration: 1
+  _lossHold: 0.4
+  _lossScale: 0.85
+  _lossColor: {r: 0.16862746, g: 0.12941177, b: 0.09411765, a: 1}
   _lossRise: 0.6
   _lossStartOffset: 0.5
 --- !u!58 &7664851279750701219

@@ -11,7 +11,13 @@
                     <ui:VisualElement class="god-chip__icon" picking-mode="Ignore" />
                 </ui:VisualElement>
                 <ui:VisualElement class="hud__identity-text" picking-mode="Ignore">
-                    <ui:Label name="identity-label" class="hud__identity-line" picking-mode="Ignore" text="YOU: ZEUS · ★ 1 sacred · ✗ 6 cursed" />
+                    <ui:VisualElement class="hud__identity-row" picking-mode="Ignore">
+                        <ui:Label name="identity-label" class="hud__identity-line" picking-mode="Ignore" text="YOU: ZEUS ·" />
+                        <ui:VisualElement class="omen-icon omen-icon--sacred hud__identity-icon" picking-mode="Ignore" />
+                        <ui:Label name="identity-sacred-label" class="hud__identity-line" picking-mode="Ignore" text="1 sacred ·" />
+                        <ui:VisualElement class="omen-icon omen-icon--cursed hud__identity-icon" picking-mode="Ignore" />
+                        <ui:Label name="identity-cursed-label" class="hud__identity-line" picking-mode="Ignore" text="6 cursed" />
+                    </ui:VisualElement>
                     <ui:Label name="goal-label" class="hud__goal" picking-mode="Ignore" text="Goal: hold 3 temples at your turn start" />
                 </ui:VisualElement>
             </ui:VisualElement>
@@ -23,7 +29,6 @@
                 <ui:Instance template="NationRow" name="nation-morrigan" picking-mode="Ignore" />
             </ui:VisualElement>
         </ui:VisualElement>
-        <ui:Button name="fast-bots-button" text="▶▶ FAST BOTS: OFF" class="button button--secondary hud__fast-bots" />
         <ui:VisualElement class="hud__top" picking-mode="Ignore">
             <ui:Label name="round-label" class="card hud__round" picking-mode="Ignore" text="Round 1 · Destiny 2: Ra +2, Morrígan -2 · Ra opens" />
         </ui:VisualElement>
@@ -141,6 +146,11 @@
                     <ui:Button name="main-menu-button" text="MAIN MENU" class="button button--secondary" />
                 </ui:VisualElement>
             </ui:VisualElement>
+        </ui:VisualElement>
+        <!-- Last, so the sound toggle draws above the main menu overlay. -->
+        <ui:VisualElement name="hud-toggles" class="hud__toggles" picking-mode="Ignore">
+            <ui:Button name="mute-button" text="SOUND: ON" class="button button--secondary hud__toggle" />
+            <ui:Button name="fast-bots-button" text="▶▶ FAST BOTS: OFF" class="button button--secondary hud__toggle" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

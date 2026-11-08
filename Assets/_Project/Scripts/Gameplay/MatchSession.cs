@@ -4,8 +4,8 @@ using UnityEngine;
 namespace GameJam.Gameplay
 {
     /// <summary>
-    /// The two player choices that must survive the scene reload that restarts a match:
-    /// which god "Play again" replays and whether bots play fast.
+    /// The player choices that must survive the scene reload that restarts a match:
+    /// which god "Play again" replays, whether bots play fast and whether sound is muted.
     /// Reloading the scene rebuilds the Match, board and HUD from scratch, so these are the only
     /// state carried over; a static class is enough and needs no persistent GameObject.
     /// </summary>
@@ -16,12 +16,15 @@ namespace GameJam.Gameplay
 
         public static bool FastBots { get; set; }
 
+        public static bool Muted { get; set; }
+
         // Domain reload is disabled in Enter Play Mode Options, so statics must be reset by hand.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetOnPlay()
         {
             ReplayGod = null;
             FastBots = false;
+            Muted = false;
         }
     }
 }

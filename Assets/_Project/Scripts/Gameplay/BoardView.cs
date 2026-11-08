@@ -70,6 +70,8 @@ namespace GameJam.Gameplay
 
         public void ShowTroopLoss(Territory territory) => _views[territory.Id].ShowTroopLoss();
 
+        public void ShowCaptureRing(Territory territory) => _views[territory.Id].ShowCaptureRing();
+
         public void SetHighlight(Territory territory, TerritoryHighlight highlight) =>
             _views[territory.Id].SetHighlight(highlight);
 
