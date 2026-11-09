@@ -4,8 +4,9 @@ namespace GameJam.Gameplay
 {
     /// <summary>
     /// Plays the match's sound effects through two sources. Rolls (dice, Destiny Die, Offering
-    /// shake) share one voice that a new roll replaces and the landing stops, so clatter never
-    /// stacks or outlasts the dice; every other cue plays as an overlapping one-shot.
+    /// shake) share one voice that only a new roll replaces, so clatter never stacks; each roll is
+    /// timed to end exactly when the dice land, so it is never cut. Every other cue plays as an
+    /// overlapping one-shot.
     /// It only knows cues, never the rules: MatchController decides when each one plays and
     /// <see cref="SfxCueChooser"/> picks the landing stings.
     /// </summary>
@@ -14,7 +15,7 @@ namespace GameJam.Gameplay
         [SerializeField]
         private AudioCues _cues;
 
-        [Tooltip("Rolls: one at a time, stopped when the dice land.")]
+        [Tooltip("Rolls: one at a time, ending when the dice land.")]
         [SerializeField]
         private AudioSource _rollSource;
 
@@ -35,6 +36,7 @@ namespace GameJam.Gameplay
             _effectsSource.mute = muted;
         }
 
+        /// <summary>Plays a one-shot cue. Rolls go through <see cref="PlayRoll"/>.</summary>
         public void Play(SfxCue cue) => Play(cue, 1f);
 
         /// <summary>Plays a cue quieter, as an accent under the main cue of the same moment.</summary>
@@ -46,21 +48,30 @@ namespace GameJam.Gameplay
             AudioClip clip = sound.PickClip();
             if (clip == null)
                 return;
-
-            if (IsRoll(cue))
-            {
-                _rollSource.clip = clip;
-                _rollSource.volume = sound.Volume * volumeScale;
-                _rollSource.Play();
-                return;
-            }
             _effectsSource.PlayOneShot(clip, sound.Volume * volumeScale);
         }
 
-        /// <summary>The dice landed: the roll sound ends with them.</summary>
-        public void StopRoll() => _rollSource.Stop();
+        /// <summary>
+        /// Starts a roll cue (combat throw, Destiny Die, Offering shake), replacing any roll still
+        /// playing, and returns how long the dice should tumble so they land with the sound: a clip
+        /// longer than the shortest tumble stretches the tumble; a shorter one starts late, so the
+        /// dice fly silently and clatter as they land.
+        /// </summary>
+        public float PlayRoll(SfxCue cue, float minTumbleSeconds)
+        {
+            CueSound sound = _cues.Get(cue);
+            AudioClip clip = sound.PickClip();
+            if (clip == null)
+                return minTumbleSeconds;
 
-        private static bool IsRoll(SfxCue cue) =>
-            cue == SfxCue.CombatRoll || cue == SfxCue.DestinyRoll || cue == SfxCue.Offering;
+            float tumble = Mathf.Max(minTumbleSeconds, clip.length);
+            _rollSource.clip = clip;
+            _rollSource.volume = sound.Volume;
+            _rollSource.PlayDelayed(tumble - clip.length);
+            return tumble;
+        }
+
+        /// <summary>Silences a roll whose dice will never land (a skipped Destiny Die, the match ending).</summary>
+        public void StopRoll() => _rollSource.Stop();
     }
 }

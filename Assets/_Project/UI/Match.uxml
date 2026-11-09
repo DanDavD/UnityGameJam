@@ -75,6 +75,8 @@
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:Label name="dice-verdict" class="dice-panel__verdict" picking-mode="Ignore" />
+            <!-- Shown by DiceView while the human's own combat result waits for a click. -->
+            <ui:Label name="dice-continue" class="dice-panel__continue" picking-mode="Ignore" />
         </ui:VisualElement>
         <!-- Slides in at the top center when a turn starts (shown class added by TurnBannerView). -->
         <ui:VisualElement name="turn-banner" class="card turn-banner" picking-mode="Ignore">
@@ -111,6 +113,22 @@
                     <ui:Instance template="GodCard" name="god-card-ra" picking-mode="Ignore" />
                     <ui:Instance template="GodCard" name="god-card-thor" picking-mode="Ignore" />
                     <ui:Instance template="GodCard" name="god-card-morrigan" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <!-- The sacred-number rule in one sentence over three rows; the drawn omen icons replace the glyphs. Text set by MenuView. -->
+                <ui:VisualElement class="menu__rule" picking-mode="Ignore">
+                    <ui:VisualElement class="menu__rule-row" picking-mode="Ignore">
+                        <ui:Label name="rule-sacred-lead" class="menu__rule-text" picking-mode="Ignore" text="Each god has a" />
+                        <ui:VisualElement class="omen-icon omen-icon--sacred menu__rule-icon" picking-mode="Ignore" />
+                        <ui:Label name="rule-sacred" class="menu__rule-text" picking-mode="Ignore" text="sacred number (beats any neutral roll)" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="menu__rule-row" picking-mode="Ignore">
+                        <ui:Label name="rule-cursed-lead" class="menu__rule-text" picking-mode="Ignore" text="and a" />
+                        <ui:VisualElement class="omen-icon omen-icon--cursed menu__rule-icon" picking-mode="Ignore" />
+                        <ui:Label name="rule-cursed" class="menu__rule-text" picking-mode="Ignore" text="cursed number (loses to any neutral roll)." />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="menu__rule-row" picking-mode="Ignore">
+                        <ui:Label name="rule-rival" class="menu__rule-text" picking-mode="Ignore" text="Your cursed number is your rival's sacred one." />
+                    </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>

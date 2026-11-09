@@ -102,8 +102,8 @@ Max 3 sizes visible on one screen at a time, besides the die. Explanations are a
 
 | Screen | Sizes |
 |---|---|
-| Match HUD | h2 (round / Destiny line, turn banner, temple dots), body (identity, goal, prompt, hint, combat "why", nation names), label (buttons, tags, nation stats) |
-| Main menu | display (title), h2 (god names), body (tagline, "Choose your god", card lines) |
+| Match HUD | h2 (round / Destiny line, turn banner, temple dots), body (identity, goal, prompt, hint, combat "why", nation names), label (buttons, outcome tags, nation stats) |
+| Main menu | display (title), h2 (god names), body (tagline, "Choose your god", card lines, sacred-number rule) |
 | Destiny Die (modal) | h1 (round), body (effect line), caption ("Click to skip") |
 | End banner (modal) | h1 (verdict, stat values), body (winner name, reason), label (stat names, buttons) |
 
@@ -138,6 +138,7 @@ Component sizes:
 | `--die-border` | 4 px | Die outline and cursed crack thickness |
 | `--die-border-sacred` | 8 px | Sacred die outline |
 | `--dice-panel-text-width` | 240 px | Max width of the combat "why" line (two dice wide) |
+| `--outcome-tag-width` | 144 px | Width of the outcome tag under each combat die; its explanation wraps to two lines, so the dice panel stays as wide as before and clear of the board frame at 1280×720 |
 | `--end-card-width` | 480 px | Min width of the end banner card |
 | `--icon-sm` | 20 px | Icon inside the small nation chip of the nations panel |
 | `--nations-panel-width` | 300 px | Width of the nations panel (left column) |
@@ -152,9 +153,11 @@ Screen padding: `--space-8`. Gap between panel sections: `--space-6`. Gap inside
 
 ## Components
 
-**Primary button:** fill `--wood`, text `--paper`, label style, padding `--space-3` × `--space-6`, radius `--radius-md`, min height 48 px. Hover → `--wood-dark` + lift 2 px. Pressed → scale 0.97, shadow removed. Disabled → fill `--paper-shade`, text `--ink-faint`.
+**Pickable UI (one hover language for every button and god card):** hover → lift (`--hover-lift`), slight grow (`--hover-scale`) and a darker frame; pressed → back down (no lift) and `--press-scale`. All in `--duration-fast` with `--ease-enter`. Disabled buttons never lift or grow.
 
-**Secondary button:** transparent fill, 2 px `--wood` border, text `--wood`. Same states.
+**Primary button:** fill `--wood` with a 2 px `--wood` border (invisible at rest, so hover can darken it without resizing), text `--paper`, label style, padding `--space-3` × `--space-6`, radius `--radius-md`, min height 48 px. Hover → fill `--wood-dark`, border `--ink`. Disabled → fill `--paper-shade`, text `--ink-faint`.
+
+**Secondary button:** transparent fill, 2 px `--wood` border, text `--wood`. Hover → fill `--paper-shade`, border `--wood-dark`. Same press and disabled states.
 
 **Panel / card:** fill `--paper`, 2 px `--paper-shade` border, radius `--radius-lg`, padding `--space-6`, flat shadow (bottom border `--shadow-offset` in `--shadow`). USS class `.card`.
 
@@ -180,6 +183,9 @@ Screen padding: `--space-8`. Gap between panel sections: `--space-6`. Gap inside
 |---|---|---|---|
 | Selected (attack from) | thick solid `--ink` ring | none | piece scales 1.1 and its shadow lengthens |
 | Legal target | thin **dashed** `--wood` ring | gentle breath: alpha 50-100% and +5% scale over 1.4 s, all targets in sync | none |
+| Hovered (only if usable now) | the `--ink` outline warms to `--wood` (a soft glow) | eases in and out over `--duration-fast` (120 ms, ease-out) | +8% scale, on top of the selected lift |
+
+**Hover rule (board):** a piece reacts to the pointer **only when a click on it would do something right now**, so hover itself teaches what is playable. During the human's Reinforce: their own territories. During Attack with nothing selected: own territories that can attack (2+ troops and at least one legal target). With a territory selected: its legal targets. Nothing reacts during bot turns, the Destiny Die, the turn banner, a pending combat, or under a HUD button. The rule is decided by `MatchController` from the same checks the clicks use (`Match.CanAttack`), never duplicated.
 
 **Board frame:** the board sits on a `--wood` frame (0.2 units wide) with a soft `--ink` shadow, like an altar board on a table. Connection lines are `--ink` at 50%, slightly thicker than a hairline.
 
@@ -193,13 +199,15 @@ Screen padding: `--space-8`. Gap between panel sections: `--space-6`. Gap inside
 
 Rules: no texture on pieces, icons, lines or UI cards (they stay flat paint and ink). Baked sprites match the scene sizes (frame 17.8 × 10.8, inner 17.4 × 10.4, steps 9 × 9 units, rounded corners matching `rounded_square`); if the board frame is resized, regenerate them. Import: Sprite, Full Rect mesh, no mipmaps, max 1024, default compression (DXT1 for the opaque tile, DXT5 for the rest).
 
-**God card:** same frame for all four gods (consistency is the point). Top band in the nation **tint** with the nation chip (color + icon); god name in Cinzel (h2); sacred and cursed numbers as two small die-like tags in the dice language, each icon + number + word: star burst icon + "1 sacred" on the nation tint with a nation-color border, cracked die icon + "6 cursed" desaturated (`--paper-shade`, `--ink-faint` border); rival line in `--ink-soft`. Hover lifts the card (`--hover-lift`) and frames it in `--wood`; press scales to `--press-scale`. Later: one-line power text if god powers ship.
+**God card:** same frame for all four gods (consistency is the point). Top band in the nation **tint** with the nation chip (color + icon); god name in Cinzel (h2); sacred and cursed numbers as two small die-like tags in the dice language, each icon + number + word: star burst icon + "1 sacred" on the nation tint with a nation-color border, cracked die icon + "6 cursed" desaturated (`--paper-shade`, `--ink-faint` border); rival line in `--ink-soft`. Hover lifts the card (`--hover-lift`), grows it (`--hover-scale`) and frames it in `--wood`; press drops the lift and scales to `--press-scale`. Later: one-line power text if god powers ship.
+
+**Sacred-number rule (main menu, under the god cards):** one fixed sentence, body size, `--ink-soft`, centered over three rows: "Each god has a [sacred icon] sacred number (beats any neutral roll) / and a [cursed icon] cursed number (loses to any neutral roll). / Your cursed number is your rival's sacred one." The drawn omen icons (`.omen-icon`, `--icon-sm`) replace the ★ / ✗ glyphs, so this is built as rows of labels and icons, like the HUD identity line. Teaches the core rule before the first click, without a tutorial.
 
 **Tooltip:** `--paper`, radius `--radius-md`, padding `--space-3`, caption or body size, appears after 300 ms hover, never covers the hovered element.
 
 **Turn banner:** top center, h2, slides down, stays 1.2 s, slides up. Shows the nation chip + "YOUR TURN" / "ZEUS'S TURN", with a `--space-2` left edge in the nation color.
 
-**Die:** rounded square, `--paper` face, `--ink` pips/number, 2 px outline. In the roll overlay, both dice side by side with the outcome tag under each: sacred / cursed icon + word ("SACRED", "CURSED"); neutral is the word alone.
+**Die:** rounded square, `--paper` face, `--ink` pips/number, 2 px outline. In the roll overlay, both dice side by side with the outcome tag under each. The tag explains the roll with the real god and number (sentence case, label size, Inter SemiBold, no tracking, centered, wraps to two lines inside `--outcome-tag-width`): sacred → [sacred icon] "1 = Zeus's sacred number", cursed → [cursed icon] "6 = Zeus's cursed number", neutral → "4 = neutral for Ra" (no icon). The icon sits above the text so the sentence gets the full tag width; both tags grow to the same height. The verdict line ("Zeus wins: sacred beats neutral") stays below.
 
 ## Iconography
 
@@ -208,7 +216,7 @@ Rules: no texture on pieces, icons, lines or UI cards (they stay flat paint and 
 - Nation icons: lightning bolt (Zeus), hammer (Thor), sun disc (Ra), crow (Morrígan). Game icons: temple, troop, die, clover, skull, sacred, cursed.
 - One icon pack or one hand-drawn set only. Never mix sources. All current icons are flat white silhouettes on transparent (`Assets/_Project/Art/Placeholder/icon_*.png`, 256 px), tinted with `-unity-background-image-tint-color`.
 - **Sacred icon** (`icon_sacred.png`): an 8-point star burst (4 long rays, 4 short). **Cursed icon** (`icon_cursed.png`): a rounded die with two pips split by a jagged vertical crack (never an ×, so it can't be read as "wrong" or "close"). Both read at 16 px.
-- **Glyph vs icon:** where the sacred / cursed mark **stands on its own** it is the drawn icon: die corner marks, combat outcome tags (icon + `SACRED` / `CURSED`), god card tags (icon + number + word), and the HUD identity line ("YOU: ZEUS ·" [sacred icon] "1 sacred ·" [cursed icon] "6 cursed": a row of three labels with `.omen-icon` between them, because Inter's ✗ reads as "×" at body size). **Inside hint sentences** it stays the ★ / ✗ text glyph, so it flows with the text. USS: `.omen-icon` (size `--icon-sm`, tint `--ink`) + `.omen-icon--sacred` or `.omen-icon--cursed` (cursed tints `--ink-soft`, desaturated like the cursed die). The word always stays next to the icon: never icon alone.
+- **Glyph vs icon:** where the sacred / cursed mark **stands on its own** it is the drawn icon: die corner marks, combat outcome tags (icon over "1 = Zeus's sacred number"), the menu's sacred-number rule, god card tags (icon + number + word), and the HUD identity line ("YOU: ZEUS ·" [sacred icon] "1 sacred ·" [cursed icon] "6 cursed": a row of three labels with `.omen-icon` between them, because Inter's ✗ reads as "×" at body size). **Inside hint sentences** it stays the ★ / ✗ text glyph, so it flows with the text. USS: `.omen-icon` (size `--icon-sm`, tint `--ink`) + `.omen-icon--sacred` or `.omen-icon--cursed` (cursed tints `--ink-soft`, desaturated like the cursed die). The word always stays next to the icon: never icon alone.
 
 ## Motion and juice
 
@@ -221,36 +229,38 @@ Subtle, fast, purposeful: motion should explain cause and effect.
 | `--duration-slow` | 400 ms | Screen transitions, victory |
 | `--ease-enter` | `ease-out-cubic` | Things arriving or reacting (hover, press, banners in) |
 | `--ease-exit` | `ease-in-cubic` | Things leaving (banners out) |
-| `--hover-lift` | `0 -2px` (translate) | Button hover |
+| `--hover-lift` | `0 -2px` (translate) | Button and god card hover |
+| `--hover-scale` | `1.02 1.02` (scale) | Button and god card hover (board pieces use +8%, a serialized field in `TerritoryView`) |
 | `--press-scale` | `0.97 0.97` (scale) | Button press |
 
 - UI motion: USS `transition` on `translate`, `scale`, `opacity`, `background-color`.
 - Board motion (sprites): small coroutines in `TerritoryView`, durations in serialized fields. A piece hops (scale 1 → 1.15 → 1, 200 ms) when it gains a troop or changes owner; a loss never hops, it shows the "-1" instead, so one thing moves per piece.
 - Capture: a ring in the new owner's color expands (+45%) and fades over 350 ms, drawn above the piece.
 - Troop loss: "-1" in `--ink` at 85% of the count size, above the count; rises with an ease-out, stays opaque for the first 40% of 1 s, then fades.
-- Dice roll: about 600 ms tumble, then land with a small overshoot. This is the moment of the game, so it gets the most love (sound + motion). On landing (400 ms): a sacred die pulses twice (+8% scale; its tint and thick border are the glow), a cursed die shakes sideways (6 px, dying out). Only the dice that just rolled react.
+- Dice roll: at least 900 ms tumble (1 s for the Destiny Die), stretched to the roll clip when it is longer, so the dice always land with the sound; then land with a small overshoot. This is the moment of the game, so it gets the most love (sound + motion). On landing (400 ms): a sacred die pulses twice (+8% scale; its tint and thick border are the glow), a cursed die shakes sideways (6 px, dying out). Only the dice that just rolled react.
 - Screen shake only when a territory is taken from a rival (empty captures do not shake), and later for Thor/Zeus powers: 3 px (2-4), 120 ms, measured in screen pixels.
+- Pacing (readability first; ▶▶ fast bots divides every bot timing by 3): a bot waits 0.7 s per troop and 0.8 s before and during each attack; a bot combat result stays 2 s; the human's own result stays until a click on the board or 3 s ("Click to continue" under the verdict), or until they choose when an Offering is possible; Destiny holds 1.5 s after landing; the turn banner stays 1.6 s.
 - Respect restraint: at most one strong animation on screen at once.
 
 ## Audio identity (for coherence)
 
 Wooden and tactile: dice clacks on wood, soft paper swishes for panels, a low drum for combat, a bright chime for sacred, a dull thud plus crack for cursed. One short music loop with ancient-instrument flavor (lyre, frame drum), kept low under SFX (not in the jam build: no music yet).
 
-Shipped cues (Kenney CC0, clips and volumes in the `AudioCues` asset; variations picked at random):
+Shipped cues (Kenney CC0, clips and volumes in the `AudioCues` asset; where a cue has variations, one is picked at random):
 
 | Moment | Sound | Sync |
 |---|---|---|
-| Combat roll | dice thrown on wood (3 variations) | starts with the tumble, stops when the dice land |
-| Offering re-roll | dice shaken in the hand | same, replaces the throw |
-| Destiny Die | single die thrown (2 variations) | starts with the tumble, stops on landing |
+| Combat roll | dice thrown on wood (3 variations) | timed to end as the dice land (starts late when the clip is shorter than the tumble) |
+| Offering re-roll | dice shaken in the hand | same; its longer clip stretches the tumble |
+| Destiny Die | single die thrown (2 variations) | timed to end as the die lands |
 | Landing sting | bright chime (sacred) / dull bong (cursed) | on landing; one per roll: a sacred winner chimes, any cursed die bongs, plain numbers stay quiet. For Destiny: chime if it helps the player, bong if it hurts them |
-| Troop placed | chip laid (3 variations) | each troop |
+| Troop placed | chip laid (one clip, always the same) | each troop |
 | Capture | chips stacked (2 variations) | with the ring |
 | Turn change | card slide | with the turn banner |
 | Victory / defeat | rising confirmation / falling minimize | with the end screen, once |
 | Button / invalid click | soft click / short error | on the click |
 
-Rules: rolls share one voice (a new roll replaces the last, landing stops it) so clatter never stacks; everything else is a one-shot. Mute toggle ("SOUND: ON/OFF") next to fast bots, kept for the session. On the web, audio starts after the first click (choosing a god).
+Rules: rolls share one voice (only a new roll replaces the last; landing never cuts it) so clatter never stacks; everything else is a one-shot. Mute toggle ("SOUND: ON/OFF") next to fast bots, kept for the session. On the web, audio starts after the first click (choosing a god).
 
 ## Layout (1920×1080 reference, must work down to 1280×720)
 

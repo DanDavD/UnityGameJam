@@ -29,34 +29,31 @@ MonoBehaviour:
     _volume: 0.8
   _sacred:
     _clips:
-    - {fileID: 8300000, guid: 5b2a4c2baf5027743a6840024e8da52d, type: 3}
-    _volume: 0.7
+    - {fileID: 8300000, guid: 5ab70a6e0b3c492438aa93b8e9a6bfa6, type: 3}
+    _volume: 0.9
   _cursed:
     _clips:
-    - {fileID: 8300000, guid: 6d5725e820ce6d74e8b475860ea56e9b, type: 3}
-    _volume: 0.8
+    - {fileID: 8300000, guid: 0e615391ca91cdc48afb9fa94cb76a24, type: 3}
+    _volume: 1
   _troopPlaced:
     _clips:
-    - {fileID: 8300000, guid: a0b76e57c4f39f24ca27a7afe600c70d, type: 3}
-    - {fileID: 8300000, guid: 6e24c51e44e70114991e74a0c6667749, type: 3}
-    - {fileID: 8300000, guid: 76d9fcc109247ca498b0027ccc954f4d, type: 3}
+    - {fileID: 8300000, guid: c2a53cb438414ff4f9d83e9b1792a0eb, type: 3}
     _volume: 0.6
   _capture:
     _clips:
-    - {fileID: 8300000, guid: 74b3c06d6c678ac4ebed51998a9da079, type: 3}
-    - {fileID: 8300000, guid: f224a44edabf2ff4b9e62f0283199ed1, type: 3}
+    - {fileID: 8300000, guid: 9a50babf7857d3941a0f393840233779, type: 3}
     _volume: 0.9
   _turnChange:
     _clips:
-    - {fileID: 8300000, guid: ef40f0b45fbf3f847af09d8a3b18bf38, type: 3}
+    - {fileID: 8300000, guid: a2d74aedcb6487044be2402f423313ca, type: 3}
     _volume: 0.5
   _victory:
     _clips:
-    - {fileID: 8300000, guid: a6525e2d2c121b647b0f39a43b7be822, type: 3}
+    - {fileID: 8300000, guid: bee5151532425724984f1a2ad3a7a14a, type: 3}
     _volume: 0.9
   _defeat:
     _clips:
-    - {fileID: 8300000, guid: db294b8357e35e743b162e0dd5034c4d, type: 3}
+    - {fileID: 8300000, guid: dfdfe2225514ac747afeb4be92c39e9b, type: 3}
     _volume: 0.9
   _click:
     _clips:

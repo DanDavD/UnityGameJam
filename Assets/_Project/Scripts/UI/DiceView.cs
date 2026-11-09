@@ -9,7 +9,7 @@ namespace GameJam.UI
 {
     /// <summary>
     /// The combat dice: attacker left, defender right. They tumble, land with a small overshoot,
-    /// then show each roll as SACRED / CURSED / NEUTRAL for its god and the verdict explaining why.
+    /// then tag each roll with what it is for its god ("1 = Zeus's sacred number") and the verdict explaining why.
     /// After an Offering only the attacker's die rolls again, matching the rule.
     /// A die that just landed sacred pulses; one that landed cursed shakes, so the omen reads before the words.
     /// </summary>
@@ -22,8 +22,11 @@ namespace GameJam.UI
         private const string OutcomeCursedClass = "outcome--cursed";
 
         [Header("Tumble")]
+        [Tooltip(
+            "Shortest tumble. A longer roll clip stretches it, so the dice always land with the sound."
+        )]
         [SerializeField, Min(0f)]
-        private float _tumbleDuration = 0.6f;
+        private float _tumbleDuration = 0.9f;
 
         [Tooltip("Seconds between random faces while tumbling.")]
         [SerializeField, Min(0.01f)]
@@ -74,12 +77,16 @@ namespace GameJam.UI
         private Label _defenderFace;
         private VisualElement _defenderOutcome;
         private Label _defenderOutcomeLabel;
+        private Label _continue;
 
         /// <summary>True while the dice are tumbling or landing; the result is not readable yet.</summary>
         public bool IsAnimating { get; private set; }
 
         /// <summary>Raised the moment the dice land and their outcomes show, so sound can match the motion.</summary>
         public event Action<CombatResult> Landed;
+
+        /// <summary>The shortest tumble; the roll sound may ask for a longer one.</summary>
+        public float MinTumbleDuration => _tumbleDuration;
 
         private void Awake()
         {
@@ -102,6 +109,8 @@ namespace GameJam.UI
             _defenderFace = root.Q<Label>("defender-face");
             _defenderOutcome = root.Q<VisualElement>("defender-outcome");
             _defenderOutcomeLabel = root.Q<Label>("defender-outcome-label");
+            _continue = root.Q<Label>("dice-continue");
+            _continue.text = MatchText.ContinueHint;
             Hide();
         }
 
@@ -111,22 +120,28 @@ namespace GameJam.UI
             IsAnimating = false;
         }
 
-        public void Show(Combat combat)
+        /// <param name="tumbleSeconds">How long the dice tumble; matches the roll clip, see SfxPlayer.PlayRoll.</param>
+        public void Show(Combat combat, float tumbleSeconds)
         {
             StopAllCoroutines();
-            StartCoroutine(Roll(combat));
+            StartCoroutine(Roll(combat, tumbleSeconds));
         }
+
+        /// <summary>"Click to continue" under the verdict, while a result waits for the human.</summary>
+        public void ShowContinueHint(bool shown) =>
+            _continue.style.display = shown ? DisplayStyle.Flex : DisplayStyle.None;
 
         public void Hide()
         {
             StopAllCoroutines();
             IsAnimating = false;
             _panel.style.display = DisplayStyle.None;
+            ShowContinueHint(false);
             ResetMotion(_attackerDie);
             ResetMotion(_defenderDie);
         }
 
-        private IEnumerator Roll(Combat combat)
+        private IEnumerator Roll(Combat combat, float tumbleSeconds)
         {
             IsAnimating = true;
             bool rollDefender = !combat.OfferingMade;
@@ -137,6 +152,7 @@ namespace GameJam.UI
             _panel.style.display = DisplayStyle.Flex;
             _title.text = MatchText.CombatTitle(combat);
             _verdict.text = string.Empty;
+            ShowContinueHint(false);
             _attackerName.text = MatchText.GodName(combat.Attacker);
             _defenderName.text = MatchText.GodName(combat.Defender);
             SetGod(_attackerDie, _attackerOutcome, combat.Attacker);
@@ -145,7 +161,7 @@ namespace GameJam.UI
             if (rollDefender)
                 ClearOutcome(_defenderDie, _defenderOutcome);
 
-            yield return Tumble(rollDefender);
+            yield return Tumble(rollDefender, tumbleSeconds);
 
             CombatResult result = combat.Result;
             _attackerFace.text = MatchText.FaceText(result.AttackerRoll);
@@ -156,13 +172,15 @@ namespace GameJam.UI
                 _attackerDie,
                 _attackerOutcome,
                 _attackerOutcomeLabel,
-                result.AttackerOutcome
+                result.AttackerOutcome,
+                MatchText.OutcomeTag(combat.Attacker, result.AttackerRoll, result.AttackerOutcome)
             );
             ShowOutcome(
                 _defenderDie,
                 _defenderOutcome,
                 _defenderOutcomeLabel,
-                result.DefenderOutcome
+                result.DefenderOutcome,
+                MatchText.OutcomeTag(combat.Defender, result.DefenderRoll, result.DefenderOutcome)
             );
             _verdict.text = MatchText.CombatVerdict(combat);
             IsAnimating = false;
@@ -210,11 +228,11 @@ namespace GameJam.UI
         }
 
         // The faces shown while tumbling are cosmetic, so they use Unity's random, not the match's.
-        private IEnumerator Tumble(bool rollDefender)
+        private IEnumerator Tumble(bool rollDefender, float duration)
         {
             float elapsed = 0f;
             float nextFace = 0f;
-            while (elapsed < _tumbleDuration)
+            while (elapsed < duration)
             {
                 if (elapsed >= nextFace)
                 {
@@ -277,7 +295,8 @@ namespace GameJam.UI
             VisualElement die,
             VisualElement outcome,
             Label label,
-            RollOutcome value
+            RollOutcome value,
+            string text
         )
         {
             ClearOutcome(die, outcome);
@@ -292,7 +311,7 @@ namespace GameJam.UI
                 outcome.AddToClassList(OutcomeCursedClass);
             }
 
-            label.text = MatchText.OutcomeLabel(value);
+            label.text = text;
             outcome.style.visibility = Visibility.Visible;
         }
     }

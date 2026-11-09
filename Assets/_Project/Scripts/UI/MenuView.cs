@@ -7,7 +7,7 @@ namespace GameJam.UI
 {
     /// <summary>
     /// The main menu over the board: title, tagline and one card per god with its sacred number,
-    /// cursed number and rival. Clicking a card reports the chosen god; the view never starts anything.
+    /// cursed number and rival, and one fixed line under them that explains sacred and cursed. Clicking a card reports the chosen god; the view never starts anything.
     /// </summary>
     [RequireComponent(typeof(UIDocument))]
     public sealed class MenuView : MonoBehaviour
@@ -30,6 +30,11 @@ namespace GameJam.UI
             root.Q<Label>("menu-title").text = MatchText.GameTitle;
             root.Q<Label>("menu-tagline").text = MatchText.Tagline;
             root.Q<Label>("menu-prompt").text = MatchText.ChooseGodPrompt;
+            root.Q<Label>("rule-sacred-lead").text = MatchText.OmenRuleSacredLead;
+            root.Q<Label>("rule-sacred").text = MatchText.OmenRuleSacred;
+            root.Q<Label>("rule-cursed-lead").text = MatchText.OmenRuleCursedLead;
+            root.Q<Label>("rule-cursed").text = MatchText.OmenRuleCursed;
+            root.Q<Label>("rule-rival").text = MatchText.OmenRuleRival;
 
             for (int i = 0; i < Match.BaseTurnOrder.Count; i++)
             {

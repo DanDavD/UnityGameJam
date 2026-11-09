@@ -55,18 +55,26 @@ namespace GameJam.Gameplay
         [Header("Pacing (seconds)")]
         [Tooltip("Pause before each troop a bot places.")]
         [SerializeField, Min(0f)]
-        private float _botPlacePause = 0.25f;
+        private float _botPlacePause = 0.7f;
 
         [Tooltip("Pause before each bot attack decision, and while its attack is highlighted.")]
         [SerializeField, Min(0f)]
-        private float _botStepPause = 0.5f;
-
-        [Tooltip("How long a landed combat result stays readable before it is confirmed.")]
-        [SerializeField, Min(0f)]
-        private float _resultHold = 1.5f;
+        private float _botStepPause = 0.8f;
 
         [Tooltip(
-            "Bot pauses, including the result hold of their combats, are multiplied by this while fast bots is on."
+            "The longest a landed result of the human's own combat waits, when it needs no decision; a click continues sooner."
+        )]
+        [SerializeField, Min(0f)]
+        private float _resultHold = 3f;
+
+        [Tooltip(
+            "How long a landed result of a bot's combat stays readable before it is confirmed."
+        )]
+        [SerializeField, Min(0f)]
+        private float _botResultHold = 2f;
+
+        [Tooltip(
+            "Bot pauses, including the result hold of their combats and their turn banner, are multiplied by this while fast bots is on."
         )]
         [SerializeField, Range(0.05f, 1f)]
         private float _fastBotFactor = 1f / 3f;
@@ -98,6 +106,10 @@ namespace GameJam.Gameplay
 
         // Set once the god is chosen and Match.Start has run; before that, board clicks mean nothing.
         private bool _matchStarted;
+
+        // True only while HumanReinforce or HumanAttack waits for a board click, so pieces never
+        // react to hover under the Destiny Die, the turn banner, a combat or a bot's turn.
+        private bool _awaitingBoardClick;
 
         // What the Destiny Die means for the human, played when it lands (null: neutral, no sting).
         private SfxCue? _destinyLandCue;
@@ -178,6 +190,7 @@ namespace GameJam.Gameplay
         // board answers "not now" instead of doing nothing.
         private void Update()
         {
+            _board.SetHovered(UsableTerritoryUnderPointer());
             if (!_matchStarted || IsHumanTurn || _humanEliminated)
                 return;
             if (_match.Phase != TurnPhase.MatchOver && TryGetClickedTerritory(out _))
@@ -291,6 +304,7 @@ namespace GameJam.Gameplay
             _hud.SetPrompt(
                 MatchText.ReinforcePrompt(_match.ReinforcementsLeft, _match.TurnReinforcements)
             );
+            _awaitingBoardClick = true;
             while (true)
             {
                 // Wait a frame first: the loop may re-enter in the frame of the previous click,
@@ -319,6 +333,7 @@ namespace GameJam.Gameplay
                 }
 
                 _hud.HideHint();
+                _awaitingBoardClick = false;
                 _match.PlaceTroop(territory);
                 _sfx.Play(SfxCue.TroopPlaced);
                 yield break;
@@ -332,6 +347,7 @@ namespace GameJam.Gameplay
             _endTurnRequested = false;
             _hud.ShowEndTurn(true);
             ShowHintOnce(Hint.Attack);
+            _awaitingBoardClick = true;
 
             while (true)
             {
@@ -339,6 +355,7 @@ namespace GameJam.Gameplay
                 yield return null;
                 if (_endTurnRequested)
                 {
+                    _awaitingBoardClick = false;
                     Select(null);
                     _hud.ShowEndTurn(false);
                     _hud.HideHint();
@@ -350,6 +367,7 @@ namespace GameJam.Gameplay
                 {
                     if (_selected != null && _match.CanAttack(_selected, clicked))
                     {
+                        _awaitingBoardClick = false;
                         _hud.ShowEndTurn(false);
                         _hud.HideHint();
                         _match.Attack(_selected, clicked);
@@ -373,11 +391,26 @@ namespace GameJam.Gameplay
                 yield break;
             }
 
-            yield return IsHumanTurn ? Pause(_resultHold) : BotPause(_resultHold);
+            yield return IsHumanTurn ? HoldHumanResult() : BotPause(_botResultHold);
             if (!IsHumanTurn && BotPlayer.ShouldMakeOffering(_match))
                 _match.MakeOffering();
             else
                 _match.ConfirmCombat();
+        }
+
+        // The human's own result needs no decision but is theirs to read, so it waits for a click
+        // on the board or the hold, whichever comes first.
+        private IEnumerator HoldHumanResult()
+        {
+            _dice.ShowContinueHint(true);
+            for (float elapsed = 0f; elapsed < _resultHold; elapsed += Time.deltaTime)
+            {
+                // Yield first, so a click is only read in a frame after the result showed.
+                yield return null;
+                if (WasBoardPressed(out _))
+                    break;
+            }
+            _dice.ShowContinueHint(false);
         }
 
         private IEnumerator HumanCombatChoice()
@@ -434,12 +467,6 @@ namespace GameJam.Gameplay
                 yield return null;
         }
 
-        private static IEnumerator Pause(float seconds)
-        {
-            for (float elapsed = 0f; elapsed < seconds; elapsed += Time.deltaTime)
-                yield return null;
-        }
-
         // The first combat the human takes part in teaches its numbers. The first time the human
         // can make an Offering, that hint goes first and the numbers wait for the next combat.
         private void ShowCombatHint(bool humanCanOffer)
@@ -459,6 +486,32 @@ namespace GameJam.Gameplay
                 return false;
             _hud.ShowHint(MatchText.HintText(hint, _humanGod));
             return true;
+        }
+
+        private Territory UsableTerritoryUnderPointer()
+        {
+            if (!_awaitingBoardClick)
+                return null;
+            Pointer pointer = Pointer.current;
+            if (pointer == null)
+                return null;
+
+            Vector2 position = pointer.position.ReadValue();
+            if (
+                _hud.IsPointerOverUi(position) || !_board.TryPick(position, out Territory territory)
+            )
+                return null;
+            return IsUsableNow(territory) ? territory : null;
+        }
+
+        // The same rules the click handlers apply, so a hover never promises a click that is refused.
+        private bool IsUsableNow(Territory territory)
+        {
+            if (_match.Phase == TurnPhase.Reinforce)
+                return territory.Owner == _match.CurrentGod;
+            if (_selected != null)
+                return _match.CanAttack(_selected, territory);
+            return HasTarget(territory);
         }
 
         private bool HasTarget(Territory from)
@@ -521,12 +574,20 @@ namespace GameJam.Gameplay
         private bool TryGetClickedTerritory(out Territory territory)
         {
             territory = null;
+            return WasBoardPressed(out Vector2 position) && _board.TryPick(position, out territory);
+        }
+
+        // A press this frame outside the HUD's buttons and panels, so toggling sound or fast bots
+        // never counts as a board click.
+        private bool WasBoardPressed(out Vector2 position)
+        {
+            position = default;
             Pointer pointer = Pointer.current;
             if (pointer == null || !pointer.press.wasPressedThisFrame)
                 return false;
 
-            Vector2 position = pointer.position.ReadValue();
-            return !_hud.IsPointerOverUi(position) && _board.TryPick(position, out territory);
+            position = pointer.position.ReadValue();
+            return !_hud.IsPointerOverUi(position);
         }
 
         private void HandleRoundStarted(int round, int destinyFace)
@@ -538,20 +599,21 @@ namespace GameJam.Gameplay
             bool humanLosesTroop =
                 Destiny.IsBadOmen(destinyFace)
                 && Destiny.BadOmenTarget(_match.Board, _humanGod) != null;
+            float tumble = _sfx.PlayRoll(SfxCue.DestinyRoll, _destiny.MinTumbleDuration);
             _destiny.Show(
                 round,
                 destinyFace,
                 destiny,
                 _humanGod,
-                MatchText.DestinyYouLine(modifier, humanLosesTroop)
+                MatchText.DestinyYouLine(modifier, humanLosesTroop),
+                tumble
             );
-            _sfx.Play(SfxCue.DestinyRoll);
             _destinyLandCue = SfxCueChooser.DestinyLanding(modifier, humanLosesTroop);
         }
 
+        // The roll is not stopped here: it was timed to end on this landing.
         private void HandleDestinyLanded()
         {
-            _sfx.StopRoll();
             if (_destinyLandCue.HasValue)
                 _sfx.Play(_destinyLandCue.Value);
         }
@@ -629,14 +691,14 @@ namespace GameJam.Gameplay
             // The re-roll after an Offering is the moment its troop is paid.
             if (combat.OfferingMade)
                 _board.ShowTroopLoss(combat.From);
-            _dice.Show(combat);
             // The Offering re-roll is the die shaken in the hand; a normal roll is thrown.
-            _sfx.Play(combat.OfferingMade ? SfxCue.Offering : SfxCue.CombatRoll);
+            SfxCue roll = combat.OfferingMade ? SfxCue.Offering : SfxCue.CombatRoll;
+            _dice.Show(combat, _sfx.PlayRoll(roll, _dice.MinTumbleDuration));
         }
 
+        // The roll is not stopped here: it was timed to end on this landing.
         private void HandleDiceLanded(CombatResult result)
         {
-            _sfx.StopRoll();
             // The dice of the pending combat; null if the match ended while they were still tumbling.
             Combat combat = _match.PendingCombat;
             if (combat == null)

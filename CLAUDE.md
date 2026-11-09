@@ -67,8 +67,8 @@ A nation with no territories is **eliminated**.
 | 2 | Core: board, territories, turn state machine, reinforcements, Destiny Die, Offering, victory | Done |
 | 3 | Presentation: altar-shaped parchment board, pieces, dice view, input; simple bots (AI); first WebGL build | Done |
 | 4 | UI Toolkit HUD, combat panel with "why", self-teaching onboarding, main menu, end screen | Done |
-| 5 | Audio, juice, balance via headless bot-vs-bot simulations | In progress |
-| 6 | WebGL build, bug fixing, polish (finish by Wed Nov 11) | |
+| 5 | Audio, juice, balance via headless bot-vs-bot simulations; playtest round 1 fixes | Done (playtest fixes pending a listen/play check) |
+| 6 | WebGL build, bug fixing, polish (finish by Wed Nov 11) | Next (plan proposed, needs approval) |
 
 #### Phase 3 plan (approved)
 
@@ -100,6 +100,25 @@ A nation with no territories is **eliminated**.
 - **Juice** (subtle, per the design system): pieces hop when they gain a troop or are captured, a small flash on a captured territory, a 2–4 px screen shake only on captures, sacred die glows and cursed die shakes on landing; one strong animation at a time.
 - **Art polish**: keep the current style; procedural parchment texture on the background and wood grain on the frame (no downloads); cleaner "-1".
 - **Balance**: Zeus wins ~22% vs 25–27%; only the bot may be tuned (rules are frozen).
+
+#### Playtest round 1 (developer feedback, fixes applied on `feature/playtest-fixes`)
+
+1. Pacing was too fast → slower defaults; the human's combat result stays until a click (max 3 s) with "Click to continue"; longer bot pauses, Destiny hold and turn banner. Fast bots ▶▶ still speeds bots up.
+2. Sounds too short → longer clips; sacred, cursed, victory and defeat are mixes of Kenney CC0 clips with a baked echo (WebGL has no audio filters). Roll sounds are no longer cut on landing.
+3. Placing troops played several sounds → one clip only.
+4. Hover feedback → only territories usable right now react (slight scale + outline), all buttons and god cards share hover/pressed states.
+5. Sacred numbers not self-explanatory → explanation line in the menu; each die tag reads "1 = Zeus's sacred number" / "4 = neutral for Ra" / "6 = Zeus's cursed number".
+
+#### Phase 6 plan (PROPOSED — present to the developer for approval before starting)
+
+Window: Mon Nov 9 – Wed Nov 11 (game finished Wed midnight). Bug fixing and polish only; no new rules.
+- **Verify playtest round 1** in a fresh WebGL build: listen to every cue with headphones, check pacing, tune volumes in `AudioCues.asset`. Confirm `AudioSource.PlayDelayed` works in WebGL.
+- **Bug bash**: full matches with each of the four gods; edge cases (human eliminated, round-15 limit, Offering, bad omen, temple win, Play again / Main menu); 1280×720 and 1920×1080; first click unlocks audio; all glyphs render.
+- **Playtest round 2** with someone who has never seen the game (first-minute clarity), then fix what they stumble on.
+- **WebGL optimization** (`/unity:optimize-web`): download size, load time, compression, managed stripping.
+- **Code tidy if time allows**: split presentation logic out of `MatchController` (~750 lines; code review LOW).
+- **Final build** uploaded to itch.io as a draft.
+- Nov 12–14 (no build changes after Nov 14 06:00): itch page (description, controls, credits, screenshots, GIF, AI disclosure — complete `Docs/ai-usage.md` then), README rewrite, submit.
 
 **If time allows:** unique god powers (Zeus lightning, Thor auto-win, Ra double production, Morrígan converts the dead), hot-seat mode, per-god VFX.
 
@@ -164,10 +183,14 @@ This is a small, simple game. **Prefer the most direct solution.**
 - Scenes and prefabs are YAML: keep one person/agent editing a scene at a time, prefer prefabs over big scene edits, never hand-merge scene conflicts (take one side, redo the change in the Editor).
 - Commit `.meta` together with its asset.
 
+## Setting up a new machine
+
+See [`Docs/development-setup.md`](Docs/development-setup.md) (Windows and macOS).
+
 ## Tests and builds
 
 - **Editor open (preferred):** run tests through the Unity MCP (`run_tests`, EditMode/PlayMode), or Window → General → Test Runner.
-- **Editor closed (batchmode):**
+- **Editor closed (batchmode)** (Windows path below; on macOS use `/Applications/Unity/Hub/Editor/6000.6.5f1/Unity.app/Contents/MacOS/Unity`):
   ```
   "C:/Program Files/Unity/Hub/Editor/6000.6.5f1/Editor/Unity.exe" -batchmode -projectPath . -runTests -testPlatform EditMode -testResults Logs/editmode-results.xml -logFile Logs/test.log
   ```
