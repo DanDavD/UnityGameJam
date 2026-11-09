@@ -207,35 +207,44 @@
     border-radius: var(--radius-md);
     font-size: var(--font-size-label);
     letter-spacing: var(--letter-spacing-label);
-    transition-property: background-color, translate, scale;
+    border-width: var(--border-width);
+    transition-property: background-color, border-color, translate, scale;
     transition-duration: var(--duration-fast);
     transition-timing-function: var(--ease-enter);
 }
 
+/* The border matches the fill at rest, so hover can darken the frame without the button changing size. */
 .button--primary {
     background-color: var(--wood);
     color: var(--paper);
-    border-width: 0;
-}
-
-.button--primary:hover {
-    background-color: var(--wood-dark);
-    translate: var(--hover-lift);
+    border-color: var(--wood);
 }
 
 .button--secondary {
     background-color: var(--clear);
     color: var(--wood);
-    border-width: var(--border-width);
     border-color: var(--wood);
+}
+
+/* Every pickable thing (buttons, god cards) answers hover the same way: lift, a slight grow, a darker frame. */
+.button:hover {
+    translate: var(--hover-lift);
+    scale: var(--hover-scale);
+}
+
+.button--primary:hover {
+    background-color: var(--wood-dark);
+    border-color: var(--ink);
 }
 
 .button--secondary:hover {
     background-color: var(--paper-shade);
-    translate: var(--hover-lift);
+    border-color: var(--wood-dark);
 }
 
+/* Pressed: pushed back down onto the table. Declared after hover so it wins while held. */
 .button:active {
+    translate: 0 0;
     scale: var(--press-scale);
 }
 
@@ -244,6 +253,7 @@
     border-color: var(--paper-shade);
     color: var(--ink-faint);
     translate: 0 0;
+    scale: 1 1;
 }
 
 /* Right: combat dice */
@@ -371,28 +381,36 @@
     display: flex;
 }
 
+/* Both tags share one width and grow to the same height, so the two dice stay evenly spaced whatever
+   the god names are. The icon sits above the text, so the explanation gets the whole width (two lines)
+   and the panel stays clear of the board frame at 1280x720. */
 .outcome {
-    flex-direction: row;
+    width: var(--outcome-tag-width);
+    flex-grow: 1;
     align-items: center;
+    justify-content: center;
     margin-top: var(--space-2);
-    padding: var(--space-1) var(--space-2);
+    padding: var(--space-1);
     background-color: var(--paper);
     border-width: var(--border-width);
     border-color: var(--paper-shade);
     border-radius: var(--radius-sm);
 }
 
+/* An explanation ("1 = Zeus's sacred number"), so sentence case and untracked, at label size and weight. */
 .outcome__label {
+    flex-shrink: 1;
     font-size: var(--font-size-label);
-    letter-spacing: var(--letter-spacing-label);
     color: var(--ink);
+    white-space: normal;
+    -unity-text-align: middle-center;
     padding: 0;
     margin: 0;
 }
 
-/* Icon + word: the icon only appears for sacred and cursed; neutral is the plain word. */
+/* Icon over the explanation: the icon only appears for sacred and cursed; neutral is the plain text. */
 .outcome__icon {
-    margin-right: var(--space-1);
+    margin-bottom: var(--space-1);
     display: none;
 }
 
@@ -414,6 +432,14 @@
     -unity-text-align: middle-center;
     white-space: normal;
     max-width: var(--dice-panel-text-width);
+}
+
+/* Same caption as the Destiny "Click to skip", so both "click" hints read alike. */
+.dice-panel__continue {
+    margin-top: var(--space-2);
+    font-size: var(--font-size-caption);
+    color: var(--ink-soft);
+    display: none;
 }
 
 /* End of match */
@@ -803,6 +829,28 @@
     flex-direction: row;
 }
 
+/* The sacred-number rule under the cards: body size, so the menu keeps display, h2 and body only. */
+.menu__rule {
+    align-items: center;
+    margin-top: var(--space-6);
+}
+
+.menu__rule-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.menu__rule-text {
+    font-size: var(--font-size-body);
+    color: var(--ink-soft);
+    padding: 0;
+    margin: 0;
+}
+
+.menu__rule-icon {
+    margin: 0 var(--space-1);
+}
+
 /* God card: the same frame for every god; only the band tint, chip and numbers change */
 .god-card {
     width: var(--god-card-width);
@@ -824,11 +872,13 @@
 /* Hover lifts the card off the table and frames it in wood: "this one is pickable". */
 .god-card:hover {
     translate: var(--hover-lift);
+    scale: var(--hover-scale);
     border-color: var(--wood);
     border-bottom-color: var(--wood-dark);
 }
 
 .god-card:active {
+    translate: 0 0;
     scale: var(--press-scale);
 }
 

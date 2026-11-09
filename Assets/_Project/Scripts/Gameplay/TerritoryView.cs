@@ -110,6 +110,23 @@ namespace GameJam.Gameplay
         [SerializeField, Min(0f)]
         private float _pulseGrow = 0.05f;
 
+        [Header("Hover (only on pieces the player can use right now)")]
+        [Tooltip(
+            "Scale on top of the rest scale while hovered, like a token nudged toward the hand."
+        )]
+        [SerializeField, Min(1f)]
+        private float _hoverScale = 1.08f;
+
+        [Tooltip("Seconds to grow or settle back: --duration-fast.")]
+        [SerializeField, Min(0.01f)]
+        private float _hoverDuration = 0.12f;
+
+        [Tooltip(
+            "--wood: the ink outline warms to wood while hovered, a soft glow that says 'clickable'."
+        )]
+        [SerializeField]
+        private Color _hoverOutlineColor = new Color(0.545f, 0.369f, 0.235f);
+
         [Header("Hop when troops are gained or the owner changes")]
         [SerializeField, Min(0.01f)]
         private float _hopDuration = 0.2f;
@@ -174,21 +191,54 @@ namespace GameJam.Gameplay
         private Coroutine _captureRingRoutine;
         private Vector3 _ringRestScale;
         private bool _pulsing;
+        private Color _outlineRestColor;
+
+        // Whether the pointer is on this piece and it is usable; _hover eases 0 to 1 toward it.
+        private bool _hovered;
+        private float _hover;
 
         public Territory Territory { get; private set; }
         public Collider2D Collider => _collider;
 
+        // Ease-out (cubic), so the piece reacts at once and settles softly.
+        private float HoverFactor
+        {
+            get
+            {
+                float eased = 1f - (1f - _hover) * (1f - _hover) * (1f - _hover);
+                return 1f + (_hoverScale - 1f) * eased;
+            }
+        }
+
         private void Awake()
         {
             _ringRestScale = _highlight.transform.localScale;
+            _outlineRestColor = _outline.color;
         }
 
-        // Only legal targets pulse; every target uses the same clock so they breathe together.
         private void Update()
         {
-            if (!_pulsing)
-                return;
+            if (_pulsing)
+                Pulse();
 
+            float target = _hovered ? 1f : 0f;
+            if (_hover == target)
+                return;
+            _hover = Mathf.MoveTowards(_hover, target, Time.deltaTime / _hoverDuration);
+            _outline.color = Color.Lerp(_outlineRestColor, _hoverOutlineColor, _hover);
+            if (_hop == null)
+                transform.localScale = Vector3.one * (_restScale * HoverFactor);
+        }
+
+        /// <summary>
+        /// Grows the piece slightly and warms its outline while the pointer is on it. The caller
+        /// only sets it on pieces a click would use right now, so unusable pieces never react.
+        /// </summary>
+        public void SetHovered(bool hovered) => _hovered = hovered;
+
+        // Only legal targets pulse; every target uses the same clock so they breathe together.
+        private void Pulse()
+        {
             float breath = 0.5f + 0.5f * Mathf.Cos(Time.time * (2f * Mathf.PI / _pulsePeriod));
             Color color = _targetColor;
             color.a = Mathf.Lerp(_pulseMinAlpha, 1f, breath);
@@ -292,7 +342,7 @@ namespace GameJam.Gameplay
             _shadow.transform.localPosition = selected ? _liftedShadowOffset : _shadowOffset;
             _restScale = _size * (selected ? _selectedScale : 1f);
             if (_hop == null)
-                transform.localScale = Vector3.one * _restScale;
+                transform.localScale = Vector3.one * (_restScale * HoverFactor);
         }
 
         private void Draw()
@@ -327,10 +377,11 @@ namespace GameJam.Gameplay
             {
                 elapsed += Time.deltaTime;
                 float bump = Mathf.Sin(Mathf.Clamp01(elapsed / _hopDuration) * Mathf.PI);
-                transform.localScale = Vector3.one * (_restScale * (1f + (_hopScale - 1f) * bump));
+                transform.localScale =
+                    Vector3.one * (_restScale * HoverFactor * (1f + (_hopScale - 1f) * bump));
                 yield return null;
             }
-            transform.localScale = Vector3.one * _restScale;
+            transform.localScale = Vector3.one * (_restScale * HoverFactor);
             _hop = null;
         }
 

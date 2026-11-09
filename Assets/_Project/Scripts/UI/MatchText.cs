@@ -36,9 +36,21 @@ namespace GameJam.UI
         public const string GameTitle = "GodBoard";
         public const string Tagline = "Your lucky number is your rival's curse.";
         public const string ChooseGodPrompt = "Choose your god";
+
+        // The menu's one fixed rule line, under the god cards. Split around the two drawn omen icons
+        // (they replace the ★ / ✗ glyphs, since Inter's ✗ reads as "×"), one sentence over three rows:
+        // "Each god has a ★ sacred number (beats any neutral roll) and a ✗ cursed number
+        // (loses to any neutral roll). Your cursed number is your rival's sacred one."
+        public const string OmenRuleSacredLead = "Each god has a";
+        public const string OmenRuleSacred = "sacred number (beats any neutral roll)";
+        public const string OmenRuleCursedLead = "and a";
+        public const string OmenRuleCursed = "cursed number (loses to any neutral roll).";
+        public const string OmenRuleRival = "Your cursed number is your rival's sacred one.";
+
         public const string YouTag = "YOU";
         public const string EliminatedTag = "eliminated";
         public const string SkipHint = "Click to skip";
+        public const string ContinueHint = "Click to continue";
 
         public const string RoundsStat = "rounds";
         public const string CombatsWonStat = "combats you won";
@@ -199,13 +211,17 @@ namespace GameJam.UI
             }
         }
 
-        /// <summary>The word of an outcome tag; the tag draws the sacred / cursed icon beside it.</summary>
-        public static string OutcomeLabel(RollOutcome outcome) =>
+        /// <summary>
+        /// "1 = Zeus's sacred number" / "6 = Zeus's cursed number" / "4 = neutral for Ra": the tag
+        /// under a combat die, naming the real god and number so the rule teaches itself. The tag
+        /// draws the sacred / cursed icon before this text, so it carries no glyph.
+        /// </summary>
+        public static string OutcomeTag(God god, int face, RollOutcome outcome) =>
             outcome switch
             {
-                RollOutcome.Sacred => "SACRED",
-                RollOutcome.Cursed => "CURSED",
-                _ => "NEUTRAL",
+                RollOutcome.Sacred => $"{face} = {GodName(god)}'s sacred number",
+                RollOutcome.Cursed => $"{face} = {GodName(god)}'s cursed number",
+                _ => $"{face} = neutral for {GodName(god)}",
             };
 
         public static string EndTitle(bool humanWon) => humanWon ? WinTitle : LoseTitle;

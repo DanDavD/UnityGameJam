@@ -64,6 +64,8 @@
     --die-border: 4px;
     --die-border-sacred: 8px;
     --dice-panel-text-width: 240px;
+    /* Width of the outcome tag under each combat die; its explanation wraps to two lines */
+    --outcome-tag-width: 144px;
     --round-line-width: 800px;
     --end-card-width: 480px;
     --icon-sm: 20px;
@@ -83,5 +85,6 @@
     --ease-enter: ease-out-cubic;
     --ease-exit: ease-in-cubic;
     --hover-lift: 0 -2px;
+    --hover-scale: 1.02 1.02;
     --press-scale: 0.97 0.97;
 }

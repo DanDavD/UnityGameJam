@@ -17,6 +17,9 @@ namespace GameJam.UI
     public sealed class DestinyView : MonoBehaviour
     {
         [Header("Timing (seconds)")]
+        [Tooltip(
+            "Shortest tumble. A longer roll clip stretches it, so the die always lands with the sound."
+        )]
         [SerializeField, Min(0f)]
         private float _tumbleDuration = 1f;
 
@@ -29,7 +32,7 @@ namespace GameJam.UI
 
         [Tooltip("How long the landed face and its effect stay readable.")]
         [SerializeField, Min(0f)]
-        private float _hold = 0.8f;
+        private float _hold = 1.5f;
 
         [Header("Motion")]
         [Tooltip("Max tilt in degrees while tumbling.")]
@@ -56,6 +59,9 @@ namespace GameJam.UI
 
         /// <summary>Raised when the die lands on its face; not raised when a click skips it.</summary>
         public event Action Landed;
+
+        /// <summary>The shortest tumble; the roll sound may ask for a longer one.</summary>
+        public float MinTumbleDuration => _tumbleDuration;
 
         private void Awake()
         {
@@ -86,10 +92,18 @@ namespace GameJam.UI
         }
 
         /// <param name="youLine">What the face does to the human, shown in <paramref name="human"/>'s color.</param>
-        public void Show(int round, int face, string effect, God human, string youLine)
+        /// <param name="tumbleSeconds">How long the die tumbles; matches the roll clip, see SfxPlayer.PlayRoll.</param>
+        public void Show(
+            int round,
+            int face,
+            string effect,
+            God human,
+            string youLine,
+            float tumbleSeconds
+        )
         {
             StopAllCoroutines();
-            StartCoroutine(Play(round, face, effect, human, youLine));
+            StartCoroutine(Play(round, face, effect, human, youLine, tumbleSeconds));
         }
 
         /// <summary>Stops the die at once, for example when the match ends during it.</summary>
@@ -100,7 +114,14 @@ namespace GameJam.UI
             _overlay.style.display = DisplayStyle.None;
         }
 
-        private IEnumerator Play(int round, int face, string effect, God human, string youLine)
+        private IEnumerator Play(
+            int round,
+            int face,
+            string effect,
+            God human,
+            string youLine,
+            float tumbleSeconds
+        )
         {
             IsPlaying = true;
             _overlay.style.display = DisplayStyle.Flex;
@@ -114,7 +135,7 @@ namespace GameJam.UI
             GodUss.Apply(_die, null);
             GodUss.Apply(_chip, null);
 
-            yield return Tumble();
+            yield return Tumble(tumbleSeconds);
 
             // The favored god's color and chip (icon) arrive together, so it is never color alone.
             God? favored = Pantheon.GodOfFace(face);
@@ -131,11 +152,11 @@ namespace GameJam.UI
         }
 
         // The faces shown while tumbling are cosmetic, so they use Unity's random, not the match's.
-        private IEnumerator Tumble()
+        private IEnumerator Tumble(float duration)
         {
             float elapsed = 0f;
             float nextFace = 0f;
-            while (elapsed < _tumbleDuration)
+            while (elapsed < duration)
             {
                 if (elapsed >= nextFace)
                 {

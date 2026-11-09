@@ -40,6 +40,7 @@ namespace GameJam.Gameplay
         private int _lineSortingOrder = -5;
 
         private readonly List<TerritoryView> _views = new List<TerritoryView>();
+        private TerritoryView _hovered;
 
         /// <summary>Spawns the views once. Territory ids equal list indices, so views are indexed the same way.</summary>
         public void Build(Board board)
@@ -74,6 +75,19 @@ namespace GameJam.Gameplay
 
         public void SetHighlight(Territory territory, TerritoryHighlight highlight) =>
             _views[territory.Id].SetHighlight(highlight);
+
+        /// <summary>The one piece that reacts to the pointer, or none (null). Only changes cost anything.</summary>
+        public void SetHovered(Territory territory)
+        {
+            TerritoryView view = territory == null ? null : _views[territory.Id];
+            if (view == _hovered)
+                return;
+            if (_hovered != null)
+                _hovered.SetHovered(false);
+            _hovered = view;
+            if (view != null)
+                view.SetHovered(true);
+        }
 
         public void ClearHighlights()
         {

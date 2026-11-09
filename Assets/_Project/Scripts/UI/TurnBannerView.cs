@@ -16,7 +16,7 @@ namespace GameJam.UI
 
         [Tooltip("Seconds the banner stays on screen, slide-in included.")]
         [SerializeField, Min(0f)]
-        private float _duration = 1.2f;
+        private float _duration = 1.6f;
 
         private UIDocument _document;
         private VisualElement _banner;

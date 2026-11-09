@@ -97,6 +97,18 @@ Key product, game-design and architecture decisions behind **GodBoard**, with th
 **Decision:** the reinforcement prompt shows its breakdown ("2 base + 1 for 2 territories + 2 Destiny"), every combat shows both omens and the reason, and a round-limit victory says which tie-break decided it.
 **Why:** the game must always show *why* something happened.
 
+### Explicit outcome tags teach the rule
+**Decision:** under each combat die, the outcome tag reads `"{face} = {God}'s sacred number"` / `"{face} = {God}'s cursed number"` / `"{face} = neutral for {God}"` (wrapping within 144 px) instead of abstract labels like "SACRED" or "CURSED". A permanent rule line sits under the main menu cards explaining that sacred beats neutral, cursed loses to neutral, and your rival's sacred is your curse.
+**Why:** playtesting showed first-time players missed *why* a low roll won or a high roll lost. An abstract label didn't connect the number back to the pantheon rule; stating the identity directly under the die makes every roll self-teaching without a separate manual.
+
+### Pacing: readability before speed
+**Decision:** player combat results remain on screen until the player clicks on the board (up to a 3 s safeguard) with a "Click to continue" caption, or until they make an Offering. Bot turns pause deliberately (0.7 s per troop, 0.8 s before and during attacks, 2 s combat result hold), the Destiny Die holds 1.5 s after landing, and the turn banner shows for 1.6 s. The fast-bots toggle (▶▶) divides all bot and banner pauses by 3.
+**Why:** the first playtest revealed that combats and bot actions resolved too quickly to read the dice, the breakdown, or the casualty animations. Giving the human control over when their combat clears ensures they can absorb the math and outcome at their own pace.
+
+### Actionable-only hover feedback
+**Decision:** pointer hover (+8% scale and enhanced border) only activates on territories that are legally interactive in the current phase (e.g. own territories during Reinforce, valid source or target during Attack). Inactive territories do not respond to hover. Buttons and god cards share a unified hover feel (`--hover-lift` and `--hover-scale`).
+**Why:** players tried clicking on invalid territories or rival lands during reinforcement because everything reacted to the mouse. Restricting hover feedback strictly to valid moves clarifies affordance without extra tooltip text.
+
 ### UI Toolkit with design tokens
 **Decision:** UI Toolkit (UXML + USS) for all screen-space UI. The colors, sizes, spacing and motion values in [`design-system.md`](design-system.md) map 1:1 to USS variables.
 **Why:** the design system and the implementation cannot drift apart.
@@ -139,6 +151,10 @@ Key product, game-design and architecture decisions behind **GodBoard**, with th
 ### Sound follows the dice, not the rules
 **Decision:** an `AudioCues` ScriptableObject maps a small `SfxCue` enum to clips and volumes; one `SfxPlayer` with two sources plays them (rolls share a single voice that the landing stops, everything else is a one-shot). `MatchController` decides when each cue plays, and the dice views raise a `Landed` event so the chime or bong lands with the die. One sting per roll: a sacred winner chimes, any cursed die bongs, plain numbers stay quiet.
 **Why:** sound repeats what the dice already show, at the exact moment they show it; tuning happens in the Inspector; no audio manager, pooling or global state. Muting the sources (not `AudioListener.volume`) keeps the setting inside the scene.
+
+### Longer cues with reverb tails and consistent reinforcement sound
+**Decision:** core stings (sacred chime, cursed omen, victory fanfare, defeat toll) were mixed with baked reverb tails (0.9 s to 1.6 s) so they decay naturally instead of cutting off abruptly. Dice roll clips are sustained until the dice land. Troop placement uses a single consistent tactile sound (`chips-handle-4`) rather than random variations.
+**Why:** playtesting with headphones showed that clipped stings felt hollow and sudden. Longer tails give emotional weight to high-stakes rolls. Rapidly clicking reinforcements with randomized clips sounded messy, whereas a consistent chip clack provides rhythmic, satisfying feedback.
 
 ### Shake only when a rival loses land
 **Decision:** captures hop the piece and expand a ring in the new owner's color; only taking a rival's territory also shakes the screen (3 px, 120 ms). Losses show a "-1" and never hop.
