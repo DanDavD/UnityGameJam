@@ -58,7 +58,6 @@ namespace GameJam.Tests.AI
             Match match = StartCombat(6, ZeusCursed, RaThree);
 
             Assert.IsTrue(match.CanMakeOffering);
-            Assert.AreEqual(3, BotPlayer.MinWinningRerollFaces);
             Assert.IsTrue(BotPlayer.ShouldMakeOffering(match));
         }
 
@@ -88,6 +87,42 @@ namespace GameJam.Tests.AI
             Match match = MatchSetup.Start(Board.CreateStandard(), MatchSetup.ZeusOpensFace);
 
             Assert.IsFalse(BotPlayer.ShouldMakeOffering(match));
+        }
+
+        // Thor 3 loses to Ra 4; a re-roll wins only on 5 and 6, but Ragnarök also gives Thor the 4-4
+        // tie and makes every win cost Ra two troops, so the same roll becomes worth an Offering.
+        [TestCase(false, false)]
+        [TestCase(true, true)]
+        public void Ragnarok_MakesATwoFaceRerollWorthIt(bool powers, bool expected)
+        {
+            Board board = Board.CreateStandard();
+            MatchSetup.Set(board, Board.EastTemple, God.Ra, 2);
+            var match = new Match(board, new FakeRandom(6, 3, 4), powers);
+            match.Start();
+            MatchSetup.PlaceAllOn(match, Board.ThorVillage);
+            match.Attack(board.Get(Board.ThorVillage), board.Get(Board.EastTemple));
+
+            Assert.IsTrue(match.CanMakeOffering);
+            Assert.AreEqual(expected, BotPlayer.ShouldMakeOffering(match));
+        }
+
+        // Morrigan 3 loses to Zeus 4; a re-roll wins only on 5 (sacred) and 6. During her Harvest
+        // each won troop also joins her, which doubles what a win is worth.
+        [TestCase(false, false)]
+        [TestCase(true, true)]
+        public void Harvest_MakesATwoFaceRerollWorthIt(bool harvest, bool expected)
+        {
+            Board board = Board.CreateStandard();
+            MatchSetup.Set(board, Board.WestTemple, God.Zeus, 2);
+            Match match = MatchSetup.StartWithPowers(board, MatchSetup.ZeusOpensFace, 3, 4);
+            MatchSetup.PassUntil(match, God.Morrigan);
+            MatchSetup.ReadyWrath(match, Board.MorriganVillage);
+            if (harvest)
+                match.UnleashWrath();
+            match.Attack(board.Get(Board.MorriganVillage), board.Get(Board.WestTemple));
+
+            Assert.IsTrue(match.CanMakeOffering);
+            Assert.AreEqual(expected, BotPlayer.ShouldMakeOffering(match));
         }
 
         private static Match StartCombat(int villageTroops, params int[] combatRolls)

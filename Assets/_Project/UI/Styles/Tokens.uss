@@ -70,12 +70,35 @@
     --end-card-width: 480px;
     --icon-sm: 20px;
     --nations-panel-width: 300px;
-    --god-card-width: 200px;
+    /* Wide enough that every power line (Day, Wrath) fits on one line at body size */
+    --god-card-width: 352px;
+    /* Wide enough for "★ THUNDERBOLT" in carved h2 capitals, so the ready state never resizes it */
+    --wrath-button-min-width: 320px;
+    /* The two main actions (END TURN, the Wrath) stand taller than every other button */
+    --action-button-height: 64px;
+    /* Fixed box of each temple dot, so the ringed goal dot is a circle around its "3" */
+    --temple-dot-size: 32px;
+    /* The star that flies from a sacred combat die to its god's Favor stars */
+    --favor-star-size: 72px;
     --die-size-destiny: 200px;
     /* Thicker bottom edge of the Destiny Die: the side of a real die seen slightly from above */
     --die-edge-destiny: 16px;
-    --turn-banner-top: 144px;
-    --turn-banner-hidden-offset: -240px;
+    /* Below the round line (even wrapped) and the Day badge under it */
+    --turn-banner-top: 192px;
+    --turn-banner-hidden-offset: -288px;
+    /* The Sacred Road popup, centered above the board's middle row: wide enough for its sentence in two
+       lines; starts just under the round line (covering a round-long Day badge instead of leaving a
+       sliver of it) and ends above the north temple */
+    --road-popup-width: 720px;
+    --road-popup-top: 112px;
+    /* The round "i" badge that says "click for the full explanation" (round line, nation rows) */
+    --info-badge-size: 28px;
+    /* Max width of the round info panel under the round line */
+    --info-panel-width: 720px;
+    /* A nation's powers card, a flyout beside its row in the nations panel */
+    --powers-card-width: 400px;
+    /* The die-like token of the reinforcement counter */
+    --counter-token-size: 72px;
 
     /* Motion */
     --duration-fast: 120ms;
@@ -87,4 +110,12 @@
     --hover-lift: 0 -2px;
     --hover-scale: 1.02 1.02;
     --press-scale: 0.97 0.97;
+    /* A count that just changed pops, like a piece that gains a troop */
+    --pop-scale: 1.15 1.15;
+    /* A Favor meter that just changed (a star arrived, or one cracked) */
+    --favor-bump-scale: 1.3 1.3;
+    /* The ready Wrath button breathes between rest and this scale */
+    --wrath-pulse-scale: 1.04 1.04;
+    /* A Favor meter that just lost a star dims to this opacity for a moment */
+    --favor-dim-opacity: 0.4;
 }

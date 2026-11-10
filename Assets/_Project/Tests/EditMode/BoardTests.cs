@@ -37,7 +37,7 @@ namespace GameJam.Tests
             Assert.AreEqual(TerritoryKind.Capital, capital.Kind);
             Assert.AreEqual(god, capital.Owner);
             Assert.AreEqual(3, capital.Troops);
-            Assert.AreEqual($"{god} Capital", capital.Name);
+            Assert.AreEqual($"{Pantheon.DisplayName(god)} Capital", capital.Name);
             Assert.AreEqual(TerritoryKind.Village, village.Kind);
             Assert.AreEqual(god, village.Owner);
             Assert.AreEqual(2, village.Troops);

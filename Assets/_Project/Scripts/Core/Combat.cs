@@ -29,5 +29,20 @@ namespace GameJam.Core
         public CombatResult Result { get; internal set; }
 
         public bool OfferingMade { get; internal set; }
+
+        /// <summary>
+        /// Troops the defender lost that joined Morrígan's attacking territory through her Harvest.
+        /// Set when the combat is confirmed, before <see cref="Match.CombatResolved"/>; 0 otherwise.
+        /// </summary>
+        public int HarvestTroops { get; internal set; }
+
+        /// <summary>
+        /// Troops another nation lost that joined Morrígan during Night of crows (her Day), and the
+        /// territory they joined, as it was before any capture moved troops out of it (it can be the
+        /// attacking territory). Set when the combat is confirmed; 0 and null otherwise.
+        /// </summary>
+        public int CrowTroops { get; internal set; }
+
+        public Territory CrowTerritory { get; internal set; }
     }
 }

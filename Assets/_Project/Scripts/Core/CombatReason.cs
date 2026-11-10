@@ -10,5 +10,8 @@ namespace GameJam.Core
 
         /// <summary>Same outcome and no higher number decides, so the defender holds.</summary>
         TieGoesToDefender,
+
+        /// <summary>A tie during Ragnarök (Thor's Day): Thor wins it, attacking or defending.</summary>
+        RagnarokTie,
     }
 }

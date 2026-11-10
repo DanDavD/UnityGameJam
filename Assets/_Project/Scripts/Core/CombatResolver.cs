@@ -4,11 +4,26 @@ namespace GameJam.Core
 {
     public static class CombatResolver
     {
+        /// <summary>The loser of a combat loses one troop, unless a god power says otherwise.</summary>
+        public const int TroopsLostPerCombat = 1;
+
         public static CombatResult Resolve(
             God attacker,
             int attackerRoll,
             God defender,
             int defenderRoll
+        ) => Resolve(attacker, attackerRoll, defender, defenderRoll, ragnarok: false);
+
+        /// <summary>
+        /// <paramref name="ragnarok"/> is true on Thor's Day: if Thor is in this combat he wins ties
+        /// and, when he wins, the loser loses <see cref="GodPowers.RagnarokLosses"/>.
+        /// </summary>
+        public static CombatResult Resolve(
+            God attacker,
+            int attackerRoll,
+            God defender,
+            int defenderRoll,
+            bool ragnarok
         )
         {
             if (attacker == defender)
@@ -17,6 +32,7 @@ namespace GameJam.Core
             // Read validates both faces.
             RollOutcome attackerOutcome = Pantheon.Read(attacker, attackerRoll);
             RollOutcome defenderOutcome = Pantheon.Read(defender, defenderRoll);
+            bool thorRages = ragnarok && (attacker == God.Thor || defender == God.Thor);
 
             CombatSide winner;
             CombatReason reason;
@@ -31,11 +47,21 @@ namespace GameJam.Core
                 winner = attackerRoll > defenderRoll ? CombatSide.Attacker : CombatSide.Defender;
                 reason = CombatReason.HigherRoll;
             }
+            else if (thorRages)
+            {
+                // Reported as Ragnarök even when Thor defends, so the UI always names the rule in play.
+                winner = attacker == God.Thor ? CombatSide.Attacker : CombatSide.Defender;
+                reason = CombatReason.RagnarokTie;
+            }
             else
             {
                 winner = CombatSide.Defender;
                 reason = CombatReason.TieGoesToDefender;
             }
+
+            God winnerGod = winner == CombatSide.Attacker ? attacker : defender;
+            int losses =
+                thorRages && winnerGod == God.Thor ? GodPowers.RagnarokLosses : TroopsLostPerCombat;
 
             return new CombatResult(
                 winner,
@@ -43,7 +69,8 @@ namespace GameJam.Core
                 attackerRoll,
                 defenderRoll,
                 attackerOutcome,
-                defenderOutcome
+                defenderOutcome,
+                losses
             );
         }
 

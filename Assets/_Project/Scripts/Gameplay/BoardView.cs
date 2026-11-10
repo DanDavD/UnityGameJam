@@ -69,7 +69,17 @@ namespace GameJam.Gameplay
 
         public void Refresh(Territory territory) => _views[territory.Id].Refresh();
 
-        public void ShowTroopLoss(Territory territory) => _views[territory.Id].ShowTroopLoss();
+        /// <summary>Floats "-2" / "+1" over the piece; see <see cref="TerritoryView.ShowTroopChange"/>.</summary>
+        public void ShowTroopChange(Territory territory, int delta) =>
+            _views[territory.Id].ShowTroopChange(delta);
+
+        /// <summary>Redraws a piece and floats how much it changed since it was last drawn.</summary>
+        public void RefreshShowingChange(Territory territory) =>
+            _views[territory.Id].RefreshShowingChange();
+
+        /// <summary>The cost a Wrath would have on this piece ("-3"), shown while aiming; 0 hides it.</summary>
+        public void SetPreview(Territory territory, int delta) =>
+            _views[territory.Id].SetPreview(delta);
 
         public void ShowCaptureRing(Territory territory) => _views[territory.Id].ShowCaptureRing();
 
@@ -89,10 +99,14 @@ namespace GameJam.Gameplay
                 view.SetHovered(true);
         }
 
+        /// <summary>Clears every ring and every Wrath preview.</summary>
         public void ClearHighlights()
         {
             foreach (TerritoryView view in _views)
+            {
                 view.SetHighlight(TerritoryHighlight.None);
+                view.SetPreview(0);
+            }
         }
 
         public bool TryPick(Vector2 screenPosition, out Territory territory)

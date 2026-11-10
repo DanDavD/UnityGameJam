@@ -58,8 +58,22 @@ Key product, game-design and architecture decisions behind **GodBoard**, with th
 **Why:** rivals get one full round to respond, which creates tension and comebacks.
 
 ### Scope restraint
-**Decision:** unique god powers, hot-seat mode and per-god VFX are stretch goals. The game must be complete without them.
+**Decision (until Nov 8):** unique god powers, hot-seat mode and per-god VFX are stretch goals. The game must be complete without them.
 **Why:** a finished, polished small game beats an ambitious unfinished one.
+**Revised Nov 8:** with the base game complete and reviewed, all three were brought into phase 6. Each one ships behind a toggle, and anything not playtested by Tue Nov 10 ships switched off, so the game stays finished either way.
+
+### God powers: two layers, both from the lucky number
+**Decision:** each god has a **Day** (an automatic round-long event when the Destiny Die shows its face) and a **Wrath** (a power the player unleashes at 3 Favor). Favor rises when you roll your sacred number in combat and falls when you roll your cursed number.
+**Why:** the Day gives spectacle that the whole table feels; the Wrath gives agency and timing. Because your sacred number is your rival's cursed number, every time you charge, your rival drains: the "opposite faces sum to 7" rule becomes a visible race.
+**Limits that keep powers big but not decisive:** the board caps them instead of luck (Sun at noon is +1 per territory, not ×2, and replaces Ra's +2; Eye of Ra takes one 1-troop territory), Night of crows feeds at most 3 troops per round, Harvest at most 2 per turn, Thunderbolt never captures, Mjölnir hits for a fixed 3.
+**Balance:** the first numbers gave Zeus 8.8% and Ra/Morrígan ~36% over 2000 bot matches. Measuring each power alone showed Zeus's powers only removed enemy troops, which hurts all three rivals equally and never changes his rank; only when the Storm's troops **join Zeus** did he reach the range. With the five tunings of "set B" every god sits between 21.9% and 27.5%.
+**Alternatives rejected:** first draft powers (one small automatic effect each) were safe but barely noticeable; doubling Ra's reinforcements could reach 18 troops in one turn and decide the match.
+
+### Sacred Road: the army's march
+**Decision:** a sacred roll in your own attack opens one Road: all of one territory's troops but one march up to two steps along your own territories.
+**Why:** in playtest 3 troops hoarded in one territory with no way out. Luck, not a new phase, gives the mobility, so the lucky number stays the identity. Of three variants (3 troops anywhere; the army's march; move-or-summon) the march was chosen because it frees big stacks completely, rewards holding connected territory and gives a visual moment of its own.
+**Interaction:** no button. After the sacred roll a popup announces the Road and the armies that can march get a ring in the acting god's own color (with a pale paper edge and a ROAD tag) by themselves, one click picks an army and rings its destinations, one click marches; the only way to decline is END TURN. A ROAD button at the bottom left was tried first and playtested as not intuitive: the board should be the control, not a second place to look. An indigo ring and prompt were tried next and playtested as clashing with the parchment palette (a second "Zeus blue"), and the one-line news notice as ugly; the Road now wears the acting god's color and announces itself with a paper popup.
+**Rejected:** repeated Offerings, fortress reach (shorter, faster games), a fortify phase (the least original) and supply caps (a restriction, not a tool).
 
 ---
 

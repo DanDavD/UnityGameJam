@@ -17,6 +17,17 @@ namespace GameJam.Core
         // The cursed face is the opposite of the sacred one, which is also the rival's sacred face.
         public static int CursedFace(God god) => Die.Opposite(SacredFace(god));
 
+        /// <summary>The god's name as players read it ("Morrígan" keeps its accent; the enum cannot).</summary>
+        public static string DisplayName(God god) =>
+            god switch
+            {
+                God.Zeus => "Zeus",
+                God.Thor => "Thor",
+                God.Ra => "Ra",
+                God.Morrigan => "Morrígan",
+                _ => throw new ArgumentOutOfRangeException(nameof(god), god, null),
+            };
+
         public static God Rival(God god) =>
             god switch
             {

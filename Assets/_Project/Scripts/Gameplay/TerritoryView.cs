@@ -1,5 +1,6 @@
 using System.Collections;
 using GameJam.Core;
+using GameJam.UI;
 using TMPro;
 using UnityEngine;
 
@@ -86,6 +87,26 @@ namespace GameJam.Gameplay
         [SerializeField]
         private Color _targetColor = Color.yellow;
 
+        [Tooltip(
+            "The Road rings breathe less than target rings: they are the call to act, so they stay bright."
+        )]
+        [SerializeField, Range(0f, 1f)]
+        private float _roadPulseMinAlpha = 0.8f;
+
+        [Tooltip(
+            "--paper: the pale edge around a Road ring. It separates the ring from the board and, for the dark god, from the plain ink selection ring."
+        )]
+        [SerializeField]
+        private Color _roadHaloColor = new Color(0.984f, 0.965f, 0.925f);
+
+        [Tooltip("Size of the Road ring's pale edge relative to the ring.")]
+        [SerializeField, Range(1f, 1.3f)]
+        private float _roadHaloScale = 1.1f;
+
+        [Tooltip("Size of the ROAD tag relative to the troop count.")]
+        [SerializeField, Range(0.2f, 1f)]
+        private float _roadTagScale = 0.75f;
+
         [Tooltip("The selected territory is drawn slightly bigger, as if lifted off the board.")]
         [SerializeField, Min(1f)]
         private float _selectedScale = 1.1f;
@@ -147,7 +168,7 @@ namespace GameJam.Gameplay
         [SerializeField]
         private int _effectSortingOrder = 6;
 
-        [Header("Troop loss (-1) floating text")]
+        [Header("Troop change (-2, +1) floating text and Wrath preview")]
         [SerializeField, Min(0.01f)]
         private float _lossDuration = 1f;
 
@@ -178,9 +199,10 @@ namespace GameJam.Gameplay
 
         private GodVisuals _visuals;
         private TextMeshPro _lossText;
+        private TextMeshPro _previewText;
         private Coroutine _lossFloat;
 
-        // When the current "-1" starts to fade; a capture ring waits for it.
+        // When the current "-1" / "+1" starts to fade; a capture ring waits for it.
         private float _lossHoldEnd;
         private float _size;
         private float _restScale;
@@ -191,7 +213,18 @@ namespace GameJam.Gameplay
         private Coroutine _captureRingRoutine;
         private Vector3 _ringRestScale;
         private bool _pulsing;
-        private Color _outlineRestColor;
+
+        // The middle row of the board counts as the top half, so its tags hang below like the top row's
+        // and never meet the bottom row's tags above.
+        private const float TagSideTolerance = 0.5f;
+
+        private Color _outlineBaseColor;
+
+        // The ring color the current highlight breathes in (wood for targets, the acting god's own color for the Road).
+        private Color _pulseColor;
+        private float _pulseAlphaFloor;
+        private TextMeshPro _roadTag;
+        private SpriteRenderer _roadHalo;
 
         // Whether the pointer is on this piece and it is usable; _hover eases 0 to 1 toward it.
         private bool _hovered;
@@ -213,7 +246,7 @@ namespace GameJam.Gameplay
         private void Awake()
         {
             _ringRestScale = _highlight.transform.localScale;
-            _outlineRestColor = _outline.color;
+            _outlineBaseColor = _outline.color;
         }
 
         private void Update()
@@ -225,7 +258,7 @@ namespace GameJam.Gameplay
             if (_hover == target)
                 return;
             _hover = Mathf.MoveTowards(_hover, target, Time.deltaTime / _hoverDuration);
-            _outline.color = Color.Lerp(_outlineRestColor, _hoverOutlineColor, _hover);
+            _outline.color = Color.Lerp(_outlineBaseColor, _hoverOutlineColor, _hover);
             if (_hop == null)
                 transform.localScale = Vector3.one * (_restScale * HoverFactor);
         }
@@ -236,14 +269,22 @@ namespace GameJam.Gameplay
         /// </summary>
         public void SetHovered(bool hovered) => _hovered = hovered;
 
-        // Only legal targets pulse; every target uses the same clock so they breathe together.
+        // Only legal targets and Road rings pulse; they all use the same clock so they breathe together.
         private void Pulse()
         {
             float breath = 0.5f + 0.5f * Mathf.Cos(Time.time * (2f * Mathf.PI / _pulsePeriod));
-            Color color = _targetColor;
-            color.a = Mathf.Lerp(_pulseMinAlpha, 1f, breath);
+            Color color = _pulseColor;
+            color.a = Mathf.Lerp(_pulseAlphaFloor, 1f, breath);
             _highlight.color = color;
             _highlight.transform.localScale = _ringRestScale * (1f + _pulseGrow * breath);
+            FollowRing(_roadHalo, _roadHaloScale);
+        }
+
+        // A copy of the ring (the pale edge) swells and shrinks with it.
+        private void FollowRing(SpriteRenderer copy, float scale)
+        {
+            if (copy != null)
+                copy.transform.localScale = _highlight.transform.localScale * scale;
         }
 
         public void Bind(Territory territory, GodVisuals visuals, float size)
@@ -280,27 +321,71 @@ namespace GameJam.Gameplay
             _hop = StartCoroutine(Hop());
         }
 
-        /// <summary>Floats a "-1" above the troop count, so a combat shows which side paid for it.</summary>
-        public void ShowTroopLoss()
+        /// <summary>
+        /// Floats "-2" or "+1" above the troop count, so every change shows who paid or gained and
+        /// how much. Gains use the same ink as losses: the sign carries the meaning, never a color.
+        /// </summary>
+        public void ShowTroopChange(int delta)
         {
-            if (!isActiveAndEnabled)
+            if (delta == 0 || !isActiveAndEnabled)
                 return;
 
             // A copy of the troop count (same font and layout), created on first use: most
-            // territories never lose a troop, so the prefab does not carry one each.
+            // territories never change by more than a placed troop, so the prefab does not carry one each.
             if (_lossText == null)
-            {
-                _lossText = Instantiate(_troops, _content);
-                _lossText.name = "Troop Loss";
-                _lossText.SetText("-1");
-                _lossText.transform.localScale = _troops.transform.localScale * _lossScale;
-                _lossText.sortingOrder = _effectSortingOrder;
-            }
+                _lossText = CopyTroopText("Troop Change");
+            // TMP formats the number without allocating a string.
+            _lossText.SetText(delta < 0 ? "-{0}" : "+{0}", Mathf.Abs(delta));
 
             if (_lossFloat != null)
                 StopCoroutine(_lossFloat);
             _lossHoldEnd = Time.time + _lossDuration * _lossHold;
             _lossFloat = StartCoroutine(FloatLoss());
+        }
+
+        /// <summary>
+        /// Redraws and floats the difference from what the piece showed, for changes that were held
+        /// back while the Destiny Die rolled (bad omen, Storm, Sun at noon).
+        /// </summary>
+        public void RefreshShowingChange()
+        {
+            int delta = Territory.Troops - _shownTroops;
+            Refresh();
+            ShowTroopChange(delta);
+        }
+
+        /// <summary>
+        /// A still "-3" above the troop count while the human aims a Wrath, so the cost of each target
+        /// is read before the click. 0 hides it.
+        /// </summary>
+        public void SetPreview(int delta)
+        {
+            if (delta == 0)
+            {
+                if (_previewText != null)
+                    _previewText.enabled = false;
+                return;
+            }
+
+            if (_previewText == null)
+            {
+                _previewText = CopyTroopText("Wrath Preview");
+                _previewText.color = _lossColor;
+                _previewText.transform.localPosition =
+                    _troops.transform.localPosition + Vector3.up * _lossStartOffset;
+            }
+            _previewText.SetText(delta < 0 ? "-{0}" : "+{0}", Mathf.Abs(delta));
+            _previewText.enabled = true;
+        }
+
+        private TextMeshPro CopyTroopText(string copyName)
+        {
+            TextMeshPro copy = Instantiate(_troops, _content);
+            copy.name = copyName;
+            copy.transform.localScale = _troops.transform.localScale * _lossScale;
+            copy.sortingOrder = _effectSortingOrder;
+            copy.enabled = false;
+            return copy;
         }
 
         /// <summary>
@@ -332,17 +417,87 @@ namespace GameJam.Gameplay
         public void SetHighlight(TerritoryHighlight highlight)
         {
             bool selected = highlight == TerritoryHighlight.Selected;
+            bool road =
+                highlight == TerritoryHighlight.RoadOrigin
+                || highlight == TerritoryHighlight.RoadDestination;
+            // The Road is the loudest call to act, so its rings are the thick ones, breathing, in the
+            // acting god's own color (every Road territory is the acting god's); the attack's
+            // targets keep the thin dashed wood ring.
             _highlight.enabled = highlight != TerritoryHighlight.None;
-            _highlight.sprite = selected ? _selectedRing : _targetRing;
-            _highlight.color = selected ? _selectedColor : _targetColor;
+            _highlight.sprite = selected || road ? _selectedRing : _targetRing;
+            _pulseColor =
+                road && Territory.Owner.HasValue
+                    ? _visuals.Get(Territory.Owner.Value).Color
+                    : _targetColor;
+            _pulseAlphaFloor = road ? _roadPulseMinAlpha : _pulseMinAlpha;
+            _highlight.color = selected ? _selectedColor : _pulseColor;
             _highlight.transform.localScale = _ringRestScale;
-            _pulsing = highlight == TerritoryHighlight.Target;
+            _pulsing = highlight == TerritoryHighlight.Target || road;
+
+            ShowRoadHalo(road);
+            ShowRoadTag(highlight == TerritoryHighlight.RoadOrigin);
 
             // Lifted: a bit bigger with a longer shadow, like a token picked up off the table.
             _shadow.transform.localPosition = selected ? _liftedShadowOffset : _shadowOffset;
             _restScale = _size * (selected ? _selectedScale : 1f);
             if (_hop == null)
                 transform.localScale = Vector3.one * (_restScale * HoverFactor);
+        }
+
+        // A pale paper edge just outside the Road ring: with the thick ring it makes a double outline,
+        // so even the dark god's black ring never passes for the plain ink selection ring, and a gold
+        // or sky-blue ring stays crisp on the tan board. A copy of the ring, created on first use.
+        private void ShowRoadHalo(bool visible)
+        {
+            if (!visible)
+            {
+                if (_roadHalo != null)
+                    _roadHalo.enabled = false;
+                return;
+            }
+
+            if (_roadHalo == null)
+            {
+                _roadHalo = Instantiate(_highlight, _highlight.transform.parent);
+                _roadHalo.name = "Road Halo";
+                _roadHalo.color = _roadHaloColor;
+                _roadHalo.sortingOrder = _highlight.sortingOrder - 1;
+            }
+            _roadHalo.sprite = _selectedRing;
+            _roadHalo.enabled = true;
+            FollowRing(_roadHalo, _roadHaloScale);
+        }
+
+        // A small "ROAD" word just outside the ring, in ink like the troop count: the cue that is not a color.
+        // It sits on the side facing the board's middle (below the top half, above the bottom half),
+        // so it never lands on the wooden frame. Created on first use, since only a few pieces march.
+        private void ShowRoadTag(bool visible)
+        {
+            if (!visible)
+            {
+                if (_roadTag != null)
+                    _roadTag.enabled = false;
+                return;
+            }
+
+            if (_roadTag == null)
+            {
+                _roadTag = CopyTroopText("Road Tag");
+                _roadTag.transform.localScale = _troops.transform.localScale * _roadTagScale;
+                _roadTag.color = _selectedColor;
+                _roadTag.SetText(MatchText.RoadTag);
+            }
+
+            Bounds ring = _highlight.bounds;
+            float halfHeight = _roadTag.preferredHeight * _roadTag.transform.lossyScale.y * 0.5f;
+            bool inTopHalf = transform.localPosition.y > -TagSideTolerance;
+            float y = inTopHalf ? ring.min.y - halfHeight : ring.max.y + halfHeight;
+            _roadTag.transform.position = new Vector3(
+                ring.center.x,
+                y,
+                _roadTag.transform.position.z
+            );
+            _roadTag.enabled = true;
         }
 
         private void Draw()

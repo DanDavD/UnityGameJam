@@ -10,13 +10,21 @@ namespace GameJam.Core
         public RollOutcome AttackerOutcome { get; }
         public RollOutcome DefenderOutcome { get; }
 
+        /// <summary>
+        /// Troops the losing territory loses when the combat is confirmed: 1, or
+        /// <see cref="GodPowers.RagnarokLosses"/> when Thor wins during Ragnarök. Inside a
+        /// <see cref="Match"/> it is already capped to what the loser can lose.
+        /// </summary>
+        public int LoserLosses { get; }
+
         public CombatResult(
             CombatSide winner,
             CombatReason reason,
             int attackerRoll,
             int defenderRoll,
             RollOutcome attackerOutcome,
-            RollOutcome defenderOutcome
+            RollOutcome defenderOutcome,
+            int loserLosses
         )
         {
             Winner = winner;
@@ -25,6 +33,18 @@ namespace GameJam.Core
             DefenderRoll = defenderRoll;
             AttackerOutcome = attackerOutcome;
             DefenderOutcome = defenderOutcome;
+            LoserLosses = loserLosses;
         }
+
+        internal CombatResult WithLoserLosses(int loserLosses) =>
+            new CombatResult(
+                Winner,
+                Reason,
+                AttackerRoll,
+                DefenderRoll,
+                AttackerOutcome,
+                DefenderOutcome,
+                loserLosses
+            );
     }
 }

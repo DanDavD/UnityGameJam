@@ -3,9 +3,11 @@ using GameJam.Core;
 namespace GameJam.Gameplay
 {
     /// <summary>
-    /// Picks the landing stings. Both are read from the human's side, like the "You:" line on the
+    /// Picks the landing stings. Both are read from one person's side, like the "You:" line on the
     /// Destiny Die: a chime is good news for you, a bong is bad news, and anything that does not
-    /// touch you stays quiet. Kept apart from <see cref="SfxPlayer"/>, which only plays cues.
+    /// touch you stays quiet. In hot-seat the combat is read through the person
+    /// <see cref="PlayerSeats.PerspectiveOf"/> names. Kept apart from <see cref="SfxPlayer"/>,
+    /// which only plays cues.
     /// </summary>
     public static class SfxCueChooser
     {

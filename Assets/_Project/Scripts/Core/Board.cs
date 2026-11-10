@@ -76,6 +76,34 @@ namespace GameJam.Core
             return total;
         }
 
+        /// <summary>A new list of the god's territories, in id order.</summary>
+        public List<Territory> TerritoriesOf(God god)
+        {
+            var owned = new List<Territory>();
+            foreach (Territory territory in _territories)
+            {
+                if (territory.Owner == god)
+                    owned.Add(territory);
+            }
+            return owned;
+        }
+
+        /// <summary>The god's territory with most troops, lowest id on ties; null if it owns nothing.</summary>
+        public Territory LargestArmy(God god)
+        {
+            // Territories are ordered by id, so a strict comparison keeps the lowest id on ties.
+            Territory largest = null;
+            foreach (Territory territory in _territories)
+            {
+                if (
+                    territory.Owner == god
+                    && (largest == null || territory.Troops > largest.Troops)
+                )
+                    largest = territory;
+            }
+            return largest;
+        }
+
         /// <summary>The approved symmetric map with starting owners and troops.</summary>
         public static Board CreateStandard()
         {
@@ -124,9 +152,21 @@ namespace GameJam.Core
         }
 
         private static Territory Capital(int id, God god) =>
-            new Territory(id, $"{god} Capital", TerritoryKind.Capital, god, CapitalStartingTroops);
+            new Territory(
+                id,
+                $"{Pantheon.DisplayName(god)} Capital",
+                TerritoryKind.Capital,
+                god,
+                CapitalStartingTroops
+            );
 
         private static Territory Village(int id, God god) =>
-            new Territory(id, $"{god} Village", TerritoryKind.Village, god, VillageStartingTroops);
+            new Territory(
+                id,
+                $"{Pantheon.DisplayName(god)} Village",
+                TerritoryKind.Village,
+                god,
+                VillageStartingTroops
+            );
     }
 }

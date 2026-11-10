@@ -1,14 +1,19 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
-    <!-- One god in the nations panel. NationsView fills the text and toggles the turn / eliminated classes. -->
+    <!-- One god in the nations panel. NationsView fills the text and toggles the turn / eliminated classes.
+         With Pantheon powers the row is a toggle (info-toggle, added by NationsView): a click opens the
+         powers card beside it. -->
     <ui:VisualElement class="nation-row" picking-mode="Ignore">
         <ui:Label class="nation-row__turn-mark" picking-mode="Ignore" text="▶" />
-        <ui:VisualElement class="god-chip nation-row__chip" picking-mode="Ignore">
-            <ui:VisualElement class="god-chip__icon" picking-mode="Ignore" />
-        </ui:VisualElement>
         <ui:VisualElement class="nation-row__text" picking-mode="Ignore">
             <ui:VisualElement class="nation-row__head" picking-mode="Ignore">
+                <ui:VisualElement class="god-chip nation-row__chip" picking-mode="Ignore">
+                    <ui:VisualElement class="god-chip__icon" picking-mode="Ignore" />
+                </ui:VisualElement>
                 <ui:Label class="nation-row__name" picking-mode="Ignore" text="Zeus" />
                 <ui:Label class="nation-row__you" picking-mode="Ignore" text="YOU" />
+                <!-- Pantheon powers only: "click me for this god's powers", on the name line, a rounded
+                     square so it never reads as one of the round temple dots. -->
+                <ui:Label class="info-badge nation-row__info" picking-mode="Ignore" text="i" />
             </ui:VisualElement>
             <ui:Label class="nation-row__stats" picking-mode="Ignore" text="2 territories · 5 troops" />
             <ui:VisualElement class="nation-row__temple-line" picking-mode="Ignore">
@@ -16,6 +21,20 @@
                 <!-- One dot label per temple, created by NationsView. -->
                 <ui:VisualElement class="nation-row__temples" picking-mode="Ignore" />
             </ui:VisualElement>
+            <!-- Pantheon powers only: Favor 0-3 as ink stars; the meter takes the god class when full. -->
+            <ui:VisualElement class="nation-row__favor-line" picking-mode="Ignore">
+                <ui:Label class="nation-row__favor" picking-mode="Ignore" text="★★☆" />
+            </ui:VisualElement>
         </ui:VisualElement>
+    </ui:VisualElement>
+    <!-- Pantheon powers only: this god's Day and Wrath in plain words. Pickable while open (a click closes it).
+         Text set by NationsView from MatchText. -->
+    <ui:VisualElement class="info-panel nation-powers">
+        <ui:Label class="info-panel__heading nation-powers__day-heading" picking-mode="Ignore" text="DAY OF ZEUS · DESTINY 1" />
+        <ui:Label class="info-panel__text nation-powers__day" picking-mode="Ignore" text="&lt;b&gt;Storm:&lt;/b&gt; every enemy territory with 2+ troops loses 1, and those troops join Zeus's Capital (or his largest army)." />
+        <ui:Label class="info-panel__heading nation-powers__wrath-heading" picking-mode="Ignore" text="WRATH · AT 3 ★ FAVOR" />
+        <ui:Label class="info-panel__text nation-powers__wrath" picking-mode="Ignore" text="&lt;b&gt;Thunderbolt:&lt;/b&gt; pick any enemy territory with 2+ troops; it loses half its troops (never below 1). Once per turn, in your attack." />
+        <ui:Label class="info-panel__text info-panel__text--soft nation-powers__favor" picking-mode="Ignore" text="Favor: +1 for each combat roll of 1, −1 for each 6." />
+        <ui:Label class="info-panel__text nation-powers__road" picking-mode="Ignore" text="&lt;b&gt;Sacred Road:&lt;/b&gt; roll your ★1 in your attack, then click a ringed territory to march its army up to 2 territories." />
     </ui:VisualElement>
 </ui:UXML>

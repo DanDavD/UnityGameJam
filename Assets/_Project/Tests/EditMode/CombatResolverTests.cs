@@ -107,6 +107,62 @@ namespace GameJam.Tests
             AssertWinner(result, CombatSide.Attacker, CombatReason.BetterOmen);
         }
 
+        [Test]
+        public void Resolve_Classic_LoserLosesOneTroop()
+        {
+            Assert.AreEqual(CombatResolver.TroopsLostPerCombat, Resolve(1, 3).LoserLosses);
+            Assert.AreEqual(CombatResolver.TroopsLostPerCombat, Resolve(3, 3).LoserLosses);
+        }
+
+        // Ragnarök (Thor's Day). Thor: sacred 6, cursed 1.
+
+        [TestCase(3, 3)] // same neutral number
+        [TestCase(6, 2)] // both sacred
+        [TestCase(1, 5)] // both cursed
+        public void Resolve_Ragnarok_ThorAttackingWinsTiesAndTheLoserLosesTwo(int thor, int ra)
+        {
+            CombatResult result = CombatResolver.Resolve(God.Thor, thor, God.Ra, ra, true);
+
+            AssertWinner(result, CombatSide.Attacker, CombatReason.RagnarokTie);
+            Assert.AreEqual(GodPowers.RagnarokLosses, result.LoserLosses);
+        }
+
+        [Test]
+        public void Resolve_Ragnarok_ThorDefendingWinsTiesAndTheLoserLosesTwo()
+        {
+            CombatResult result = CombatResolver.Resolve(God.Zeus, 3, God.Thor, 3, true);
+
+            AssertWinner(result, CombatSide.Defender, CombatReason.RagnarokTie);
+            Assert.AreEqual(GodPowers.RagnarokLosses, result.LoserLosses);
+        }
+
+        [Test]
+        public void Resolve_Ragnarok_ThorWinningByOmen_StillTakesTwo()
+        {
+            CombatResult result = CombatResolver.Resolve(God.Thor, 6, God.Ra, 3, true);
+
+            AssertWinner(result, CombatSide.Attacker, CombatReason.BetterOmen);
+            Assert.AreEqual(GodPowers.RagnarokLosses, result.LoserLosses);
+        }
+
+        [Test]
+        public void Resolve_Ragnarok_ThorLosing_LosesOnlyOne()
+        {
+            CombatResult result = CombatResolver.Resolve(God.Thor, 1, God.Ra, 3, true);
+
+            AssertWinner(result, CombatSide.Defender, CombatReason.BetterOmen);
+            Assert.AreEqual(CombatResolver.TroopsLostPerCombat, result.LoserLosses);
+        }
+
+        [Test]
+        public void Resolve_Ragnarok_CombatWithoutThor_IsUnchanged()
+        {
+            CombatResult result = CombatResolver.Resolve(Attacker, 3, Defender, 3, true);
+
+            AssertWinner(result, CombatSide.Defender, CombatReason.TieGoesToDefender);
+            Assert.AreEqual(CombatResolver.TroopsLostPerCombat, result.LoserLosses);
+        }
+
         private static CombatResult Resolve(int attackerRoll, int defenderRoll) =>
             CombatResolver.Resolve(Attacker, attackerRoll, Defender, defenderRoll);
 

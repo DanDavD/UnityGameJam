@@ -11,10 +11,13 @@ using UnityEngine.SceneManagement;
 namespace GameJam.Gameplay
 {
     /// <summary>
-    /// Runs one match in the scene. A single coroutine loop waits for the god choice, then issues
-    /// every Core command (human clicks or bot decisions) one step at a time; Core event handlers
-    /// only update visuals. Keeping commands out of handlers respects Match's rule that handlers
-    /// must not re-enter it. Buttons only set flags that the loop reads.
+    /// Runs one match in the scene. A single coroutine loop waits for the seats (solo: a god card;
+    /// hot-seat: Human / Bot per god, then START) and the Pantheon powers / Classic mode, builds the
+    /// Match, then issues every Core command (human clicks or bot decisions, including the Wrath)
+    /// one step at a time. Core events are turned
+    /// into visuals and sound by <see cref="MatchPresenter"/>; keeping commands out of event handlers
+    /// respects Match's rule that handlers must not re-enter it. Buttons only set flags that the
+    /// loop reads, and <see cref="PlayerSeats"/> answers who plays each god.
     /// </summary>
     public sealed class MatchController : MonoBehaviour
     {
@@ -31,47 +34,53 @@ namespace GameJam.Gameplay
         [SerializeField]
         private MenuView _menu;
 
-        [SerializeField]
-        private NationsView _nations;
-
-        [SerializeField]
-        private TurnBannerView _turnBanner;
-
+        [Tooltip("Read only to tell a click that skips the Destiny Die from a board click.")]
         [SerializeField]
         private DestinyView _destiny;
 
-        [Header("Audio and juice")]
+        [SerializeField]
+        private MatchPresenter _presenter;
+
+        [Header("Audio")]
+        [Tooltip(
+            "Input feedback only: clicks, refusals and placed troops. Event cues live in MatchPresenter."
+        )]
         [SerializeField]
         private SfxPlayer _sfx;
 
-        [SerializeField]
-        private CameraShake _cameraShake;
-
         [Header("Players")]
-        [Tooltip("Debug: a bot also plays the human's nation, so a whole match plays by itself.")]
+        [Tooltip(
+            "Debug: bots also play the human seats (solo or hot-seat), so a whole match plays by itself."
+        )]
         [SerializeField]
         private bool _botPlaysHuman;
 
         [Header("Pacing (seconds)")]
         [Tooltip("Pause before each troop a bot places.")]
         [SerializeField, Min(0f)]
-        private float _botPlacePause = 0.7f;
+        private float _botPlacePause = 1f;
 
         [Tooltip("Pause before each bot attack decision, and while its attack is highlighted.")]
         [SerializeField, Min(0f)]
-        private float _botStepPause = 0.8f;
+        private float _botStepPause = 1.2f;
 
         [Tooltip(
             "The longest a landed result of the human's own combat waits, when it needs no decision; a click continues sooner."
         )]
         [SerializeField, Min(0f)]
-        private float _resultHold = 3f;
+        private float _resultHold = 4.5f;
+
+        [Tooltip(
+            "How long the optional Offering stays under the human's die when they lose a combat they may re-roll; then the combat confirms by itself."
+        )]
+        [SerializeField, Min(0.1f)]
+        private float _offeringWindow = 2f;
 
         [Tooltip(
             "How long a landed result of a bot's combat stays readable before it is confirmed."
         )]
         [SerializeField, Min(0f)]
-        private float _botResultHold = 2f;
+        private float _botResultHold = 3f;
 
         [Tooltip(
             "Bot pauses, including the result hold of their combats and their turn banner, are multiplied by this while fast bots is on."
@@ -79,30 +88,46 @@ namespace GameJam.Gameplay
         [SerializeField, Range(0.05f, 1f)]
         private float _fastBotFactor = 1f / 3f;
 
+        private Board _boardModel;
         private Match _match;
-        private God _humanGod;
+        private PlayerSeats _seats;
         private Territory _selected;
 
-        // Set by menu and HUD button events and consumed by the loop, so clicks never issue commands.
-        private God? _chosenGod;
+        // While the human aims a Wrath, clicks pick its target instead of an attack. Thor's Mjölnir
+        // also picks its source first, kept apart from the attack selection.
+        private bool _aimingWrath;
+        private Territory _wrathSource;
+
+        // Sacred Road mode, for the human only: while a Road is open and some army can march, the
+        // ringed origins (own territories with 2+ troops and a path) are the only territories that react
+        // until the march or END TURN; picking one rings its destinations. Both lists are filled when
+        // they become known and only read after, so the hover never recomputes the Road's paths per frame.
+        private bool _roadMode;
+        private Territory _roadSource;
+        private readonly List<Territory> _roadOrigins = new List<Territory>();
+        private readonly List<Territory> _roadDestinations = new List<Territory>();
+
+        // The menu's hot-seat choice: Human (true) or Bot per god, indexed like Match.BaseTurnOrder.
+        // Everyone is Human when hot-seat opens; a card click hands a god to a bot and back.
+        private bool _menuHotSeat;
+        private readonly bool[] _menuSeats = { true, true, true, true };
+
+        // Set by menu, HUD and dice button events and consumed by the loop, so clicks never issue commands.
+        private PlayerSeats _chosenSeats;
         private bool _offeringRequested;
-        private bool _acceptRequested;
+
+        // True only while the Offering button is on screen, so a click queued for the frame the window
+        // closes can never re-roll a combat the player already saw confirm.
+        private bool _offeringOpen;
         private bool _endTurnRequested;
+        private bool _wrathRequested;
 
-        // Set on TurnStarted and played by the loop, after the Destiny Die when a round also started.
-        private God? _pendingTurnBanner;
+        // A board click that ended the human's combat window early. It confirms the combat and is
+        // then replayed by the attack loop, so clicking the same enemy again attacks again at once.
+        private Territory _carriedClick;
 
-        // The HUD round line waits for the Destiny Die to land, so it never spoils the roll.
-        private string _pendingRoundLine;
-
-        // Territories the bad omen took a troop from while the Destiny Die was still rolling. Their
-        // pieces are redrawn after it lands, for the same reason. At most one per nation.
-        private readonly List<Territory> _omenLosses = new List<Territory>(
-            Match.BaseTurnOrder.Count
-        );
-
-        // The human is out: the match is over for them even though the bots could keep playing.
-        private bool _humanEliminated;
+        // The target of the human's last attack: where the army advances after a capture.
+        private Territory _lastTarget;
 
         // Set once the god is chosen and Match.Start has run; before that, board clicks mean nothing.
         private bool _matchStarted;
@@ -111,70 +136,71 @@ namespace GameJam.Gameplay
         // react to hover under the Destiny Die, the turn banner, a combat or a bot's turn.
         private bool _awaitingBoardClick;
 
-        // What the Destiny Die means for the human, played when it lands (null: neutral, no sting).
-        private SfxCue? _destinyLandCue;
+        // The Destiny overlay was showing in the previous Update; see Update for why that matters.
+        private bool _destinyWasPlaying;
 
-        // The end banner can show twice (human eliminated, then the last bot wins); the sting plays once.
-        private bool _endCuePlayed;
+        // Only read once the match started, when both exist.
+        private bool IsHumanTurn => _seats.IsHuman(_match.CurrentGod);
 
-        // End-screen stat and one-time onboarding hints; both live only for this match (scene load).
-        private int _combatsWonByHuman;
-        private readonly HashSet<Hint> _shownHints = new HashSet<Hint>();
-
-        private bool IsHumanTurn => !_botPlaysHuman && _match.CurrentGod == _humanGod;
+        // Every person is out: the match is over for them even though the bots could keep playing.
+        // Solo that is the player; in hot-seat the match goes on while one person is left.
+        private bool AreAllHumansOut => _seats != null && _seats.AreAllHumansOut(_match);
 
         private float BotPaceFactor => MatchSession.FastBots ? _fastBotFactor : 1f;
 
         private void Awake()
         {
-            // Built at once so the board shows behind the menu; the match starts after the choice.
-            _match = new Match(Board.CreateStandard(), new SystemRandom());
-            _board.Build(_match.Board);
+            // The board shows behind the menu at once. The Match itself waits for the menu, because
+            // the Pantheon powers / Classic choice is part of how it is built.
+            _boardModel = Board.CreateStandard();
+            _board.Build(_boardModel);
         }
 
-        // Subscribed before Start() so the first RoundStarted and TurnStarted are not missed.
         private void OnEnable()
         {
-            _match.RoundStarted += HandleRoundStarted;
-            _match.TurnStarted += HandleTurnStarted;
-            _match.TerritoryChanged += HandleTerritoryChanged;
-            _match.TerritoryCaptured += HandleTerritoryCaptured;
-            _match.CombatRolled += HandleCombatRolled;
-            _match.CombatResolved += HandleCombatResolved;
-            _match.NationEliminated += HandleNationEliminated;
-            _match.MatchWon += HandleMatchWon;
-            _menu.GodChosen += HandleGodChosen;
-            _hud.OfferingClicked += HandleOfferingClicked;
-            _hud.AcceptClicked += HandleAcceptClicked;
+            if (_match != null)
+                AttachMatch();
+            _menu.GodCardClicked += HandleGodCardClicked;
+            _menu.PowersChosen += HandlePowersChosen;
+            _menu.HotSeatChosen += HandleHotSeatChosen;
+            _menu.StartClicked += HandleStartClicked;
+            _dice.OfferingClicked += HandleOfferingClicked;
             _hud.EndTurnClicked += HandleEndTurnClicked;
+            _hud.WrathClicked += HandleWrathClicked;
             _hud.FastBotsClicked += HandleFastBotsClicked;
             _hud.MuteClicked += HandleMuteClicked;
             _hud.PlayAgainClicked += HandlePlayAgainClicked;
             _hud.MainMenuClicked += HandleMainMenuClicked;
-            _dice.Landed += HandleDiceLanded;
-            _destiny.Landed += HandleDestinyLanded;
         }
 
         private void OnDisable()
         {
-            _match.RoundStarted -= HandleRoundStarted;
-            _match.TurnStarted -= HandleTurnStarted;
-            _match.TerritoryChanged -= HandleTerritoryChanged;
-            _match.TerritoryCaptured -= HandleTerritoryCaptured;
-            _match.CombatRolled -= HandleCombatRolled;
-            _match.CombatResolved -= HandleCombatResolved;
-            _match.NationEliminated -= HandleNationEliminated;
-            _match.MatchWon -= HandleMatchWon;
-            _menu.GodChosen -= HandleGodChosen;
-            _hud.OfferingClicked -= HandleOfferingClicked;
-            _hud.AcceptClicked -= HandleAcceptClicked;
+            if (_match != null)
+                DetachMatch();
+            _menu.GodCardClicked -= HandleGodCardClicked;
+            _menu.PowersChosen -= HandlePowersChosen;
+            _menu.HotSeatChosen -= HandleHotSeatChosen;
+            _menu.StartClicked -= HandleStartClicked;
+            _dice.OfferingClicked -= HandleOfferingClicked;
             _hud.EndTurnClicked -= HandleEndTurnClicked;
+            _hud.WrathClicked -= HandleWrathClicked;
             _hud.FastBotsClicked -= HandleFastBotsClicked;
             _hud.MuteClicked -= HandleMuteClicked;
             _hud.PlayAgainClicked -= HandlePlayAgainClicked;
             _hud.MainMenuClicked -= HandleMainMenuClicked;
-            _dice.Landed -= HandleDiceLanded;
-            _destiny.Landed -= HandleDestinyLanded;
+        }
+
+        // Subscribed before Match.Start so the first RoundStarted and TurnStarted are not missed.
+        private void AttachMatch()
+        {
+            _presenter.Attach(_match);
+            _match.TurnStarted += HandleTurnStarted;
+        }
+
+        private void DetachMatch()
+        {
+            _presenter.Detach();
+            _match.TurnStarted -= HandleTurnStarted;
         }
 
         // In Start, not Awake: the views query their elements in their own OnEnable.
@@ -183,6 +209,8 @@ namespace GameJam.Gameplay
             _hud.SetFastBots(MatchSession.FastBots);
             _hud.SetMuted(MatchSession.Muted);
             _sfx.SetMuted(MatchSession.Muted);
+            _menu.SetPowers(MatchSession.PowersEnabled);
+            RefreshMenuSeats();
             StartCoroutine(Run());
         }
 
@@ -191,7 +219,12 @@ namespace GameJam.Gameplay
         private void Update()
         {
             _board.SetHovered(UsableTerritoryUnderPointer());
-            if (!_matchStarted || IsHumanTurn || _humanEliminated)
+            // A click that skips the Destiny Die belongs to its overlay, not the board. UI Toolkit may
+            // handle it before or after this Update, so the frame after the overlay last showed is
+            // ignored too.
+            bool destinyTookClick = _destiny.IsPlaying || _destinyWasPlaying;
+            _destinyWasPlaying = _destiny.IsPlaying;
+            if (destinyTookClick || !_matchStarted || IsHumanTurn || AreAllHumansOut)
                 return;
             if (_match.Phase != TurnPhase.MatchOver && TryGetClickedTerritory(out _))
                 _sfx.Play(SfxCue.Invalid);
@@ -200,13 +233,13 @@ namespace GameJam.Gameplay
         // The turn state machine lives in Match; this loop only asks who acts in the current phase.
         private IEnumerator Run()
         {
-            yield return ChooseGod();
+            yield return ChooseSeats();
             _match.Start();
             _matchStarted = true;
-            // Stopping when the human is eliminated also stops every remaining bot pause.
-            while (_match.Phase != TurnPhase.MatchOver && !_humanEliminated)
+            // Stopping when every person is eliminated also stops every remaining bot pause.
+            while (_match.Phase != TurnPhase.MatchOver && !AreAllHumansOut)
             {
-                yield return PlayAnnouncements();
+                yield return _presenter.PlayAnnouncements(_fastBotFactor);
                 switch (_match.Phase)
                 {
                     case TurnPhase.Reinforce:
@@ -227,83 +260,29 @@ namespace GameJam.Gameplay
             }
         }
 
-        // "Play again" already knows the god; otherwise the menu waits for a card click.
-        private IEnumerator ChooseGod()
+        // "Play again" already knows the seats and the mode; otherwise the menu waits for a card
+        // click (solo) or START (hot-seat). The Match is built here, once the mode is final.
+        private IEnumerator ChooseSeats()
         {
-            _chosenGod = MatchSession.ReplayGod;
-            MatchSession.ReplayGod = null;
-            if (_chosenGod == null)
+            _chosenSeats = MatchSession.ReplaySeats;
+            MatchSession.ReplaySeats = null;
+            if (_chosenSeats == null)
             {
                 _menu.Show();
-                while (_chosenGod == null)
+                while (_chosenSeats == null)
                     yield return null;
                 _menu.Hide();
             }
 
-            _humanGod = _chosenGod.Value;
-            _hud.SetIdentity(_humanGod);
-            _nations.SetHuman(_humanGod);
-            _nations.Refresh(_match);
-        }
-
-        // The Destiny Die (when a round just started), then the turn banner, before anyone acts.
-        private IEnumerator PlayAnnouncements()
-        {
-            while (_destiny.IsPlaying)
-                yield return null;
-            bool roundStarted = _pendingRoundLine != null;
-            ApplyPendingRoundLine();
-            ShowOmenLosses();
-            if (roundStarted)
-            {
-                // A skipped Destiny Die never lands, so its roll would otherwise keep rattling.
-                _sfx.StopRoll();
-                // After the die, not under its overlay, so the hint is readable when it explains the roll.
-                ShowHintOnce(Hint.Destiny);
-            }
-
-            if (_pendingTurnBanner == null)
-                yield break;
-
-            God god = _pendingTurnBanner.Value;
-            _pendingTurnBanner = null;
-            // The turn highlight moves with the banner, not before the Destiny Die has landed.
-            _nations.Refresh(_match);
-            bool human = IsHumanTurn;
-            _turnBanner.Show(god, MatchText.TurnBanner(god, human), human ? 1f : BotPaceFactor);
-            // Only "YOUR TURN" is announced by sound; bot turns change often and stay silent.
-            if (human)
-                _sfx.Play(SfxCue.TurnChange);
-            while (_turnBanner.IsPlaying)
-                yield return null;
-        }
-
-        private void ShowOmenLosses()
-        {
-            if (_omenLosses.Count == 0)
-                return;
-            foreach (Territory territory in _omenLosses)
-            {
-                _board.Refresh(territory);
-                _board.ShowTroopLoss(territory);
-            }
-            _omenLosses.Clear();
-            _nations.Refresh(_match);
-        }
-
-        private void ApplyPendingRoundLine()
-        {
-            if (_pendingRoundLine == null)
-                return;
-            _hud.SetRound(_pendingRoundLine);
-            _pendingRoundLine = null;
+            _match = new Match(_boardModel, new SystemRandom(), MatchSession.PowersEnabled);
+            AttachMatch();
+            _seats = _chosenSeats;
+            _presenter.SetSeats(_seats);
         }
 
         private IEnumerator HumanReinforce()
         {
-            _hud.SetPrompt(
-                MatchText.ReinforcePrompt(_match.ReinforcementsLeft, _match.TurnReinforcements)
-            );
+            _hud.SetPrompt(MatchText.ReinforcePrompt(_match.TurnReinforcements));
             _awaitingBoardClick = true;
             while (true)
             {
@@ -312,7 +291,7 @@ namespace GameJam.Gameplay
                 yield return null;
                 // Waits for a free hint slot, so it never replaces the Destiny hint the moment it appears.
                 if (!_hud.IsHintVisible)
-                    ShowHintOnce(Hint.Reinforce);
+                    _presenter.ShowHintOnce(Hint.Reinforce);
                 if (!TryGetClickedTerritory(out Territory territory))
                     continue;
 
@@ -321,10 +300,7 @@ namespace GameJam.Gameplay
                     // Appended, not replaced, so the troop count and its breakdown stay visible.
                     _hud.SetPrompt(
                         MatchText.WithHint(
-                            MatchText.ReinforcePrompt(
-                                _match.ReinforcementsLeft,
-                                _match.TurnReinforcements
-                            ),
+                            MatchText.ReinforcePrompt(_match.TurnReinforcements),
                             MatchText.PickOwnTerritoryHint
                         )
                     );
@@ -342,11 +318,25 @@ namespace GameJam.Gameplay
 
         private IEnumerator HumanAttack()
         {
-            // Keep the previous selection after a combat so repeated attacks need fewer clicks.
-            Select(_selected != null && HasTarget(_selected) ? _selected : null);
+            Select(NextAttacker());
             _endTurnRequested = false;
+            _wrathRequested = false;
             _hud.ShowEndTurn(true);
-            ShowHintOnce(Hint.Attack);
+            // Favor and the Road only change through commands, so the Wrath button and Road mode are
+            // set once per visit to this loop.
+            bool wrathUsable = RefreshWrathButton();
+            // A sacred roll's Road starts here, back in the attack loop, never over the combat's dice.
+            if (StartRoadMode())
+            {
+                // The popup says what the rings are about, so both appear together, once the Favor
+                // line of the sacred die has been read. Clicks wait for that moment, no longer.
+                yield return _presenter.ShowRoadPopupIfOpened();
+                ShowRoadOrigins();
+            }
+            else if (!(wrathUsable && _presenter.ShowHintOnce(Hint.Wrath)))
+            {
+                _presenter.ShowHintOnce(Hint.Attack);
+            }
             _awaitingBoardClick = true;
 
             while (true)
@@ -355,27 +345,395 @@ namespace GameJam.Gameplay
                 yield return null;
                 if (_endTurnRequested)
                 {
-                    _awaitingBoardClick = false;
+                    // The only way to decline a Road: it is lost with the rest of the turn.
+                    StopAimingWrath();
+                    LeaveHumanAttack();
                     Select(null);
-                    _hud.ShowEndTurn(false);
-                    _hud.HideHint();
                     _match.EndTurn();
                     yield break;
                 }
 
-                if (TryGetClickedTerritory(out Territory clicked))
+                if (_wrathRequested)
                 {
-                    if (_selected != null && _match.CanAttack(_selected, clicked))
+                    _wrathRequested = false;
+                    if (_aimingWrath)
                     {
-                        _awaitingBoardClick = false;
-                        _hud.ShowEndTurn(false);
-                        _hud.HideHint();
-                        _match.Attack(_selected, clicked);
+                        CancelWrath();
+                    }
+                    else if (GodPowers.WrathNeedsTarget(_match.CurrentGod))
+                    {
+                        AimWrath();
+                    }
+                    else
+                    {
+                        // Eye of Ra and Harvest choose for themselves: the button is the whole command.
+                        LeaveHumanAttack();
+                        _match.UnleashWrath();
                         yield break;
                     }
-                    SelectOrExplain(clicked);
+                    continue;
                 }
+
+                if ((_aimingWrath || _roadSource != null) && WasCancelPressed())
+                {
+                    if (_aimingWrath)
+                        CancelWrath();
+                    else
+                        DropRoadOrigin();
+                    continue;
+                }
+
+                if (!TryTakeAttackClick(out Territory clicked))
+                    continue;
+
+                if (_aimingWrath)
+                {
+                    if (!TryAimWrathAt(clicked))
+                        continue;
+                    Territory source = _wrathSource;
+                    StopAimingWrath();
+                    LeaveHumanAttack();
+                    _match.UnleashWrath(source, clicked);
+                    yield break;
+                }
+
+                if (_roadMode)
+                {
+                    if (!TryRoadClick(clicked))
+                        continue;
+                    Territory origin = _roadSource;
+                    LeaveHumanAttack();
+                    _match.UseRoad(origin, clicked);
+                    yield break;
+                }
+
+                if (_selected != null && _match.CanAttack(_selected, clicked))
+                {
+                    LeaveHumanAttack();
+                    _lastTarget = clicked;
+                    _match.Attack(_selected, clicked);
+                    yield break;
+                }
+                SelectOrExplain(clicked);
             }
+        }
+
+        // The attack loop's buttons and hint go away before a command. The selection stays, so an
+        // attack keeps its rings during the combat and the next visit can reselect it. Road mode ends
+        // with any command (a march spends the Road, a Wrath or END TURN leaves the loop); its prompt
+        // is dropped so the large line never hangs over what follows, and so is the popup.
+        private void LeaveHumanAttack()
+        {
+            _awaitingBoardClick = false;
+            _lastTarget = null;
+            _hud.ShowEndTurn(false);
+            _hud.ShowWrath(false);
+            _hud.HideHint();
+            if (!_roadMode)
+                return;
+            StopRoadMode();
+            _presenter.HideRoadPopup();
+            _hud.SetPrompt(string.Empty);
+        }
+
+        // Risk-style follow-up after a combat: the attacker stays selected while it can still attack,
+        // so the same enemy is one click away. After a capture the source keeps a single troop, so
+        // the selection follows the army into the captured territory when that one can attack.
+        private Territory NextAttacker()
+        {
+            Territory advanced = _lastTarget;
+            _lastTarget = null;
+            if (_selected == null)
+                return null;
+            if (HasTarget(_selected))
+                return _selected;
+            bool canAdvance =
+                advanced != null && advanced.Owner == _match.CurrentGod && HasTarget(advanced);
+            return canAdvance ? advanced : null;
+        }
+
+        // The click that ended the combat window comes first, then a fresh click on the board.
+        private bool TryTakeAttackClick(out Territory clicked)
+        {
+            clicked = _carriedClick;
+            _carriedClick = null;
+            return clicked != null || TryGetClickedTerritory(out clicked);
+        }
+
+        /// <summary>Shows the Wrath button (powers on) and returns whether it can be pressed now.</summary>
+        private bool RefreshWrathButton()
+        {
+            _hud.ShowWrath(_match.PowersEnabled);
+            if (!_match.PowersEnabled)
+                return false;
+
+            God god = _match.CurrentGod;
+            bool usable = _match.IsWrathReady && HasWrathTarget();
+            string text = MatchText.WrathButton(
+                god,
+                _match.FavorOf(god),
+                _match.WrathUsedThisTurn,
+                usable
+            );
+            _hud.SetWrath(text, usable, god, aiming: false);
+            return usable;
+        }
+
+        // Ra and Morrígan have no target; Zeus may strike any territory; Thor needs a source next to it.
+        private bool HasWrathTarget()
+        {
+            if (!GodPowers.WrathNeedsTarget(_match.CurrentGod))
+                return _match.CanUnleashWrath();
+            foreach (Territory territory in _match.Board.Territories)
+            {
+                bool aimable = GodPowers.WrathNeedsSource(_match.CurrentGod)
+                    ? HasWrathTargetFrom(territory)
+                    : _match.CanUnleashWrath(target: territory);
+                if (aimable)
+                    return true;
+            }
+            return false;
+        }
+
+        // An index loop for the same reason as HasTarget: the hover calls this every frame.
+        private bool HasWrathTargetFrom(Territory source)
+        {
+            IReadOnlyList<Territory> neighbors = source.Neighbors;
+            for (int i = 0; i < neighbors.Count; i++)
+            {
+                if (_match.CanUnleashWrath(source, neighbors[i]))
+                    return true;
+            }
+            return false;
+        }
+
+        private void AimWrath()
+        {
+            God god = _match.CurrentGod;
+            _aimingWrath = true;
+            // The Wrath suspends Road mode (its highlights are redrawn); cancelling restores it.
+            _roadSource = null;
+            _roadDestinations.Clear();
+            // Thor aims from the selected attacker when it can strike, saving a click.
+            bool selectedCanStrike =
+                GodPowers.WrathNeedsSource(god)
+                && _selected != null
+                && HasWrathTargetFrom(_selected);
+            _wrathSource = selectedCanStrike ? _selected : null;
+            _hud.SetWrath(MatchText.CancelWrathButton(god), true, god, aiming: true);
+            _hud.HideHint();
+            ShowWrathTargets();
+            _sfx.Play(SfxCue.Click);
+        }
+
+        // Backing out of the Wrath goes back to what it interrupted: the ringed Road origins when a
+        // Road is pending, else the plain attack mode.
+        private void CancelWrath()
+        {
+            StopAimingWrath();
+            RefreshWrathButton();
+            if (_roadMode)
+                ShowRoadOrigins();
+            else
+                Select(null);
+            _sfx.Play(SfxCue.Click);
+        }
+
+        private void StopAimingWrath()
+        {
+            _aimingWrath = false;
+            _wrathSource = null;
+        }
+
+        // Rings every legal target with the troops the Wrath would take ("-3"), so the choice is read
+        // before the click. Thor first rings nothing and waits for his source, like an attack.
+        private void ShowWrathTargets()
+        {
+            _board.ClearHighlights();
+            God god = _match.CurrentGod;
+            _hud.SetPrompt(MatchText.WrathTargetPrompt(god, _wrathSource));
+            bool needsSource = GodPowers.WrathNeedsSource(god);
+            if (needsSource && _wrathSource == null)
+                return;
+            if (needsSource)
+                _board.SetHighlight(_wrathSource, TerritoryHighlight.Selected);
+
+            foreach (Territory target in _match.Board.Territories)
+            {
+                if (!_match.CanUnleashWrath(_wrathSource, target))
+                    continue;
+                _board.SetHighlight(target, TerritoryHighlight.Target);
+                int loss = needsSource
+                    ? GodPowers.MjolnirLoss(target.Troops)
+                    : GodPowers.ThunderboltLoss(target.Troops);
+                _board.SetPreview(target, -loss);
+            }
+        }
+
+        // True when the click is the Wrath's target. A click on one of Thor's own territories picks
+        // (or drops) his source instead; anything else says why it cannot be struck.
+        private bool TryAimWrathAt(Territory clicked)
+        {
+            if (_match.CanUnleashWrath(_wrathSource, clicked))
+                return true;
+
+            God god = _match.CurrentGod;
+            if (GodPowers.WrathNeedsSource(god) && clicked.Owner == god)
+            {
+                bool canStrikeFromHere = clicked != _wrathSource && HasWrathTargetFrom(clicked);
+                if (canStrikeFromHere || clicked == _wrathSource)
+                {
+                    _wrathSource = canStrikeFromHere ? clicked : null;
+                    ShowWrathTargets();
+                    _sfx.Play(SfxCue.Click);
+                    return false;
+                }
+                _hud.SetPrompt(
+                    MatchText.WithHint(
+                        MatchText.WrathTargetPrompt(god, _wrathSource),
+                        MatchText.WrathNoSourceHint
+                    )
+                );
+                _sfx.Play(SfxCue.Invalid);
+                return false;
+            }
+
+            // Thor without a source must start from his own side, whatever enemy was clicked.
+            string why =
+                GodPowers.WrathNeedsSource(god) && _wrathSource == null
+                    ? MatchText.WrathPickSourceFirstHint
+                    : MatchText.WrathNoTargetHint(god);
+            _hud.SetPrompt(MatchText.WithHint(MatchText.WrathTargetPrompt(god, _wrathSource), why));
+            _sfx.Play(SfxCue.Invalid);
+            return false;
+        }
+
+        /// <summary>
+        /// Enters Road mode when the human holds an open Road and has an army that can march (2+
+        /// troops and a destination); otherwise nothing is blocked. Called once per visit to the
+        /// attack loop: the Road only opens through a combat, so this never runs per frame.
+        /// </summary>
+        private bool StartRoadMode()
+        {
+            StopRoadMode();
+            if (!_match.PowersEnabled || !_match.IsRoadAvailable)
+                return false;
+            CollectRoadOrigins();
+            if (_roadOrigins.Count == 0)
+                return false;
+
+            _roadMode = true;
+            // No attack selection while the Road is pending; the ringed origins are the only choices.
+            _selected = null;
+            return true;
+        }
+
+        private void StopRoadMode()
+        {
+            _roadMode = false;
+            _roadSource = null;
+            _roadOrigins.Clear();
+            _roadDestinations.Clear();
+        }
+
+        // Own territories that can march: 2+ troops and at least one destination.
+        private void CollectRoadOrigins()
+        {
+            _roadOrigins.Clear();
+            God god = _match.CurrentGod;
+            foreach (Territory territory in _match.Board.Territories)
+            {
+                if (
+                    territory.Owner == god
+                    && GodPowers.RoadTroops(territory.Troops) > 0
+                    && GodPowers.RoadDestinations(_match.Board, god, territory).Count > 0
+                )
+                    _roadOrigins.Add(territory);
+            }
+        }
+
+        // Every army that can march wears the Road ring and its ROAD tag; everything else stays plain.
+        private void ShowRoadOrigins()
+        {
+            _roadSource = null;
+            _roadDestinations.Clear();
+            _board.ClearHighlights();
+            for (int i = 0; i < _roadOrigins.Count; i++)
+                _board.SetHighlight(_roadOrigins[i], TerritoryHighlight.RoadOrigin);
+            _hud.SetRoadPrompt(MatchText.RoadOriginsPrompt);
+        }
+
+        // The destinations are looked up once, here, and cached for the highlights, the hover and the
+        // click. The other origins go plain, so only what the click can do glows: the picked army
+        // (lifted) and its ringed destinations with the troops that would march ("+9").
+        private void PickRoadOrigin(Territory source)
+        {
+            _roadSource = source;
+            // The person acted on the popup's advice: it has done its job.
+            _presenter.HideRoadPopup();
+            _roadDestinations.Clear();
+            _roadDestinations.AddRange(
+                GodPowers.RoadDestinations(_match.Board, _match.CurrentGod, source)
+            );
+
+            _board.ClearHighlights();
+            _board.SetHighlight(source, TerritoryHighlight.Selected);
+            int moved = GodPowers.RoadTroops(source.Troops);
+            for (int i = 0; i < _roadDestinations.Count; i++)
+            {
+                _board.SetHighlight(_roadDestinations[i], TerritoryHighlight.RoadDestination);
+                _board.SetPreview(_roadDestinations[i], moved);
+            }
+            _hud.SetRoadPrompt(MatchText.RoadDestinationsPrompt);
+        }
+
+        // Esc, right-click or a second click on the origin: back to the ringed origins (never to attacking).
+        private void DropRoadOrigin()
+        {
+            ShowRoadOrigins();
+            _sfx.Play(SfxCue.Click);
+        }
+
+        // True when the click is a destination: the march is chosen. Otherwise it picks or drops an
+        // origin, or says why nothing happened (attacks wait until the Road is resolved); the hint
+        // replaces the prompt until the next valid click.
+        private bool TryRoadClick(Territory clicked)
+        {
+            if (_roadSource != null && _match.CanUseRoad(_roadSource, clicked))
+                return true;
+
+            if (_roadSource == null && _roadOrigins.Contains(clicked))
+            {
+                PickRoadOrigin(clicked);
+                _sfx.Play(SfxCue.Click);
+                return false;
+            }
+            if (clicked == _roadSource)
+            {
+                DropRoadOrigin();
+                return false;
+            }
+
+            string why =
+                _roadSource != null ? MatchText.RoadNoDestinationHint
+                : clicked.Owner == _match.CurrentGod ? MatchText.RoadNoOriginHint
+                : MatchText.RoadAttackWaitsHint;
+            _hud.SetRoadPrompt(why);
+            _sfx.Play(SfxCue.Invalid);
+            return false;
+        }
+
+        // Right-click or Esc, the usual "never mind" of a desktop game.
+        private bool WasCancelPressed()
+        {
+            Keyboard keyboard = Keyboard.current;
+            Mouse mouse = Mouse.current;
+            if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
+                return true;
+            // A right-click over the HUD is not a "never mind" for the aiming.
+            return mouse != null
+                && mouse.rightButton.wasPressedThisFrame
+                && !_hud.IsPointerOverUi(mouse.position.ReadValue());
         }
 
         private IEnumerator ResolveCombat()
@@ -383,50 +741,25 @@ namespace GameJam.Gameplay
             while (_dice.IsAnimating)
                 yield return null;
 
-            bool humanCanOffer = IsHumanTurn && _match.CanMakeOffering;
-            ShowCombatHint(humanCanOffer);
-            if (humanCanOffer)
+            // A person defending against a bot still gets the combat hint.
+            bool canOffer = IsHumanTurn && _match.CanMakeOffering;
+            _presenter.ShowCombatHint(canOffer);
+            if (!IsHumanTurn)
             {
-                yield return HumanCombatChoice();
+                yield return BotPause(_botResultHold);
+                if (BotPlayer.ShouldMakeOffering(_match))
+                    _match.MakeOffering();
+                else
+                    _match.ConfirmCombat();
                 yield break;
             }
 
-            yield return IsHumanTurn ? HoldHumanResult() : BotPause(_botResultHold);
-            if (!IsHumanTurn && BotPlayer.ShouldMakeOffering(_match))
-                _match.MakeOffering();
-            else
-                _match.ConfirmCombat();
-        }
-
-        // The human's own result needs no decision but is theirs to read, so it waits for a click
-        // on the board or the hold, whichever comes first.
-        private IEnumerator HoldHumanResult()
-        {
-            _dice.ShowContinueHint(true);
-            for (float elapsed = 0f; elapsed < _resultHold; elapsed += Time.deltaTime)
-            {
-                // Yield first, so a click is only read in a frame after the result showed.
-                yield return null;
-                if (WasBoardPressed(out _))
-                    break;
-            }
-            _dice.ShowContinueHint(false);
-        }
-
-        private IEnumerator HumanCombatChoice()
-        {
-            _hud.SetPrompt(MatchText.OfferingPrompt);
-            _offeringRequested = false;
-            _acceptRequested = false;
-            _hud.ShowCombatChoice(true);
-            while (!_offeringRequested && !_acceptRequested)
-                yield return null;
-
-            _hud.ShowCombatChoice(false);
-            _hud.HideHint();
+            yield return HumanResultWindow(canOffer);
             // After an Offering the phase stays CombatPending, so the loop comes back here with the new roll.
             if (_offeringRequested)
             {
+                _offeringRequested = false;
+                _hud.HideHint();
                 _hud.SetPrompt(MatchText.OfferingMadePrompt);
                 _match.MakeOffering();
             }
@@ -434,6 +767,39 @@ namespace GameJam.Gameplay
             {
                 _match.ConfirmCombat();
             }
+        }
+
+        // The human's landed result never asks for a decision: it confirms by itself after the hold
+        // (the Offering window when a re-roll is possible), or sooner on a click on the board. That
+        // click is kept for the attack loop, so attacking again is a single click, like in Risk.
+        // The Offering button, when shown, is the only way to re-roll; it never blocks the game.
+        private IEnumerator HumanResultWindow(bool canOffer)
+        {
+            float window = canOffer ? _offeringWindow : _resultHold;
+            _offeringRequested = false;
+            _offeringOpen = canOffer;
+            _dice.ShowOffering(canOffer);
+            _dice.ShowContinueHint(!canOffer);
+            if (canOffer)
+                _hud.SetPrompt(MatchText.OfferingPrompt);
+
+            for (float elapsed = 0f; elapsed < window; elapsed += Time.deltaTime)
+            {
+                // Yield first, so a click is only read in a frame after the result showed.
+                yield return null;
+                if (canOffer)
+                    _dice.SetOfferingTimeLeft(1f - elapsed / window);
+                if (_offeringRequested)
+                    break;
+                if (WasBoardPressed(out Vector2 position))
+                {
+                    _board.TryPick(position, out _carriedClick);
+                    break;
+                }
+            }
+            _offeringOpen = false;
+            _dice.ShowOffering(false);
+            _dice.ShowContinueHint(false);
         }
 
         private IEnumerator BotReinforce()
@@ -447,6 +813,18 @@ namespace GameJam.Gameplay
         {
             _board.ClearHighlights();
             yield return BotPause(_botStepPause);
+            // Asked before every attack: Favor can fill up in the middle of the turn.
+            if (BotPlayer.TryChooseWrath(_match, out Territory source, out Territory target))
+            {
+                yield return BotWrath(source, target);
+                yield break;
+            }
+            // The march comes before the attack: it brings the army to where the fight is.
+            if (BotPlayer.TryChooseRoad(_match, out Territory roadFrom, out Territory roadTo))
+            {
+                yield return BotRoad(roadFrom, roadTo);
+                yield break;
+            }
             if (!BotPlayer.TryChooseAttack(_match, out Territory from, out Territory to))
             {
                 _match.EndTurn();
@@ -460,32 +838,45 @@ namespace GameJam.Gameplay
             _match.Attack(from, to);
         }
 
+        // Paced like an attack: the aim shows first, then the blow, then its result stays readable.
+        private IEnumerator BotWrath(Territory source, Territory target)
+        {
+            God god = _match.CurrentGod;
+            if (source != null)
+                _board.SetHighlight(source, TerritoryHighlight.Selected);
+            if (target != null)
+                _board.SetHighlight(target, TerritoryHighlight.Target);
+            _hud.SetPrompt(MatchText.BotWrath(god));
+            yield return BotPause(_botStepPause);
+
+            _match.UnleashWrath(source, target);
+            yield return BotPause(_botResultHold);
+            // A Wrath that ended the match, or knocked the last person out, leaves the end screen alone.
+            if (_match.Phase != TurnPhase.MatchOver && !AreAllHumansOut)
+                _hud.SetPrompt(MatchText.BotPlaying(god));
+        }
+
+        // Paced like an attack: the origin and destination show first, then the march; the presenter
+        // plays the path and the turn loop waits for it before anyone acts.
+        private IEnumerator BotRoad(Territory from, Territory to)
+        {
+            God god = _match.CurrentGod;
+            _board.SetHighlight(from, TerritoryHighlight.Selected);
+            _board.SetHighlight(to, TerritoryHighlight.Target);
+            _hud.SetPrompt(MatchText.BotRoad(god));
+            yield return BotPause(_botStepPause);
+
+            _match.UseRoad(from, to);
+            yield return BotPause(_botStepPause);
+            if (_match.Phase != TurnPhase.MatchOver && !AreAllHumansOut)
+                _hud.SetPrompt(MatchText.BotPlaying(god));
+        }
+
         // The factor is read every frame, so toggling fast bots mid-pause takes effect at once.
         private IEnumerator BotPause(float seconds)
         {
             for (float elapsed = 0f; elapsed < seconds * BotPaceFactor; elapsed += Time.deltaTime)
                 yield return null;
-        }
-
-        // The first combat the human takes part in teaches its numbers. The first time the human
-        // can make an Offering, that hint goes first and the numbers wait for the next combat.
-        private void ShowCombatHint(bool humanCanOffer)
-        {
-            Combat combat = _match.PendingCombat;
-            if (_botPlaysHuman || (combat.Attacker != _humanGod && combat.Defender != _humanGod))
-                return;
-            if (humanCanOffer && ShowHintOnce(Hint.Offering))
-                return;
-            ShowHintOnce(Hint.Combat);
-        }
-
-        /// <summary>Shows the hint the first time its situation happens in this match; false afterwards.</summary>
-        private bool ShowHintOnce(Hint hint)
-        {
-            if (_botPlaysHuman || !_shownHints.Add(hint))
-                return false;
-            _hud.ShowHint(MatchText.HintText(hint, _humanGod));
-            return true;
         }
 
         private Territory UsableTerritoryUnderPointer()
@@ -509,16 +900,41 @@ namespace GameJam.Gameplay
         {
             if (_match.Phase == TurnPhase.Reinforce)
                 return territory.Owner == _match.CurrentGod;
+            if (_aimingWrath)
+                return IsWrathClickUsable(territory);
+            if (_roadMode)
+                return IsRoadClickUsable(territory);
             if (_selected != null)
                 return _match.CanAttack(_selected, territory);
             return HasTarget(territory);
         }
 
+        // Road mode: an origin, or once one is picked, it again (to drop it) and its destinations.
+        // Cached lists only.
+        private bool IsRoadClickUsable(Territory territory) =>
+            _roadSource == null
+                ? _roadOrigins.Contains(territory)
+                : territory == _roadSource || _roadDestinations.Contains(territory);
+
+        // While aiming: a target, or (Thor) one of his territories that can strike from there.
+        private bool IsWrathClickUsable(Territory territory)
+        {
+            if (_match.CanUnleashWrath(_wrathSource, territory))
+                return true;
+            God god = _match.CurrentGod;
+            return GodPowers.WrathNeedsSource(god)
+                && territory.Owner == god
+                && HasWrathTargetFrom(territory);
+        }
+
+        // An index loop, not foreach: this runs every frame from the hover in Update, and foreach
+        // over an IReadOnlyList boxes its enumerator.
         private bool HasTarget(Territory from)
         {
-            foreach (Territory neighbor in from.Neighbors)
+            IReadOnlyList<Territory> neighbors = from.Neighbors;
+            for (int i = 0; i < neighbors.Count; i++)
             {
-                if (_match.CanAttack(from, neighbor))
+                if (_match.CanAttack(from, neighbors[i]))
                     return true;
             }
             return false;
@@ -590,214 +1006,70 @@ namespace GameJam.Gameplay
             return !_hud.IsPointerOverUi(position);
         }
 
-        private void HandleRoundStarted(int round, int destinyFace)
-        {
-            _pendingRoundLine = MatchText.RoundLine(round, destinyFace, _match.RoundOpener);
-            string destiny = MatchText.DestinyLine(destinyFace, _match.RoundOpener);
-            // Read before the bad omen is applied (it follows this event), so ask Core who it will hit.
-            int modifier = Destiny.ReinforcementModifier(_humanGod, destinyFace);
-            bool humanLosesTroop =
-                Destiny.IsBadOmen(destinyFace)
-                && Destiny.BadOmenTarget(_match.Board, _humanGod) != null;
-            float tumble = _sfx.PlayRoll(SfxCue.DestinyRoll, _destiny.MinTumbleDuration);
-            _destiny.Show(
-                round,
-                destinyFace,
-                destiny,
-                _humanGod,
-                MatchText.DestinyYouLine(modifier, humanLosesTroop),
-                tumble
-            );
-            _destinyLandCue = SfxCueChooser.DestinyLanding(modifier, humanLosesTroop);
-        }
-
-        // The roll is not stopped here: it was timed to end on this landing.
-        private void HandleDestinyLanded()
-        {
-            if (_destinyLandCue.HasValue)
-                _sfx.Play(_destinyLandCue.Value);
-        }
-
+        // A new turn starts clean: nothing selected, no Wrath being aimed and no button press left
+        // over, so in hot-seat the next person never inherits the last one's input. The presenter
+        // clears the highlights.
         private void HandleTurnStarted(God god, int reinforcements)
         {
-            _pendingTurnBanner = god;
             _selected = null;
-            _board.ClearHighlights();
-            // The last combat stays readable until the next roll or the next turn.
-            _dice.Hide();
-            if (IsHumanTurn)
+            StopAimingWrath();
+            StopRoadMode();
+            _offeringRequested = false;
+            _carriedClick = null;
+            _lastTarget = null;
+            _endTurnRequested = false;
+            _wrathRequested = false;
+        }
+
+        // Solo: the card starts the match as that god. Hot-seat: it switches the god between Human
+        // and Bot. On WebGL the browser only allows audio after a user gesture; this click provides it.
+        private void HandleGodCardClicked(God god)
+        {
+            _sfx.Play(SfxCue.Click);
+            if (!_menuHotSeat)
             {
-                // Cleared, so the previous bot's "X is playing…" never lingers into the human's turn.
-                _hud.SetPrompt(string.Empty);
+                _chosenSeats = PlayerSeats.Solo(god, _botPlaysHuman);
                 return;
             }
-            _hud.SetPrompt(MatchText.BotPlaying(god));
-            // A human hint would otherwise hang over the bot's turn.
-            _hud.HideHint();
+            int seat = Match.BaseTurnIndex(god);
+            _menuSeats[seat] = !_menuSeats[seat];
+            RefreshMenuSeats();
         }
 
-        private void HandleTerritoryChanged(Territory territory)
+        private void HandleHotSeatChosen(bool hotSeat)
         {
-            // Only the bad omen changes troops while the Destiny Die rolls; showing it now would spoil the roll.
-            if (_destiny.IsPlaying)
-            {
-                _omenLosses.Add(territory);
-                return;
-            }
-            _board.Refresh(territory);
-            _nations.Refresh(_match);
-        }
-
-        // Taking land from a rival is the strongest board moment, so only it shakes the screen; an
-        // empty territory just changes color with its ring.
-        private void HandleTerritoryCaptured(Territory territory, God newOwner, God? previousOwner)
-        {
-            _board.ShowCaptureRing(territory);
-            if (previousOwner.HasValue)
-                _cameraShake.Shake();
-            bool temple = territory.Kind == TerritoryKind.Temple;
-            if (temple)
-                ShowHintOnce(Hint.Temple);
-
-            // Fired before NationEliminated and MatchWon: when this capture ends the match for the
-            // human, the end sting that follows plays alone.
-            if (previousOwner.HasValue && EndsMatchForHuman(previousOwner.Value))
-                return;
-            _sfx.Play(SfxCue.Capture);
-            // A temple is the goal, so its capture carries a quiet chime under the capture cue.
-            if (temple)
-                _sfx.PlaySubtle(SfxCue.Sacred);
-        }
-
-        /// <summary>True when this god is now out and that ends the match for the human: it was the human, or one nation is left.</summary>
-        private bool EndsMatchForHuman(God eliminated)
-        {
-            if (!_match.IsEliminated(eliminated))
-                return false;
-            if (!_botPlaysHuman && eliminated == _humanGod)
-                return true;
-
-            int living = 0;
-            foreach (God god in Match.BaseTurnOrder)
-            {
-                if (!_match.IsEliminated(god))
-                    living++;
-            }
-            return living == 1;
-        }
-
-        private void HandleCombatRolled(Combat combat)
-        {
-            // The re-roll after an Offering is the moment its troop is paid.
-            if (combat.OfferingMade)
-                _board.ShowTroopLoss(combat.From);
-            // The Offering re-roll is the die shaken in the hand; a normal roll is thrown.
-            SfxCue roll = combat.OfferingMade ? SfxCue.Offering : SfxCue.CombatRoll;
-            _dice.Show(combat, _sfx.PlayRoll(roll, _dice.MinTumbleDuration));
-        }
-
-        // The roll is not stopped here: it was timed to end on this landing.
-        private void HandleDiceLanded(CombatResult result)
-        {
-            // The dice of the pending combat; null if the match ended while they were still tumbling.
-            Combat combat = _match.PendingCombat;
-            if (combat == null)
-                return;
-            God? human = _botPlaysHuman ? null : _humanGod;
-            SfxCue? cue = SfxCueChooser.CombatLanding(combat, result, human);
-            if (cue.HasValue)
-                _sfx.Play(cue.Value);
-        }
-
-        // The dice panel is not hidden here, so the verdict stays readable after the troop is lost.
-        private void HandleCombatResolved(Combat combat)
-        {
-            bool attackerWon = combat.Result.Winner == CombatSide.Attacker;
-            if ((attackerWon ? combat.Attacker : combat.Defender) == _humanGod)
-                _combatsWonByHuman++;
-
-            // A defender at 0 is about to be captured: the change of owner already says it lost,
-            // and a "-1" over the attacker's freshly moved-in troops would read as a loss.
-            if (attackerWon && combat.To.Troops == 0)
-                return;
-            _board.ShowTroopLoss(attackerWon ? combat.To : combat.From);
-        }
-
-        private void HandleNationEliminated(God god)
-        {
-            _nations.Refresh(_match);
-            if (_botPlaysHuman || god != _humanGod)
-            {
-                // A rival falling is news, not the end: a quiet defeat cue. When it leaves one
-                // nation, MatchWon follows and its end sting plays alone.
-                if (!EndsMatchForHuman(god))
-                    _sfx.PlaySubtle(SfxCue.Defeat);
-                return;
-            }
-
-            _humanEliminated = true;
-            // No winner yet: the bots could keep playing, so the banner stays neutral.
-            ShowEndBanner(MatchText.LoseTitle, MatchText.EliminatedLine(god), null);
-        }
-
-        // When the human's elimination leaves one nation, this follows HandleNationEliminated and
-        // the banner names that winner instead; it is still a defeat for the human.
-        private void HandleMatchWon(God winner, VictoryReason reason) =>
-            ShowEndBanner(
-                MatchText.EndTitle(winner == _humanGod),
-                MatchText.VictoryLine(reason, _match.RoundLimitDecider),
-                winner
-            );
-
-        private void ShowEndBanner(string title, string detail, God? winner)
-        {
-            // A temple win at a round's first turn ends the match while the Destiny Die still rolls.
-            _destiny.Hide();
-            ShowOmenLosses();
-            _board.ClearHighlights();
-            _nations.Refresh(_match);
-            // A temple win at a round's first turn ends the match before the loop shows the line.
-            ApplyPendingRoundLine();
-            _hud.ShowEndTurn(false);
-            _hud.ShowCombatChoice(false);
-            _hud.SetPrompt(string.Empty);
-            PlayEndCueOnce(winner == _humanGod);
-            int winnerTemples = winner.HasValue ? _match.Board.TempleCount(winner.Value) : 0;
-            _hud.ShowEndBanner(
-                title,
-                detail,
-                winner,
-                _match.Round,
-                winnerTemples,
-                _combatsWonByHuman
-            );
-        }
-
-        private void PlayEndCueOnce(bool humanWon)
-        {
-            if (_endCuePlayed)
-                return;
-            _endCuePlayed = true;
-            _sfx.StopRoll();
-            _sfx.Play(humanWon ? SfxCue.Victory : SfxCue.Defeat);
-        }
-
-        // On WebGL the browser only allows audio after a user gesture; this first click provides it.
-        private void HandleGodChosen(God god)
-        {
-            _chosenGod = god;
+            _menuHotSeat = hotSeat;
+            RefreshMenuSeats();
             _sfx.Play(SfxCue.Click);
         }
 
+        // START is disabled without a person, but the rule is checked here too: the button is only a view.
+        private void HandleStartClicked()
+        {
+            if (!PlayerSeats.IsValid(_menuSeats))
+                return;
+            _chosenSeats = new PlayerSeats(_menuSeats, _botPlaysHuman);
+            _sfx.Play(SfxCue.Click);
+        }
+
+        private void RefreshMenuSeats() =>
+            _menu.SetSeats(_menuHotSeat, _menuSeats, PlayerSeats.IsValid(_menuSeats));
+
         private void HandleOfferingClicked()
         {
+            if (!_offeringOpen)
+                return;
             _offeringRequested = true;
             _sfx.Play(SfxCue.Click);
         }
 
-        private void HandleAcceptClicked()
+        private void HandleWrathClicked() => _wrathRequested = true;
+
+        // Only reachable on the menu, before the Match exists, so the mode is final once a card is clicked.
+        private void HandlePowersChosen(bool enabled)
         {
-            _acceptRequested = true;
+            MatchSession.PowersEnabled = enabled;
+            _menu.SetPowers(enabled);
             _sfx.Play(SfxCue.Click);
         }
 
@@ -824,16 +1096,18 @@ namespace GameJam.Gameplay
         }
 
         // Restarting is a scene reload: Match, board and views are rebuilt from scratch, so no
-        // state can leak between matches. Only the chosen god crosses over, through MatchSession.
+        // state can leak between matches. Only the seats (solo or hot-seat) cross over, through
+        // MatchSession; PlayerSeats never changes, so the same instance is safe to hand over.
         private void HandlePlayAgainClicked()
         {
-            MatchSession.ReplayGod = _humanGod;
+            MatchSession.ReplaySeats = _seats;
             ReloadScene();
         }
 
+        // The menu opens on solo again: the hot-seat choice lives only in this scene's controller.
         private void HandleMainMenuClicked()
         {
-            MatchSession.ReplayGod = null;
+            MatchSession.ReplaySeats = null;
             ReloadScene();
         }
 

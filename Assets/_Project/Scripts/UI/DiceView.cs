@@ -12,6 +12,8 @@ namespace GameJam.UI
     /// then tag each roll with what it is for its god ("1 = Zeus's sacred number") and the verdict explaining why.
     /// After an Offering only the attacker's die rolls again, matching the rule.
     /// A die that just landed sacred pulses; one that landed cursed shakes, so the omen reads before the words.
+    /// While the human loses a combat they may re-roll, an optional Offering button sits under their die
+    /// with a draining bar; MatchController owns its window and decides what a click means.
     /// </summary>
     [RequireComponent(typeof(UIDocument))]
     public sealed class DiceView : MonoBehaviour
@@ -21,12 +23,15 @@ namespace GameJam.UI
         private const string OutcomeSacredClass = "outcome--sacred";
         private const string OutcomeCursedClass = "outcome--cursed";
 
+        // TODO(MatchText): move to MatchText once the HUD text pass is merged.
+        private const string OfferingLabel = "OFFERING · RE-ROLL (−1)";
+
         [Header("Tumble")]
         [Tooltip(
-            "Shortest tumble. A longer roll clip stretches it, so the dice always land with the sound."
+            "Fallback only, used when there is no roll clip. Normally the tumble is exactly the roll clip's length, so the dice land with its final clack."
         )]
         [SerializeField, Min(0f)]
-        private float _tumbleDuration = 0.9f;
+        private float _tumbleDuration = 1.3f;
 
         [Tooltip("Seconds between random faces while tumbling.")]
         [SerializeField, Min(0.01f)]
@@ -38,7 +43,7 @@ namespace GameJam.UI
 
         [Header("Landing")]
         [SerializeField, Min(0.01f)]
-        private float _landDuration = 0.18f;
+        private float _landDuration = 0.25f;
 
         [Tooltip("Peak scale of the landing bounce.")]
         [SerializeField, Min(1f)]
@@ -47,7 +52,7 @@ namespace GameJam.UI
         [Header("Outcome emphasis, right after landing")]
         [Tooltip("Seconds of the sacred pulse and the cursed shake.")]
         [SerializeField, Min(0.01f)]
-        private float _emphasisDuration = 0.4f;
+        private float _emphasisDuration = 0.6f;
 
         [Tooltip("Extra scale at the top of each sacred pulse.")]
         [SerializeField, Min(0f)]
@@ -78,6 +83,8 @@ namespace GameJam.UI
         private VisualElement _defenderOutcome;
         private Label _defenderOutcomeLabel;
         private Label _continue;
+        private Button _offeringButton;
+        private VisualElement _offeringTimer;
 
         /// <summary>True while the dice are tumbling or landing; the result is not readable yet.</summary>
         public bool IsAnimating { get; private set; }
@@ -85,8 +92,18 @@ namespace GameJam.UI
         /// <summary>Raised the moment the dice land and their outcomes show, so sound can match the motion.</summary>
         public event Action<CombatResult> Landed;
 
-        /// <summary>The shortest tumble; the roll sound may ask for a longer one.</summary>
-        public float MinTumbleDuration => _tumbleDuration;
+        /// <summary>The human pressed the Offering button under their die.</summary>
+        public event Action OfferingClicked;
+
+        /// <summary>The tumble when the roll sound is missing; otherwise the sound sets it.</summary>
+        public float FallbackTumbleDuration => _tumbleDuration;
+
+        /// <summary>True while the dice panel is on screen (a combat's dice stay until the next roll or turn).</summary>
+        public bool IsShown => _panel.style.display == DisplayStyle.Flex;
+
+        /// <summary>One side's die, where a star for its sacred roll starts.</summary>
+        public VisualElement DieOf(CombatSide side) =>
+            side == CombatSide.Attacker ? _attackerDie : _defenderDie;
 
         private void Awake()
         {
@@ -111,16 +128,21 @@ namespace GameJam.UI
             _defenderOutcomeLabel = root.Q<Label>("defender-outcome-label");
             _continue = root.Q<Label>("dice-continue");
             _continue.text = MatchText.ContinueHint;
+            _offeringButton = root.Q<Button>("dice-offering-button");
+            _offeringTimer = root.Q<VisualElement>("dice-offering-timer");
+            root.Q<Label>("dice-offering-label").text = OfferingLabel;
+            _offeringButton.clicked += HandleOfferingClicked;
             Hide();
         }
 
         private void OnDisable()
         {
+            _offeringButton.clicked -= HandleOfferingClicked;
             StopAllCoroutines();
             IsAnimating = false;
         }
 
-        /// <param name="tumbleSeconds">How long the dice tumble; matches the roll clip, see SfxPlayer.PlayRoll.</param>
+        /// <param name="tumbleSeconds">How long the dice tumble: the roll clip's length, see SfxPlayer.PlayRoll.</param>
         public void Show(Combat combat, float tumbleSeconds)
         {
             StopAllCoroutines();
@@ -131,12 +153,24 @@ namespace GameJam.UI
         public void ShowContinueHint(bool shown) =>
             _continue.style.display = shown ? DisplayStyle.Flex : DisplayStyle.None;
 
+        /// <summary>The optional Offering under the attacker's die, its timer bar full.</summary>
+        public void ShowOffering(bool shown)
+        {
+            _offeringButton.style.display = shown ? DisplayStyle.Flex : DisplayStyle.None;
+            SetOfferingTimeLeft(1f);
+        }
+
+        /// <summary>Drains the Offering's timer bar; 1 is the whole window left, 0 none.</summary>
+        public void SetOfferingTimeLeft(float fraction) =>
+            _offeringTimer.style.width = Length.Percent(Mathf.Clamp01(fraction) * 100f);
+
         public void Hide()
         {
             StopAllCoroutines();
             IsAnimating = false;
             _panel.style.display = DisplayStyle.None;
             ShowContinueHint(false);
+            ShowOffering(false);
             ResetMotion(_attackerDie);
             ResetMotion(_defenderDie);
         }
@@ -153,6 +187,7 @@ namespace GameJam.UI
             _title.text = MatchText.CombatTitle(combat);
             _verdict.text = string.Empty;
             ShowContinueHint(false);
+            ShowOffering(false);
             _attackerName.text = MatchText.GodName(combat.Attacker);
             _defenderName.text = MatchText.GodName(combat.Defender);
             SetGod(_attackerDie, _attackerOutcome, combat.Attacker);
@@ -228,12 +263,17 @@ namespace GameJam.UI
         }
 
         // The faces shown while tumbling are cosmetic, so they use Unity's random, not the match's.
+        // Timed on the real clock, not by summing Time.deltaTime (which Unity caps after a hitch),
+        // because the sound runs in real time: the dice must land when the clip ends.
         private IEnumerator Tumble(bool rollDefender, float duration)
         {
-            float elapsed = 0f;
+            float start = Time.realtimeSinceStartup;
             float nextFace = 0f;
-            while (elapsed < duration)
+            while (true)
             {
+                float elapsed = Time.realtimeSinceStartup - start;
+                if (elapsed >= duration)
+                    break;
                 if (elapsed >= nextFace)
                 {
                     nextFace += _faceInterval;
@@ -241,7 +281,6 @@ namespace GameJam.UI
                     if (rollDefender)
                         RandomFace(_defenderDie, _defenderFace);
                 }
-                elapsed += Time.deltaTime;
                 yield return null;
             }
             _attackerDie.style.rotate = new Rotate(0f);
@@ -271,6 +310,8 @@ namespace GameJam.UI
             face.text = MatchText.FaceText(Random.Range(1, Die.Faces + 1));
             die.style.rotate = new Rotate(Random.Range(-_tumbleAngle, _tumbleAngle));
         }
+
+        private void HandleOfferingClicked() => OfferingClicked?.Invoke();
 
         private static void SetScale(VisualElement element, float scale) =>
             element.style.scale = new Scale(new Vector3(scale, scale, 1f));

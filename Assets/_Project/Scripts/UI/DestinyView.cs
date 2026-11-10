@@ -11,28 +11,35 @@ namespace GameJam.UI
     /// The Destiny Die at each round start: a large die tumbles in the center, lands on the face
     /// Destiny rolled and shows what it does this round. A click anywhere skips it.
     /// A god's face takes that god's color, so the favored god is visible at a glance. A last line
-    /// in the human's color says what the face does to them ("You: +2").
+    /// in the human's color says what the face does to them ("You: +2"). With the god powers on, a
+    /// god's face also shows that god's Day ("DAY OF ZEUS · Storm: …") in its color.
     /// </summary>
     [RequireComponent(typeof(UIDocument))]
     public sealed class DestinyView : MonoBehaviour
     {
         [Header("Timing (seconds)")]
         [Tooltip(
-            "Shortest tumble. A longer roll clip stretches it, so the die always lands with the sound."
+            "Fallback only, used when there is no roll clip. Normally the tumble is exactly the roll clip's length, so the die lands with its final clack."
         )]
         [SerializeField, Min(0f)]
-        private float _tumbleDuration = 1f;
+        private float _tumbleDuration = 1.3f;
 
         [Tooltip("Seconds between random faces while tumbling.")]
         [SerializeField, Min(0.01f)]
         private float _faceInterval = 0.08f;
 
         [SerializeField, Min(0.01f)]
-        private float _landDuration = 0.2f;
+        private float _landDuration = 0.3f;
 
         [Tooltip("How long the landed face and its effect stay readable.")]
         [SerializeField, Min(0f)]
-        private float _hold = 1.5f;
+        private float _hold = 2.5f;
+
+        [Tooltip(
+            "Extra hold when the round brings news worth reading twice: a god's Day line, or the bad omen taking troops."
+        )]
+        [SerializeField, Min(0f)]
+        private float _newsExtraHold = 1.5f;
 
         [Header("Motion")]
         [Tooltip("Max tilt in degrees while tumbling.")]
@@ -50,9 +57,14 @@ namespace GameJam.UI
         private VisualElement _chip;
         private Label _face;
         private Label _effect;
+        private Label _day;
         private Label _you;
         private Label _skip;
         private WaitForSeconds _holdWait;
+        private WaitForSeconds _newsHoldWait;
+
+        // The die has landed and its lines show; a Day line set after that shows at once.
+        private bool _landed;
 
         /// <summary>True from the first tumble until the hold ends or a click skips it.</summary>
         public bool IsPlaying { get; private set; }
@@ -60,13 +72,14 @@ namespace GameJam.UI
         /// <summary>Raised when the die lands on its face; not raised when a click skips it.</summary>
         public event Action Landed;
 
-        /// <summary>The shortest tumble; the roll sound may ask for a longer one.</summary>
-        public float MinTumbleDuration => _tumbleDuration;
+        /// <summary>The tumble when the roll sound is missing; otherwise the sound sets it.</summary>
+        public float FallbackTumbleDuration => _tumbleDuration;
 
         private void Awake()
         {
             _document = GetComponent<UIDocument>();
             _holdWait = new WaitForSeconds(_hold);
+            _newsHoldWait = new WaitForSeconds(_newsExtraHold);
         }
 
         private void OnEnable()
@@ -78,6 +91,7 @@ namespace GameJam.UI
             _chip = root.Q<VisualElement>("destiny-chip");
             _face = root.Q<Label>("destiny-face");
             _effect = root.Q<Label>("destiny-effect");
+            _day = root.Q<Label>("destiny-day");
             _you = root.Q<Label>("destiny-you");
             _skip = root.Q<Label>("destiny-skip");
             _skip.text = MatchText.SkipHint;
@@ -91,13 +105,16 @@ namespace GameJam.UI
             Hide();
         }
 
-        /// <param name="youLine">What the face does to the human, shown in <paramref name="human"/>'s color.</param>
-        /// <param name="tumbleSeconds">How long the die tumbles; matches the roll clip, see SfxPlayer.PlayRoll.</param>
+        /// <param name="youLine">
+        /// What the face does to the human, shown in <paramref name="human"/>'s color; null hides the
+        /// line (hot-seat: the die speaks to the whole table, and the round info has every god's line).
+        /// </param>
+        /// <param name="tumbleSeconds">How long the die tumbles: the roll clip's length, see SfxPlayer.PlayRoll.</param>
         public void Show(
             int round,
             int face,
             string effect,
-            God human,
+            God? human,
             string youLine,
             float tumbleSeconds
         )
@@ -105,6 +122,24 @@ namespace GameJam.UI
             StopAllCoroutines();
             StartCoroutine(Play(round, face, effect, human, youLine, tumbleSeconds));
         }
+
+        /// <summary>
+        /// Adds the Day line to the die shown by <see cref="Show"/>; it is revealed with the effect
+        /// when the die lands. Match raises the Day right after the round starts, so it comes second.
+        /// </summary>
+        public void SetDayLine(string text, God god)
+        {
+            _day.text = text;
+            GodUss.Apply(_day, god);
+            _day.style.display = DisplayStyle.Flex;
+            _day.style.visibility = _landed ? Visibility.Visible : Visibility.Hidden;
+        }
+
+        /// <summary>
+        /// Replaces the "You" line of the die shown by <see cref="Show"/>, for news that arrives with
+        /// the Day (the Storm striking the human). Revealed on landing like the rest.
+        /// </summary>
+        public void SetYouLine(string text) => _you.text = text;
 
         /// <summary>Stops the die at once, for example when the match ends during it.</summary>
         public void Hide()
@@ -118,16 +153,20 @@ namespace GameJam.UI
             int round,
             int face,
             string effect,
-            God human,
+            God? human,
             string youLine,
             float tumbleSeconds
         )
         {
             IsPlaying = true;
+            _landed = false;
             _overlay.style.display = DisplayStyle.Flex;
+            // No Day until SetDayLine says so (3, 4, Classic, or an eliminated god's face).
+            _day.style.display = DisplayStyle.None;
             _title.text = MatchText.RoundTitle(round);
             _effect.text = effect;
-            _you.text = youLine;
+            _you.text = youLine ?? string.Empty;
+            _you.style.display = youLine != null ? DisplayStyle.Flex : DisplayStyle.None;
             GodUss.Apply(_you, human);
             // Both hidden until the die lands, so the effect never spoils the roll.
             _effect.style.visibility = Visibility.Hidden;
@@ -144,27 +183,37 @@ namespace GameJam.UI
             GodUss.Apply(_chip, favored);
             yield return Land();
 
+            _landed = true;
             _effect.style.visibility = Visibility.Visible;
             _you.style.visibility = Visibility.Visible;
+            _day.style.visibility = Visibility.Visible;
             Landed?.Invoke();
             yield return _holdWait;
+            // Playtests showed a Day or the bad omen went by before it could be read: both change
+            // the board right away, so they get the extra hold. A click still skips at any time.
+            // The Day line is checked only now because SetDayLine arrives after Show.
+            if (_day.style.display == DisplayStyle.Flex || Destiny.IsBadOmen(face))
+                yield return _newsHoldWait;
             Hide();
         }
 
         // The faces shown while tumbling are cosmetic, so they use Unity's random, not the match's.
+        // Timed on the real clock, like the combat dice, so the die lands when the roll clip ends.
         private IEnumerator Tumble(float duration)
         {
-            float elapsed = 0f;
+            float start = Time.realtimeSinceStartup;
             float nextFace = 0f;
-            while (elapsed < duration)
+            while (true)
             {
+                float elapsed = Time.realtimeSinceStartup - start;
+                if (elapsed >= duration)
+                    break;
                 if (elapsed >= nextFace)
                 {
                     nextFace += _faceInterval;
                     _face.text = MatchText.FaceText(Random.Range(1, Die.Faces + 1));
                     _die.style.rotate = new Rotate(Random.Range(-_tumbleAngle, _tumbleAngle));
                 }
-                elapsed += Time.deltaTime;
                 yield return null;
             }
             _die.style.rotate = new Rotate(0f);

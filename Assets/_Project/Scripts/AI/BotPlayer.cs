@@ -1,3 +1,4 @@
+using System;
 using GameJam.Core;
 
 namespace GameJam.AI
@@ -11,10 +12,6 @@ namespace GameJam.AI
     {
         // One more than the rules minimum: the bot only gambles a troop when it can afford it.
         public const int MinTroopsToOffer = Match.MinTroopsToOffer + 1;
-
-        // An Offering pays 1 troop for a re-roll that wins with chance q: it costs (1 - q) own
-        // troops on average and takes q enemy troops, so it only pays off when q is at least 1/2.
-        public const int MinWinningRerollFaces = 3;
 
         // Lower is better. Temples win the match, so they come first in both groups.
         private const int EmptyTemple = 0;
@@ -87,22 +84,225 @@ namespace GameJam.AI
             if (!match.CanMakeOffering || match.PendingCombat.From.Troops < MinTroopsToOffer)
                 return false;
 
+            // An Offering pays 1 troop for a re-roll. Each winning face is worth the troops the enemy
+            // loses (plus what the Harvest reaps) and the troops the bot no longer loses, so it pays
+            // off when those add up to at least one per die face. In a classic 1-for-1 combat a face
+            // is worth 2, so 3 winning faces break even; Ragnarök and the Harvest lower that.
+            // Night of crows is ignored: its troops go to Morrígan whoever wins, so it rarely
+            // changes whether this re-roll is worth it.
             Combat combat = match.PendingCombat;
-            int winningFaces = 0;
+            int lossIfStillLosing = combat.Result.LoserLosses;
+            int value = 0;
             for (int face = 1; face <= Die.Faces; face++)
             {
                 CombatResult reroll = CombatResolver.Resolve(
                     combat.Attacker,
                     face,
                     combat.Defender,
-                    combat.Result.DefenderRoll
+                    combat.Result.DefenderRoll,
+                    match.IsRagnarokActive
                 );
-                if (reroll.Winner == CombatSide.Attacker)
-                    winningFaces++;
+                if (reroll.Winner != CombatSide.Attacker)
+                    continue;
+
+                int enemyLoss = Math.Min(reroll.LoserLosses, combat.To.Troops);
+                int reaped = Math.Min(enemyLoss, match.HarvestTroopsLeft);
+                value += enemyLoss + reaped + lossIfStillLosing;
             }
 
-            return winningFaces >= MinWinningRerollFaces;
+            return value >= Die.Faces;
         }
+
+        /// <summary>
+        /// Phase Attack, with <see cref="Match.IsWrathReady"/>. True when the bot should unleash its
+        /// Wrath now with these arguments (null when the god needs none). Ask before every attack:
+        /// Favor can fill up in the middle of a turn.
+        /// </summary>
+        public static bool TryChooseWrath(Match match, out Territory source, out Territory target)
+        {
+            source = null;
+            target = null;
+            if (!match.IsWrathReady)
+                return false;
+
+            switch (match.CurrentGod)
+            {
+                case God.Zeus:
+                    target = ThunderboltTarget(match);
+                    break;
+                case God.Thor:
+                    return TryChooseMjolnir(match, out source, out target);
+                case God.Ra:
+                    // Converting territories is never bad, so the Eye opens as soon as it sees one.
+                    return match.CanUnleashWrath();
+                default:
+                    return HasFavorableCombat(match) && match.CanUnleashWrath();
+            }
+            return target != null;
+        }
+
+        /// <summary>
+        /// Phase Attack, with <see cref="Match.IsRoadAvailable"/>. True when the bot should march along
+        /// the Sacred Road now. Ask after a Road opens and before attacking. The biggest stack
+        /// marches, and only to a territory whose best target is strictly better than the best one
+        /// the origin has today (and that the arriving troops can actually take): never wasteful.
+        /// </summary>
+        public static bool TryChooseRoad(Match match, out Territory from, out Territory to)
+        {
+            from = null;
+            to = null;
+            if (!match.IsRoadAvailable)
+                return false;
+
+            God god = match.CurrentGod;
+            (int priority, int troops) bestOption = default;
+            foreach (Territory origin in match.Board.Territories)
+            {
+                if (origin.Owner != god || origin.Troops < Match.MinTroopsToAttack)
+                    continue;
+
+                // Best attack the origin could make right now; none counts as worse than any.
+                bool hasHere = TryBestTarget(origin, origin.Troops, out var here);
+                int moved = GodPowers.RoadTroops(origin.Troops);
+                foreach (
+                    Territory destination in GodPowers.RoadDestinations(match.Board, god, origin)
+                )
+                {
+                    int arriving = destination.Troops + moved;
+                    if (!TryBestTarget(destination, arriving, out var there))
+                        continue;
+                    if (hasHere && there.CompareTo(here) >= 0)
+                        continue;
+
+                    if (IsBetterRoad(god, origin, destination, there, from, to, bestOption))
+                    {
+                        from = origin;
+                        to = destination;
+                        bestOption = there;
+                    }
+                }
+            }
+            return from != null;
+        }
+
+        // Biggest stack first, then the better target, then ids seen from the bot's own corner.
+        private static bool IsBetterRoad(
+            God god,
+            Territory origin,
+            Territory destination,
+            (int priority, int troops) option,
+            Territory bestOrigin,
+            Territory bestDestination,
+            (int priority, int troops) bestOption
+        )
+        {
+            if (bestOrigin == null)
+                return true;
+
+            var candidate = (
+                -origin.Troops,
+                option,
+                IdSeenFrom(god, destination),
+                IdSeenFrom(god, origin)
+            );
+            var best = (
+                -bestOrigin.Troops,
+                bestOption,
+                IdSeenFrom(god, bestDestination),
+                IdSeenFrom(god, bestOrigin)
+            );
+            return candidate.CompareTo(best) < 0;
+        }
+
+        // The most valuable neighbor a territory holding `troops` could attack: the same priority and
+        // weakest-first order as TryChooseAttack, and only targets the bot would actually attack.
+        private static bool TryBestTarget(
+            Territory territory,
+            int troops,
+            out (int priority, int troops) best
+        )
+        {
+            best = default;
+            bool found = false;
+            foreach (Territory target in territory.Neighbors)
+            {
+                if (target.Owner == territory.Owner)
+                    continue;
+                if (target.Owner != null && troops <= target.Troops)
+                    continue;
+
+                var option = (Priority(target), target.Troops);
+                if (!found || option.CompareTo(best) < 0)
+                {
+                    best = option;
+                    found = true;
+                }
+            }
+            return found;
+        }
+
+        // The biggest enemy army, preferring Temples and the Altar: they decide the match, and halving
+        // the garrison opens them for the attacks that follow.
+        private static Territory ThunderboltTarget(Match match)
+        {
+            Territory best = null;
+            foreach (Territory territory in match.Board.Territories)
+            {
+                if (!match.CanUnleashWrath(target: territory))
+                    continue;
+
+                var candidate = (IsSacredSite(territory) ? 0 : 1, -territory.Troops);
+                if (
+                    best == null
+                    || candidate.CompareTo((IsSacredSite(best) ? 0 : 1, -best.Troops)) < 0
+                )
+                    best = territory;
+            }
+            return best;
+        }
+
+        // Only a blow that captures is worth a full meter; Temples first, like any attack.
+        private static bool TryChooseMjolnir(
+            Match match,
+            out Territory source,
+            out Territory target
+        )
+        {
+            God god = match.CurrentGod;
+            source = null;
+            target = null;
+            foreach (Territory from in match.Board.Territories)
+            {
+                foreach (Territory to in from.Neighbors)
+                {
+                    bool captures =
+                        match.CanUnleashWrath(from, to) && to.Troops <= GodPowers.MjolnirDamage;
+                    if (captures && IsBetter(god, from, to, source, target))
+                    {
+                        source = from;
+                        target = to;
+                    }
+                }
+            }
+            return source != null;
+        }
+
+        // The Harvest only pays if a real combat follows, so it waits for an attack worth making.
+        private static bool HasFavorableCombat(Match match)
+        {
+            foreach (Territory from in match.Board.Territories)
+            {
+                foreach (Territory to in from.Neighbors)
+                {
+                    if (match.CanAttack(from, to) && to.Owner != null && HasAdvantage(from, to))
+                        return true;
+                }
+            }
+            return false;
+        }
+
+        private static bool IsSacredSite(Territory territory) =>
+            territory.Kind == TerritoryKind.Temple || territory.Kind == TerritoryKind.Altar;
 
         // Empty territories are free; enemies only when the bot has more troops on its side.
         // Every combat or capture spends troops or territories, so a turn of attacks always ends.
