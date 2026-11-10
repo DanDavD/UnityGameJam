@@ -12,21 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1966cb4ff2e647945a3fe68cd9e81d80, type: 3}
   m_Name: AudioCues
   m_EditorClassIdentifier: GameJam.Gameplay::GameJam.Gameplay.AudioCues
-  _combatRoll:
-    _clips:
-    - {fileID: 8300000, guid: 0e27077e00063664f9bfb1e31106ec4a, type: 3}
-    - {fileID: 8300000, guid: 24b84feba19abac4cabc87c99c67c530, type: 3}
-    - {fileID: 8300000, guid: 3774cfff14a708042a4cd17991b5fb70, type: 3}
-    _volume: 0.9
-  _destinyRoll:
-    _clips:
-    - {fileID: 8300000, guid: f1964e7812361f44eb25377ea0e6bc78, type: 3}
-    - {fileID: 8300000, guid: a0b49bf324f30d040bb7bab461bac591, type: 3}
-    _volume: 1
-  _offering:
-    _clips:
-    - {fileID: 8300000, guid: cc55fa63fd765804bba43a452ac28f72, type: 3}
-    _volume: 0.8
+  _diceRoll: {fileID: 8300000, guid: aee6e62d89ce046c7bf4d357ea83a5a9, type: 3}
+  _diceRollVolume: 0.9
   _sacred:
     _clips:
     - {fileID: 8300000, guid: 5ab70a6e0b3c492438aa93b8e9a6bfa6, type: 3}

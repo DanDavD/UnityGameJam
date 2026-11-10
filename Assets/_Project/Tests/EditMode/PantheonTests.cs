@@ -73,5 +73,14 @@ namespace GameJam.Tests
         {
             Assert.Throws<ArgumentOutOfRangeException>(() => Pantheon.Read(God.Zeus, face));
         }
+
+        [TestCase(God.Zeus, "Zeus")]
+        [TestCase(God.Thor, "Thor")]
+        [TestCase(God.Ra, "Ra")]
+        [TestCase(God.Morrigan, "Morrígan")]
+        public void DisplayName_EachGod_IsHowPlayersReadIt(God god, string expected)
+        {
+            Assert.AreEqual(expected, Pantheon.DisplayName(god));
+        }
     }
 }

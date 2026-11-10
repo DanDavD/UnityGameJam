@@ -1,7 +1,12 @@
 {
   "name": "GameJam.Tests",
   "rootNamespace": "GameJam.Tests",
-  "references": ["GameJam.Core", "GameJam.AI", "UnityEngine.TestRunner", "UnityEditor.TestRunner"],
+  "references": [
+    "GameJam.Core",
+    "GameJam.AI",
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner"
+  ],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

@@ -57,6 +57,42 @@ A nation with no territories is **eliminated**.
 2. **Last nation standing.**
 3. **After 15 rounds:** most territories; tie → most troops; tie → earlier in the base cycle (Zeus, Ra, Thor, Morrígan).
 
+### God powers: Favor and the Day of the God (approved Nov 8, phase 6)
+
+Approved by the developer after the feature freeze, as the one deliberate exception. Both layers come from the lucky number and are behind a single on/off flag (`Match` constructor; menu toggle **Pantheon powers / Classic**). Tuning numbers live in Core constants next to `Destiny`, mirrored in data when the presentation needs them.
+
+**1. Day of the God (automatic).** When the Destiny Die shows a god's face, besides the usual +2 / −2, that god's **Day** lasts the whole round. Instant Day effects resolve at round start, like the bad omen, before the opener's turn.
+
+| God | Day effect |
+|---|---|
+| Zeus | **Storm:** every enemy territory **on the board** with 2+ troops loses 1 troop (never empties a territory); the lost troops **join Zeus's Capital**, or his largest army if he lost it (ties: lowest id). |
+| Thor | **Ragnarök:** this round, in every combat Thor is in (attacking or defending), Thor wins ties and, when Thor wins, the loser loses **2** troops instead of 1 (never more than it has; an attacking territory always keeps 1). |
+| Ra | **Sun at noon:** +1 troop on every Ra territory, **instead of** Ra's +2 favored reinforcements (Morrígan's −2 still applies). |
+| Morrígan | **Night of crows:** this round, troops other nations lose **in rolled combats** (anywhere on the board) join Morrígan's Capital, or her largest army if she lost the Capital (ties: lowest id), **at most 3 per round**. Offering, bad omen, Storm, Thunderbolt and Mjölnir losses do not count. |
+
+**2. Wrath (chosen by the player).** Each nation has **Favor 0–3**. When a combat resolves, each side whose **final** die shows its **sacred** number gains +1 Favor and each side whose final die shows its **cursed** number loses 1 (min 0). The Destiny Die does not change Favor (it gives the Day instead). With **3 Favor**, during its own Attack phase with no combat pending, a nation may unleash its Wrath **once per turn**; Favor returns to 0.
+
+| God | Wrath |
+|---|---|
+| Zeus | **Thunderbolt:** pick any enemy territory on the board with 2+ troops; it loses half its troops rounded up, never going below 1 (no capture). |
+| Thor | **Mjölnir:** an attack (same source/target rules as a normal attack, enemy target only) with no roll: the defender loses 3 troops (or all it has); if it reaches 0 Thor captures it and moves all troops but one. |
+| Ra | **Eye of Ra:** **1** enemy territory adjacent to Ra's territories that has **exactly 1 troop** becomes Ra's (troops stay 1). Chosen automatically: Temples first, then the Altar, then lowest id. Needs a candidate. Can eliminate a nation (and win by last nation standing). |
+| Morrígan | **Harvest:** for the rest of her turn, the **first 2** troops defenders lose in her attacks join her attacking territory (+1 each), before a capture moves troops. During her Harvest these troops do not also feed Night of crows. |
+
+Balance (2000 bot matches, set B approved Nov 8): Zeus 21.9%, Ra 25.7%, Thor 27.5%, Morrígan 24.9%; Classic stays at ~24/24/26/26%.
+
+Interactions: Ragnarök changes who wins, so the Offering rule ("only while losing") follows the new result. Temple victory is still checked only at the start of your turn. Eliminated nations keep no Favor. If the human is eliminated in a solo match, the match stops on YOU LOSE (bots don't finish it).
+
+### Sacred Road: the army's march (approved Nov 9, phase 6; behind the powers/Pantheon toggle)
+
+Problem found in playtest 3: troops pile up in one territory (usually the Capital) with no way out. Fix, driven by the lucky number (repeated Offerings and a fortify phase were rejected):
+
+- **Trigger.** When the **attacker's final die in a combat shows the attacker's own sacred number** (the same moment it earns Favor), the gods open the road: until the end of that turn the attacker has **one Road**. Only the attacker earns it, in its own turn (a defender's sacred die never interrupts another nation's turn). At most one Road at a time; an unused Road is lost at End turn; a Road that was already used can be reopened by another sacred roll in the same turn. It is not granted if that combat ended the match.
+- **The march.** Optional, during the Attack phase with no combat pending: pick one of your territories with 2+ troops (the origin) and a destination of your own that is **at most `SacredRoadMaxSteps` (=2) territories away along a path made only of your own territories**. **All the origin's troops but one** move to the destination. The road never crosses enemy or empty territories (that would be an attack).
+- **Tuning levers if the simulations say it is too strong** (try in this order): cap the troops moved (`SacredRoadMaxTroops`, e.g. 6), reduce steps to 1, or require the destination to touch an enemy/empty territory.
+- **Bots** march their biggest stack toward the owned territory with the best attack target (empty Temples/Altar first, then weaker enemies).
+- **Classic mode** has no Road. It must be re-balanced with the headless simulations (target: every god 21–29%), also tracking the largest troop stack per match to confirm hoarding drops.
+
 **Design filter:** every mechanic must be **fun, easy to understand, simple to implement and unique**, and it should be decided by the lucky number whenever possible. Theme is 40% of the jam score. For every feature ask *"if the lucky number were removed, would this still work?"*. Prefer no. Restraint over scope. The player must understand what to do in the first minute without reading. Always show *why* a result happened. Visual and UI rules live in [`Docs/design-system.md`](Docs/design-system.md).
 
 ### Phases
@@ -68,7 +104,7 @@ A nation with no territories is **eliminated**.
 | 3 | Presentation: altar-shaped parchment board, pieces, dice view, input; simple bots (AI); first WebGL build | Done |
 | 4 | UI Toolkit HUD, combat panel with "why", self-teaching onboarding, main menu, end screen | Done |
 | 5 | Audio, juice, balance via headless bot-vs-bot simulations; playtest round 1 fixes | Done (playtest fixes pending a listen/play check) |
-| 6 | WebGL build, bug fixing, polish (finish by Wed Nov 11) | Next (plan proposed, needs approval) |
+| 6 | God powers, hot-seat, per-god VFX, WebGL build, bug fixing, polish (finish by Wed Nov 11) | In progress |
 
 #### Phase 3 plan (approved)
 
@@ -109,9 +145,9 @@ A nation with no territories is **eliminated**.
 4. Hover feedback → only territories usable right now react (slight scale + outline), all buttons and god cards share hover/pressed states.
 5. Sacred numbers not self-explanatory → explanation line in the menu; each die tag reads "1 = Zeus's sacred number" / "4 = neutral for Ra" / "6 = Zeus's cursed number".
 
-#### Phase 6 plan (PROPOSED — present to the developer for approval before starting)
+#### Phase 6 plan (approved Nov 8, full scope: nothing cut)
 
-Window: Mon Nov 9 – Wed Nov 11 (game finished Wed midnight). Bug fixing and polish only; no new rules.
+Window: Sun Nov 8 night – Wed Nov 11 (game finished Wed midnight). Priority order: **god powers** (rules above: Core + AI + tests, balance sims, then presentation: Favor meter, Wrath button, Day banner, "why" lines, per-god VFX), then **hot-seat** (human or bot per god in the menu), then the polish items below. Every new feature is behind a toggle; anything not merged and playtested by **Tue Nov 10 23:59** ships toggled off. Wednesday is fixes only.
 - **Verify playtest round 1** in a fresh WebGL build: listen to every cue with headphones, check pacing, tune volumes in `AudioCues.asset`. Confirm `AudioSource.PlayDelayed` works in WebGL.
 - **Bug bash**: full matches with each of the four gods; edge cases (human eliminated, round-15 limit, Offering, bad omen, temple win, Play again / Main menu); 1280×720 and 1920×1080; first click unlocks audio; all glyphs render.
 - **Playtest round 2** with someone who has never seen the game (first-minute clarity), then fix what they stumble on.
@@ -119,8 +155,6 @@ Window: Mon Nov 9 – Wed Nov 11 (game finished Wed midnight). Bug fixing and po
 - **Code tidy if time allows**: split presentation logic out of `MatchController` (~750 lines; code review LOW).
 - **Final build** uploaded to itch.io as a draft.
 - Nov 12–14 (no build changes after Nov 14 06:00): itch page (description, controls, credits, screenshots, GIF, AI disclosure — complete `Docs/ai-usage.md` then), README rewrite, submit.
-
-**If time allows:** unique god powers (Zeus lightning, Thor auto-win, Ra double production, Morrígan converts the dead), hot-seat mode, per-god VFX.
 
 **Visual identity (never like a world-map war game):** a parchment board shaped like an altar, the four gods in their corners, temples around the center. No world map, no toy soldiers, no political-map colors.
 

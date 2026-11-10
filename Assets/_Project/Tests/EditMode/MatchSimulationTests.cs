@@ -28,10 +28,50 @@ namespace GameJam.Tests
                 PlayMatch(seed);
         }
 
-        // Returns a fingerprint of the final state so two runs can be compared.
-        private static string PlayMatch(int seed)
+        // The greedy player unleashes every Wrath the moment it can, so every power and its edge
+        // cases (Storm on small armies, Eye of Ra eliminations, Mjölnir captures) get exercised.
+        [Test]
+        public void WithPowers_ManySeeds_EveryMatchEndsWithAWinnerAndAValidBoard()
         {
-            var match = new Match(Board.CreateStandard(), new SystemRandom(seed));
+            for (int seed = 0; seed < 500; seed++)
+                PlayMatch(seed, powers: true);
+        }
+
+        [Test]
+        public void WithPowers_SameSeed_ProducesTheSameMatch()
+        {
+            Assert.AreEqual(PlayMatch(2026, powers: true), PlayMatch(2026, powers: true));
+        }
+
+        [Test]
+        public void PowersOff_NoFavorDayOrWrathEventEverFires()
+        {
+            var match = new Match(Board.CreateStandard(), new SystemRandom(7));
+            int powerEvents = 0;
+            match.FavorChanged += (_, _) => powerEvents++;
+            match.DayStarted += (_, _) => powerEvents++;
+            match.WrathUnleashed += (_, _) => powerEvents++;
+
+            PlayToEnd(match, 7);
+
+            Assert.AreEqual(0, powerEvents);
+        }
+
+        // Returns a fingerprint of the final state so two runs can be compared.
+        private static string PlayMatch(int seed, bool powers = false)
+        {
+            var match = new Match(Board.CreateStandard(), new SystemRandom(seed), powers);
+            PlayToEnd(match, seed);
+
+            var fingerprint = new StringBuilder();
+            fingerprint.Append($"{match.Winner} {match.WinReason} round {match.Round}:");
+            foreach (Territory territory in match.Board.Territories)
+                fingerprint.Append($" {territory.Owner}/{territory.Troops}");
+            return fingerprint.ToString();
+        }
+
+        private static void PlayToEnd(Match match, int seed)
+        {
             match.Start();
 
             for (int turn = 0; turn < MaxTurns && match.Phase != TurnPhase.MatchOver; turn++)
@@ -47,12 +87,6 @@ namespace GameJam.Tests
                 && match.Round <= Match.RoundLimit;
             if (!finished)
                 Assert.Fail($"seed {seed}: match did not end with a living winner.");
-
-            var fingerprint = new StringBuilder();
-            fingerprint.Append($"{match.Winner} {match.WinReason} round {match.Round}:");
-            foreach (Territory territory in match.Board.Territories)
-                fingerprint.Append($" {territory.Owner}/{territory.Troops}");
-            return fingerprint.ToString();
         }
 
         private static void PlayGreedyTurn(Match match)
@@ -62,6 +96,12 @@ namespace GameJam.Tests
 
             for (int i = 0; i < MaxAttacksPerTurn && match.Phase == TurnPhase.Attack; i++)
             {
+                if (TryFindWrath(match, out Territory source, out Territory target))
+                {
+                    match.UnleashWrath(source, target);
+                    continue;
+                }
+
                 if (!TryFindAttack(match, out Territory from, out Territory to))
                     break;
 
@@ -113,6 +153,34 @@ namespace GameJam.Tests
             }
             from = null;
             to = null;
+            return false;
+        }
+
+        // The first legal Wrath in id order, with no strategy at all.
+        private static bool TryFindWrath(Match match, out Territory source, out Territory target)
+        {
+            source = null;
+            target = null;
+            if (match.CanUnleashWrath())
+                return true;
+
+            foreach (Territory territory in match.Board.Territories)
+            {
+                if (match.CanUnleashWrath(target: territory))
+                {
+                    target = territory;
+                    return true;
+                }
+                foreach (Territory neighbor in territory.Neighbors)
+                {
+                    if (match.CanUnleashWrath(territory, neighbor))
+                    {
+                        source = territory;
+                        target = neighbor;
+                        return true;
+                    }
+                }
+            }
             return false;
         }
 

@@ -46,6 +46,28 @@ namespace GameJam.Tests
             return match;
         }
 
+        /// <summary>Like <see cref="Start"/>, with the god powers on.</summary>
+        public static Match StartWithPowers(Board board, params int[] rolls)
+        {
+            var match = new Match(board, new FakeRandom(rolls), powersEnabled: true);
+            match.Start();
+            return match;
+        }
+
+        /// <summary>Plays passive turns until it is <paramref name="god"/>'s Reinforce phase.</summary>
+        public static void PassUntil(Match match, God god)
+        {
+            while (match.CurrentGod != god)
+                PlayPassiveTurn(match);
+        }
+
+        /// <summary>Places every reinforcement on <paramref name="id"/>, fills the Favor and enters Attack.</summary>
+        public static void ReadyWrath(Match match, int id)
+        {
+            PlaceAllOn(match, id);
+            match.SetFavor(match.CurrentGod, GodPowers.MaxFavor);
+        }
+
         public static void PlaceAllOn(Match match, int id)
         {
             Territory territory = match.Board.Get(id);

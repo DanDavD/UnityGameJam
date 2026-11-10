@@ -11,16 +11,16 @@ namespace GameJam.Gameplay
     public sealed class AudioCues : ScriptableObject
     {
         [Header("Dice")]
+        [Tooltip(
+            "The one sound of every roll (combat, Destiny Die, Offering re-roll). Its length is the tumble: it starts with the dice and ends with the landing clack."
+        )]
         [SerializeField]
-        private CueSound _combatRoll = new CueSound();
+        private AudioClip _diceRoll;
 
-        [SerializeField]
-        private CueSound _destinyRoll = new CueSound();
+        [SerializeField, Range(0.1f, 1f)]
+        private float _diceRollVolume = 0.9f;
 
-        [Tooltip("The attacker's re-roll after an Offering: the die shaken in the hand.")]
-        [SerializeField]
-        private CueSound _offering = new CueSound();
-
+        [Header("Dice landing (stings after the roll)")]
         [Tooltip("A landed roll decided by a sacred number (or a Destiny that favors the player).")]
         [SerializeField]
         private CueSound _sacred = new CueSound();
@@ -54,12 +54,13 @@ namespace GameJam.Gameplay
         [SerializeField]
         private CueSound _invalid = new CueSound();
 
+        public AudioClip DiceRoll => _diceRoll;
+
+        public float DiceRollVolume => _diceRollVolume;
+
         public CueSound Get(SfxCue cue) =>
             cue switch
             {
-                SfxCue.CombatRoll => _combatRoll,
-                SfxCue.DestinyRoll => _destinyRoll,
-                SfxCue.Offering => _offering,
                 SfxCue.Sacred => _sacred,
                 SfxCue.Cursed => _cursed,
                 SfxCue.TroopPlaced => _troopPlaced,

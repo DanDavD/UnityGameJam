@@ -39,16 +39,7 @@ namespace GameJam.Core
         /// </summary>
         public static Territory BadOmenTarget(Board board, God god)
         {
-            // Territories are ordered by id, so a strict comparison keeps the lowest id on ties.
-            Territory largest = null;
-            foreach (Territory territory in board.Territories)
-            {
-                if (
-                    territory.Owner == god
-                    && (largest == null || territory.Troops > largest.Troops)
-                )
-                    largest = territory;
-            }
+            Territory largest = board.LargestArmy(god);
             return largest != null && largest.Troops >= BadOmenMinTroops ? largest : null;
         }
     }

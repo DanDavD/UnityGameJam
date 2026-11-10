@@ -1,6 +1,8 @@
 /* Match HUD, menu and modals. Every value comes from Styles/Tokens.uss.
    Text sizes per screen (dice excluded):
-   - HUD: h2 (round line, turn banner, temple dots), body (identity, goal, prompt, hint, verdict), label (buttons, tags, stats).
+   - HUD: h2 (round line, turn banner, temple dots), body (identity, prompt, hint, verdict, info panels),
+     label (buttons, tags, stats, info headings). The reinforcement counter's number is a die-like token,
+     so like the dice it sits outside the count (h1).
      The round line is Inter, not Cinzel: Cinzel's 1 reads as an I, and that line is all numbers.
    - Menu: display (title), h2 (god names), body (tagline, prompt, card lines).
    - Destiny Die: h1 (round), body (effect, your effect), caption (skip hint).
@@ -22,6 +24,7 @@
 .menu__title,
 .god-card__name,
 .turn-banner__label,
+.road-popup__title,
 .end-banner__title {
     -unity-font-definition: var(--font-display);
 }
@@ -68,37 +71,49 @@
 .hud__identity {
     flex-direction: row;
     align-items: center;
+    /* At least as wide as the nations panel under it, so the left column reads as one and the card
+       barely resizes when hot-seat hands it to the next person. */
+    min-width: var(--nations-panel-width);
     padding: var(--space-3) var(--space-4);
     border-radius: var(--radius-md);
 }
 
-.hud__identity-text {
-    margin-left: var(--space-3);
-}
-
-/* Label, icon, label, icon, label: the omen icons replace the ★ / ✗ glyphs (Inter's ✗ reads as "×"). */
-.hud__identity-row {
+/* Chip and name share one head line, both centered on it, like a nation row. */
+.hud__identity-head {
     flex-direction: row;
     align-items: center;
 }
 
-.hud__identity-line {
+/* Icon, label, icon, label: the omen icons replace the ★ / ✗ glyphs (Inter's ✗ reads as "×"). */
+.hud__identity-row {
+    flex-direction: row;
+    align-items: center;
+    margin-top: var(--space-1);
+}
+
+/* "ZEUS", then the two numbers, then the Wrath: three short lines, nothing else. */
+.hud__identity-name {
     font-size: var(--font-size-body);
     -unity-font-style: bold;
+    color: var(--ink);
+    padding: 0;
+    margin: 0 0 0 var(--space-2);
+}
+
+.hud__identity-line {
+    font-size: var(--font-size-body);
     color: var(--ink);
     padding: 0;
     margin: 0;
 }
 
 .hud__identity-icon {
-    margin: 0 var(--space-1);
+    margin-right: var(--space-1);
 }
 
-.hud__goal {
-    font-size: var(--font-size-body);
-    color: var(--ink-soft);
-    padding: 0;
-    margin: var(--space-1) 0 0 0;
+/* Space between "1 sacred" and the cursed pair, instead of a "·" separator. */
+.hud__identity-icon--second {
+    margin-left: var(--space-4);
 }
 
 /* Top center: round and Destiny, the loudest line on the HUD */
@@ -106,17 +121,42 @@
     align-items: center;
 }
 
-/* One line, kept short by MatchText so it never runs into the identity card at 1280x720. */
+/* Kept short by MatchText (the full story is in the round info panel); h2 like the turn banner.
+   A row, so the "i" badge sits at its end. Wraps rather than clips if a line ever runs long. */
 .hud__round {
+    flex-direction: row;
+    align-items: center;
     max-width: var(--round-line-width);
-    white-space: nowrap;
+    padding: var(--space-2) var(--space-3) var(--space-2) var(--space-6);
+    border-radius: var(--radius-md);
+}
+
+/* Two lines: the Destiny line (h2) and, under it, the round counter (label, secondary), so the top
+   of the screen never crams both facts into one line. */
+.hud__round-lines {
+    flex-shrink: 1;
+    align-items: center;
+    margin-right: var(--space-3);
+}
+
+.hud__round-text {
+    white-space: normal;
     -unity-text-align: middle-center;
-    /* Body size so the longest line (bad omen + opener) fits the pill on one line at every resolution. */
-    font-size: var(--font-size-body);
+    font-size: var(--font-size-h2);
     -unity-font-style: bold;
     color: var(--ink);
-    padding: var(--space-2) var(--space-6);
-    border-radius: var(--radius-md);
+    padding: 0;
+    margin: 0;
+}
+
+.hud__round-counter {
+    -unity-text-align: middle-center;
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-strong);
+    letter-spacing: var(--letter-spacing-label);
+    color: var(--ink-soft);
+    padding: 0;
+    margin: 0;
 }
 
 /* Bottom center: prompt and actions */
@@ -149,9 +189,44 @@
     -unity-text-align: middle-center;
 }
 
+/* Sacred Road mode: the prompt is the call to act, so it stands larger and bold, still plain ink. */
+.hud__prompt--road {
+    font-size: var(--font-size-h2);
+    -unity-font-style: bold;
+    color: var(--ink);
+}
+
+/* Three slots across the bottom: the two sides share the leftover width equally, so the center
+   (END TURN, or the reinforcement counter) sits at the exact bottom center; the Wrath waits on its left. */
 .hud__actions {
+    align-self: stretch;
+    flex-direction: row;
+    align-items: center;
+}
+
+.hud__actions-side {
+    flex-grow: 1;
+    flex-basis: 0;
+    flex-direction: row;
+    align-items: center;
+}
+
+.hud__actions-side--left {
+    justify-content: flex-end;
+}
+
+.hud__actions-center {
+    flex-shrink: 0;
     flex-direction: row;
     justify-content: center;
+    align-items: center;
+}
+
+/* END TURN: the main action of every turn, taller and wider than any other button. */
+.button.button--end-turn {
+    height: var(--action-button-height);
+    padding: 0 var(--space-12);
+    font-size: var(--font-size-body);
 }
 
 /* Nation chip: nation color + icon, so the god is never color alone */
@@ -208,7 +283,9 @@
     font-size: var(--font-size-label);
     letter-spacing: var(--letter-spacing-label);
     border-width: var(--border-width);
-    transition-property: background-color, border-color, translate, scale;
+    /* color too: a mode button switching primary <-> secondary fades fill and text together,
+       so its label never vanishes (wood on wood) mid-transition. */
+    transition-property: background-color, border-color, color, translate, scale;
     transition-duration: var(--duration-fast);
     transition-timing-function: var(--ease-enter);
 }
@@ -442,6 +519,40 @@
     display: none;
 }
 
+/* --- Dice panel: optional Offering (owned by DiceView) ---
+   Sits under the attacker's die, as wide as its outcome tag. Hidden until the human loses a combat
+   they may re-roll; the timer bar drains over the Offering window, so its disappearance is expected. */
+.button.dice-offering {
+    display: none;
+    align-self: flex-start;
+    width: var(--outcome-tag-width);
+    margin: var(--space-2) var(--space-1) 0;
+    padding: var(--space-2) var(--space-2) var(--space-1);
+}
+
+.dice-offering__label {
+    font-size: var(--font-size-label);
+    letter-spacing: var(--letter-spacing-label);
+    -unity-text-align: middle-center;
+    white-space: normal;
+    color: var(--wood);
+}
+
+.dice-offering__timer {
+    height: var(--space-1);
+    margin-top: var(--space-1);
+    background-color: var(--paper-shade);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.dice-offering__timer-fill {
+    width: 100%;
+    height: 100%;
+    background-color: var(--wood);
+}
+/* --- End of dice panel Offering --- */
+
 /* End of match */
 .end-banner {
     position: absolute;
@@ -536,6 +647,17 @@
     padding: var(--space-2);
 }
 
+/* The goal, always on screen: one quiet line heading the rows (sentence case at label size, like the
+   outcome tags), so the ringed "3" dot in every row has its meaning written next to it. */
+.nations-panel__goal {
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-strong);
+    color: var(--ink-soft);
+    white-space: normal;
+    padding: 0 var(--space-2);
+    margin: var(--space-1) 0 var(--space-2) 0;
+}
+
 .nation-row {
     flex-direction: row;
     align-items: center;
@@ -584,12 +706,14 @@
     align-items: center;
 }
 
+/* Chip, name, then the info key pushed to the head's right end (same x on every row). */
 .nation-row__name {
+    flex-grow: 1;
     font-size: var(--font-size-body);
     -unity-font-style: bold;
     color: var(--ink);
     padding: 0;
-    margin: 0;
+    margin: 0 0 0 var(--space-2);
 }
 
 .nation-row__you {
@@ -631,11 +755,14 @@
     align-items: center;
 }
 
+/* A fixed square box per dot (radius half its size), so the goal ring is a true circle. */
 .nation-row__temple-dot {
+    width: var(--temple-dot-size);
+    height: var(--temple-dot-size);
     font-size: var(--font-size-h2);
     color: var(--ink);
     -unity-text-align: middle-center;
-    padding: 0 var(--space-1);
+    padding: 0;
     margin: 0;
     border-width: var(--border-width);
     border-color: var(--clear);
@@ -645,6 +772,13 @@
 /* The dot that wins the match (TemplesToWin): ringed in --wood like a target. */
 .nation-row__temple-dot--goal {
     border-color: var(--wood);
+}
+
+/* Empty, the goal ring holds its number ("3"), so the ring reads "the 3rd temple wins". */
+.nation-row__temple-dot--goal-number {
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-strong);
+    color: var(--wood);
 }
 
 /* Eliminated: faded, the stats line says "eliminated" and the temple line goes away. */
@@ -689,6 +823,69 @@
     font-size: var(--font-size-h2);
     -unity-font-style: bold;
     color: var(--ink);
+    padding: 0;
+}
+
+/* Sacred Road popup: a paper card centered at the top that rises into place (translate, scale and
+   opacity transitions on the shown class) when a person's sacred die opens the road. It sits above
+   the board's middle, not on it, and has no scrim: the rings it talks about stay in view. Only
+   catches clicks while shown (picking set by C#). */
+.road-popup {
+    position: absolute;
+    left: 50%;
+    top: var(--road-popup-top);
+    width: var(--road-popup-width);
+    padding: var(--space-3) var(--space-6);
+    border-left-width: var(--space-2);
+    translate: -50% var(--space-4);
+    scale: 0.94 0.94;
+    opacity: 0;
+    transition-property: translate, scale, opacity;
+    transition-duration: var(--duration-base);
+    transition-timing-function: var(--ease-exit);
+}
+
+.road-popup--shown {
+    translate: -50% 0;
+    scale: 1 1;
+    opacity: 1;
+    transition-timing-function: var(--ease-enter);
+}
+
+.road-popup.god--zeus { border-left-color: var(--nation-zeus); }
+.road-popup.god--thor { border-left-color: var(--nation-thor); }
+.road-popup.god--ra { border-left-color: var(--nation-ra); }
+.road-popup.god--morrigan { border-left-color: var(--nation-morrigan); }
+
+.road-popup__head {
+    flex-direction: row;
+    align-items: center;
+}
+
+.road-popup__title {
+    flex-grow: 1;
+    margin-left: var(--space-4);
+    font-size: var(--font-size-h2);
+    -unity-font-style: bold;
+    color: var(--ink);
+    padding: 0;
+}
+
+.road-popup__text {
+    margin-top: var(--space-2);
+    font-size: var(--font-size-body);
+    color: var(--ink);
+    white-space: normal;
+    padding: 0;
+}
+
+/* Same quiet closing line as the info panels, at the end of the title row. */
+.road-popup__close {
+    margin-left: var(--space-4);
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-strong);
+    letter-spacing: var(--letter-spacing-label);
+    color: var(--ink-soft);
     padding: 0;
 }
 
@@ -821,8 +1018,23 @@
     font-size: var(--font-size-body);
     -unity-font-definition: var(--font-strong);
     color: var(--ink);
-    margin-top: var(--space-8);
+    padding: 0;
+    margin: 0;
+}
+
+/* The prompt, and in hot-seat the START button beside it, so the menu grows by one button height at most.
+   The mode toggles above already separate it from the title. */
+.menu__prompt-row {
+    flex-direction: row;
+    align-items: center;
+    /* As tall as START, so switching Solo / Hot-seat never makes the cards jump. */
+    min-height: var(--button-min-height);
+    margin-top: var(--space-4);
     margin-bottom: var(--space-4);
+}
+
+.menu__start {
+    margin: 0 0 0 var(--space-4);
 }
 
 .menu__cards {
@@ -852,9 +1064,11 @@
 }
 
 /* God card: the same frame for every god; only the band tint, chip and numbers change */
+/* flex-grow: each card fills its template container, so all four stand at the same height. */
 .god-card {
     width: var(--god-card-width);
-    margin: 0 var(--space-3);
+    flex-grow: 1;
+    margin: 0 var(--space-2);
     align-items: center;
     padding-bottom: var(--space-6);
     overflow: hidden;
@@ -944,6 +1158,33 @@
     margin: var(--space-3) 0 0 0;
 }
 
+/* Hot-seat: who plays this god, a small tag in the band's top-right corner (absolute, so the four
+   cards keep their height). HUMAN reads like a primary button, BOT like a secondary one: the word
+   carries the meaning, the fill only repeats it. */
+.god-card__seat {
+    position: absolute;
+    top: var(--space-2);
+    right: var(--space-2);
+    padding: 0 var(--space-2);
+    font-size: var(--font-size-label);
+    letter-spacing: var(--letter-spacing-label);
+    -unity-font-definition: var(--font-strong);
+    -unity-font-style: normal;
+    border-width: var(--border-width);
+    border-radius: var(--radius-sm);
+    border-color: var(--wood);
+}
+
+.god-card__seat--human {
+    background-color: var(--wood);
+    color: var(--paper);
+}
+
+.god-card__seat--bot {
+    background-color: var(--paper);
+    color: var(--wood);
+}
+
 /* End screen: three stats split by thin paper-shade dividers, then two actions */
 .end-stats {
     flex-direction: row;
@@ -980,4 +1221,530 @@
 .end-banner__actions {
     flex-direction: row;
     justify-content: center;
+}
+
+/* God powers (Pantheon powers mode). Placeholder styling with existing tokens; every element is
+   hidden in Classic. Game-state lines (news, Day) wear the god's tint and color, like .outcome;
+   advice (.hud__hint) keeps its wood edge, so the two never look alike. */
+
+/* HUD identity: the Wrath, the loudest line of the card. Its carved name (Cinzel h2) and the Favor
+   stars (Inter h2, ink) on the god's tint with a nation-color edge, like the Day badge: it is that
+   god's power. Never "ready": the Wrath button says that. */
+.hud__wrath {
+    flex-direction: row;
+    align-items: center;
+    align-self: flex-start;
+    margin-top: var(--space-2);
+    padding: var(--space-1) var(--space-3);
+    border-width: var(--border-width);
+    border-left-width: var(--space-2);
+    border-radius: var(--radius-sm);
+}
+
+.hud__wrath.god--zeus { background-color: var(--nation-zeus-tint); border-color: var(--nation-zeus); }
+.hud__wrath.god--thor { background-color: var(--nation-thor-tint); border-color: var(--nation-thor); }
+.hud__wrath.god--ra { background-color: var(--nation-ra-tint); border-color: var(--nation-ra); }
+.hud__wrath.god--morrigan { background-color: var(--nation-morrigan-tint); border-color: var(--nation-morrigan); }
+
+.hud__wrath-name {
+    -unity-font-definition: var(--font-display);
+    font-size: var(--font-size-h2);
+    -unity-font-style: bold;
+    color: var(--ink);
+    padding: 0;
+    /* Room for the stars' bump (--favor-bump-scale) without touching the name. */
+    margin: 0 var(--space-4) 0 0;
+}
+
+.hud__favor {
+    font-size: var(--font-size-h2);
+    -unity-font-definition: var(--font-strong);
+    color: var(--ink);
+    padding: 0;
+    margin: 0;
+    transition-property: scale, opacity;
+    transition-duration: var(--duration-base);
+    transition-timing-function: var(--ease-enter);
+}
+
+/* A Favor meter (identity card or nation row) answering a star: it grows when one arrives, and
+   dims for a moment when a cursed roll cracks one. Added and removed by the views. */
+.favor--bump {
+    scale: var(--favor-bump-scale);
+}
+
+.favor--dim {
+    opacity: var(--favor-dim-opacity);
+}
+
+/* The star that flies from a sacred combat die to its god's Favor: the sacred star burst in the
+   nation color over an ink one (the outline, like the wooden pieces), so even Zeus's light blue
+   reads on parchment. Pooled by HudView; it never takes a click. */
+.favor-star {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: var(--favor-star-size);
+    height: var(--favor-star-size);
+    visibility: hidden;
+}
+
+.favor-star__back,
+.favor-star__front {
+    position: absolute;
+    -unity-background-scale-mode: scale-to-fit;
+    background-image: url("../Art/Placeholder/icon_sacred.png");
+}
+
+.favor-star__back {
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    -unity-background-image-tint-color: var(--ink);
+}
+
+.favor-star__front {
+    left: var(--space-2);
+    top: var(--space-2);
+    right: var(--space-2);
+    bottom: var(--space-2);
+}
+
+.favor-star.god--zeus > .favor-star__front { -unity-background-image-tint-color: var(--nation-zeus); }
+.favor-star.god--thor > .favor-star__front { -unity-background-image-tint-color: var(--nation-thor); }
+.favor-star.god--ra > .favor-star__front { -unity-background-image-tint-color: var(--nation-ra); }
+.favor-star.god--morrigan > .favor-star__front { -unity-background-image-tint-color: var(--nation-morrigan); }
+
+/* Its quiet counterpart: a cracked-die mark that sinks and fades over a meter that lost a star. */
+.favor-crack {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: var(--icon-md);
+    height: var(--icon-md);
+    -unity-background-scale-mode: scale-to-fit;
+    background-image: url("../Art/Placeholder/icon_cursed.png");
+    -unity-background-image-tint-color: var(--ink-soft);
+    visibility: hidden;
+}
+
+/* Under the round line while a round-long Day lasts (Ragnarök, Night of crows). */
+.hud__day-badge {
+    margin-top: var(--space-2);
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--font-size-body);
+    -unity-font-definition: var(--font-strong);
+    color: var(--ink);
+    border-width: var(--border-width);
+    border-left-width: var(--space-2);
+    border-radius: var(--radius-sm);
+    -unity-text-align: middle-center;
+}
+
+/* What a power just did, above the hint. A row, so a Favor change can lead with the drawn omen icon
+   (like the HUD identity line): Inter's ✗ glyph reads as "×" at body size. */
+.hud__news {
+    flex-direction: row;
+    align-items: center;
+    border-width: var(--border-width);
+    border-left-width: var(--space-2);
+    border-radius: var(--radius-md);
+    padding: var(--space-2) var(--space-6);
+    margin-bottom: var(--space-3);
+}
+
+.hud__news-text {
+    font-size: var(--font-size-body);
+    -unity-font-style: bold;
+    color: var(--ink);
+    padding: 0;
+    margin: 0;
+    -unity-text-align: middle-center;
+}
+
+.hud__news-icon {
+    margin-right: var(--space-2);
+    display: none;
+}
+
+.hud__news--sacred > .hud__news-icon--sacred,
+.hud__news--cursed > .hud__news-icon--cursed {
+    display: flex;
+}
+
+.hud__day-badge.god--zeus, .hud__news.god--zeus { background-color: var(--nation-zeus-tint); border-color: var(--nation-zeus); }
+.hud__day-badge.god--thor, .hud__news.god--thor { background-color: var(--nation-thor-tint); border-color: var(--nation-thor); }
+.hud__day-badge.god--ra, .hud__news.god--ra { background-color: var(--nation-ra-tint); border-color: var(--nation-ra); }
+.hud__day-badge.god--morrigan, .hud__news.god--morrigan { background-color: var(--nation-morrigan-tint); border-color: var(--nation-morrigan); }
+
+/* The Wrath button keeps the button language. Disabled it still names the Wrath and its progress,
+   so its text stays ink (readable) on the paper-shade fill. Ready, it wears the god's tint and color
+   and a ★; while aiming it turns secondary (set by HudView). */
+.button.button--wrath {
+    min-width: var(--wrath-button-min-width);
+    height: var(--action-button-height);
+    margin-right: var(--space-4);
+    /* The ready pulse breathes slowly; hover, press and color changes stay fast. */
+    transition-duration: var(--duration-fast), var(--duration-fast), var(--duration-fast), var(--duration-fast), var(--duration-slow);
+}
+
+.button--wrath:disabled {
+    color: var(--ink);
+}
+
+/* Ready, it is the god's own power: solid nation color, an ink frame with a deeper ink bottom edge
+   (a painted tile, like the pieces), the Wrath name in carved h2 capitals after a ★, and a slow
+   breath (button--wrath-pulse, toggled by HudView). Text is ink, paper on Morrígan's black. */
+.button.button--wrath-ready {
+    font-size: var(--font-size-h2);
+    -unity-font-definition: var(--font-display);
+    -unity-font-style: bold;
+    letter-spacing: 0;
+    border-color: var(--ink);
+    border-bottom-width: var(--shadow-offset);
+    color: var(--ink);
+}
+
+.button--wrath-ready.god--zeus { background-color: var(--nation-zeus); }
+.button--wrath-ready.god--thor { background-color: var(--nation-thor); }
+.button--wrath-ready.god--ra { background-color: var(--nation-ra); }
+.button--wrath-ready.god--morrigan { background-color: var(--nation-morrigan); color: var(--paper); }
+
+/* Hover keeps the god's color and frames it in wood-dark; the lift and grow come from .button:hover. */
+.button--wrath-ready:hover {
+    border-color: var(--wood-dark);
+}
+
+.button--wrath-pulse {
+    scale: var(--wrath-pulse-scale);
+}
+
+/* Destiny Die: the Day line, under the effect, on the god's tint with its color (like the "You" line). */
+.destiny-card__day {
+    margin-top: var(--space-3);
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--font-size-body);
+    -unity-font-style: bold;
+    color: var(--ink);
+    border-width: var(--border-width);
+    border-radius: var(--radius-sm);
+    white-space: normal;
+    max-width: var(--round-line-width);
+    -unity-text-align: middle-center;
+}
+
+.destiny-card__day.god--zeus { background-color: var(--nation-zeus-tint); border-color: var(--nation-zeus); }
+.destiny-card__day.god--thor { background-color: var(--nation-thor-tint); border-color: var(--nation-thor); }
+.destiny-card__day.god--ra { background-color: var(--nation-ra-tint); border-color: var(--nation-ra); }
+.destiny-card__day.god--morrigan { background-color: var(--nation-morrigan-tint); border-color: var(--nation-morrigan); }
+
+/* Menu: Pantheon powers / Classic, side by side; the selected one is the primary button. */
+.menu__modes {
+    flex-direction: row;
+    margin-top: var(--space-6);
+}
+
+/* A thin paper-shade rule between the two pairs (powers / classic, solo / hot-seat). */
+.menu__modes-divider {
+    width: var(--border-width);
+    margin: var(--space-1) var(--space-4);
+    background-color: var(--paper-shade);
+}
+
+.menu__mode-line {
+    font-size: var(--font-size-body);
+    color: var(--ink-soft);
+    margin-top: var(--space-2);
+    -unity-text-align: middle-center;
+}
+
+/* Two lines, "Storm: enemies -1, to Zeus" / "Thunderbolt: halve an army": the names are <b>, which
+   Inter maps to SemiBold. Body size, so the menu keeps display, h2 and body only. */
+.god-card__powers {
+    font-size: var(--font-size-body);
+    color: var(--ink);
+    white-space: normal;
+    -unity-text-align: middle-center;
+    padding: 0 var(--space-2);
+    margin: var(--space-2) 0 0 0;
+}
+
+/* Nations panel: the Favor stars "★★☆" alone, in ink (the word "Favor" lives in the powers card);
+   the meter takes the god's tint and color when full (never color alone: the stars carry the count),
+   bumps when a star arrives and dims when one cracks (.favor--bump / .favor--dim). */
+.nation-row__favor-line {
+    flex-direction: row;
+    align-items: center;
+    margin-top: var(--space-1);
+}
+
+.nation-row__favor {
+    font-size: var(--font-size-body);
+    -unity-font-definition: var(--font-strong);
+    color: var(--ink);
+    padding: 0 var(--space-1);
+    margin: 0;
+    border-width: var(--border-width);
+    border-color: var(--clear);
+    border-radius: var(--radius-sm);
+    transition-property: scale, opacity;
+    transition-duration: var(--duration-base);
+    transition-timing-function: var(--ease-enter);
+}
+
+.nation-row__favor--full.god--zeus { background-color: var(--nation-zeus-tint); border-color: var(--nation-zeus); }
+.nation-row__favor--full.god--thor { background-color: var(--nation-thor-tint); border-color: var(--nation-thor); }
+.nation-row__favor--full.god--ra { background-color: var(--nation-ra-tint); border-color: var(--nation-ra); }
+.nation-row__favor--full.god--morrigan { background-color: var(--nation-morrigan-tint); border-color: var(--nation-morrigan); }
+
+.nation-row--eliminated .nation-row__favor-line {
+    display: none;
+}
+
+/* Small nation chip (round info rows), the nations panel size. */
+.god-chip--sm {
+    width: var(--icon-md);
+    height: var(--icon-md);
+}
+
+.god-chip--sm > .god-chip__icon {
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+}
+
+/* Info toggles (the round line, a nation row with powers): the whole thing is the hit area and the
+   "i" badge says it can be opened. The badge is a small key: a rounded square (never round, so it can't
+   be read as a temple dot), paper-shade fill, wood frame and a bold wood "i". Hover follows the
+   pickable language on the badge (lift, grow, darker frame); open, it turns solid wood. It is a label,
+   not a Button, so one click never toggles twice. */
+.info-badge {
+    width: var(--info-badge-size);
+    height: var(--info-badge-size);
+    flex-shrink: 0;
+    padding: 0;
+    margin: 0;
+    -unity-text-align: middle-center;
+    -unity-font-definition: var(--font-strong);
+    -unity-font-style: bold;
+    font-size: var(--font-size-label);
+    color: var(--wood);
+    background-color: var(--paper-shade);
+    border-width: var(--border-width);
+    border-bottom-width: var(--shadow-offset);
+    border-color: var(--wood);
+    border-radius: var(--radius-sm);
+    transition-property: background-color, border-color, color, translate, scale;
+    transition-duration: var(--duration-fast);
+    transition-timing-function: var(--ease-enter);
+}
+
+.info-toggle {
+    transition-property: border-color, background-color;
+    transition-duration: var(--duration-fast);
+    transition-timing-function: var(--ease-enter);
+}
+
+.info-toggle:hover .info-badge {
+    translate: var(--hover-lift);
+    scale: var(--hover-scale);
+    background-color: var(--paper);
+    border-color: var(--wood-dark);
+    color: var(--wood-dark);
+}
+
+/* Pressed: pushed down, the deeper bottom edge flattens like a key. */
+.info-toggle:active .info-badge {
+    translate: 0 0;
+    scale: var(--press-scale);
+    border-bottom-width: var(--border-width);
+}
+
+.info-toggle--open .info-badge,
+.info-toggle--open:hover .info-badge {
+    background-color: var(--wood);
+    border-color: var(--wood);
+    color: var(--paper);
+}
+
+/* The round line frames itself in wood on hover, like a god card. */
+.hud__round.info-toggle:hover,
+.hud__round.info-toggle--open {
+    border-color: var(--wood);
+    border-bottom-color: var(--wood-dark);
+}
+
+/* A nation row's hover frame is paper-shade, so it never reads as the wood "whose turn" frame. */
+.nation-row.info-toggle:hover {
+    border-color: var(--ink-faint);
+}
+
+.nation-row--turn.info-toggle:hover {
+    border-color: var(--wood);
+}
+
+.nation-row__info {
+    margin-left: var(--space-2);
+    flex-shrink: 0;
+    display: none;
+}
+
+.nation-row.info-toggle .nation-row__info {
+    display: flex;
+}
+
+/* Explanations in full sentences: label headings (what it is), body text (what it does). */
+.info-panel {
+    display: none;
+}
+
+.info-panel__heading {
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-strong);
+    letter-spacing: var(--letter-spacing-label);
+    color: var(--ink-soft);
+    white-space: normal;
+    padding: 0;
+    margin: var(--space-3) 0 0 0;
+}
+
+.info-panel__text {
+    font-size: var(--font-size-body);
+    color: var(--ink);
+    white-space: normal;
+    padding: 0;
+    margin: var(--space-1) 0 0 0;
+}
+
+.info-panel__text--soft {
+    color: var(--ink-soft);
+}
+
+.info-panel__close {
+    align-self: center;
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-strong);
+    letter-spacing: var(--letter-spacing-label);
+    color: var(--ink-soft);
+    padding: 0;
+    margin: var(--space-4) 0 0 0;
+}
+
+/* Round info: under the round line (and the Day badge), centered. Absolute, so however long a Day's
+   text runs it lies over the board and never pushes the prompt and actions down at 1280x720. */
+.round-info {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    translate: -50% 0;
+    width: var(--info-panel-width);
+    margin-top: var(--space-2);
+    padding: var(--space-4) var(--space-6);
+    border-radius: var(--radius-md);
+}
+
+#round-info-title {
+    margin-top: 0;
+}
+
+.round-info__god {
+    flex-direction: row;
+    align-items: center;
+    margin-top: var(--space-2);
+}
+
+.round-info__god-text {
+    flex-shrink: 1;
+    margin: 0 0 0 var(--space-3);
+}
+
+/* A god's powers card, a flyout to the right of its row, aligned with it: paper with the nation
+   color on the left edge (the row beside it carries the chip and the open "i", so the color is never
+   alone). Absolute, so opening it never pushes the rows below off the screen at 1280x720; wider than
+   the panel, so its sentences wrap to a few lines and even Morrígan's card (the last row) fits. */
+.nation-powers {
+    position: absolute;
+    left: 100%;
+    top: 0;
+    width: var(--powers-card-width);
+    margin-left: var(--space-4);
+    padding: var(--space-3) var(--space-4);
+    background-color: var(--paper);
+    border-width: var(--border-width);
+    border-left-width: var(--space-2);
+    border-bottom-width: var(--shadow-offset);
+    border-color: var(--paper-shade);
+    border-bottom-color: var(--shadow);
+    border-radius: var(--radius-md);
+}
+
+/* The lower two rows open upward (bottom-aligned with their row), so their cards stay clear of the
+   prompt and actions at the bottom of the screen. */
+#nation-thor > .nation-powers,
+#nation-morrigan > .nation-powers {
+    top: auto;
+    bottom: 0;
+}
+
+.nation-powers.god--zeus { border-left-color: var(--nation-zeus); }
+.nation-powers.god--thor { border-left-color: var(--nation-thor); }
+.nation-powers.god--ra { border-left-color: var(--nation-ra); }
+.nation-powers.god--morrigan { border-left-color: var(--nation-morrigan); }
+
+.nation-powers__day-heading {
+    margin-top: 0;
+}
+
+/* Reinforcement counter: troops still to place, in a die-like token in the action slot (where END TURN
+   appears once they are all placed). The number pops on every placement, like a piece that gains a troop. */
+.reinforce-counter {
+    flex-direction: row;
+    align-items: center;
+    margin: 0 var(--space-2);
+    padding: var(--space-2) var(--space-6) var(--space-2) var(--space-2);
+    border-radius: var(--radius-md);
+}
+
+.reinforce-counter__count {
+    width: var(--counter-token-size);
+    height: var(--counter-token-size);
+    -unity-text-align: middle-center;
+    -unity-font-definition: var(--font-strong);
+    font-size: var(--font-size-h1);
+    color: var(--ink);
+    padding: 0;
+    margin: 0;
+    background-color: var(--paper);
+    border-width: var(--die-border);
+    border-color: var(--ink);
+    border-radius: var(--radius-md);
+    transition-property: scale;
+    transition-duration: var(--duration-base);
+    transition-timing-function: var(--ease-enter);
+}
+
+.reinforce-counter__count--pop {
+    scale: var(--pop-scale);
+}
+
+.reinforce-counter__text {
+    margin-left: var(--space-4);
+}
+
+.reinforce-counter__label {
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-strong);
+    letter-spacing: var(--letter-spacing-label);
+    color: var(--ink);
+    padding: 0;
+    margin: 0;
+}
+
+/* Where this turn's troops came from ("2 base + 1 for 2 territories + 2 Destiny"), quiet under the
+   caption, so the prompt line above can say only whose turn it is. */
+.reinforce-counter__formula {
+    font-size: var(--font-size-label);
+    color: var(--ink-soft);
+    padding: 0;
+    margin: var(--space-1) 0 0 0;
 }

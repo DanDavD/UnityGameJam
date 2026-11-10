@@ -7,22 +7,33 @@
         <!-- Left column: who you are, then every nation at a glance. -->
         <ui:VisualElement class="hud__left" picking-mode="Ignore">
             <ui:VisualElement name="identity-card" class="card hud__identity" picking-mode="Ignore">
-                <ui:VisualElement name="identity-chip" class="god-chip god--zeus" picking-mode="Ignore">
-                    <ui:VisualElement class="god-chip__icon" picking-mode="Ignore" />
-                </ui:VisualElement>
+                <!-- Only the key facts: who you are, your two numbers and your Wrath with its Favor.
+                     The goal and the powers' full rules live in the info panels (round line, nation rows).
+                     The chip sits on the name line (same head as a nation row), centered with it. -->
                 <ui:VisualElement class="hud__identity-text" picking-mode="Ignore">
+                    <ui:VisualElement class="hud__identity-head" picking-mode="Ignore">
+                        <ui:VisualElement name="identity-chip" class="god-chip god-chip--sm god--zeus" picking-mode="Ignore">
+                            <ui:VisualElement class="god-chip__icon" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                        <ui:Label name="identity-label" class="hud__identity-name" picking-mode="Ignore" text="ZEUS" />
+                    </ui:VisualElement>
                     <ui:VisualElement class="hud__identity-row" picking-mode="Ignore">
-                        <ui:Label name="identity-label" class="hud__identity-line" picking-mode="Ignore" text="YOU: ZEUS ·" />
                         <ui:VisualElement class="omen-icon omen-icon--sacred hud__identity-icon" picking-mode="Ignore" />
-                        <ui:Label name="identity-sacred-label" class="hud__identity-line" picking-mode="Ignore" text="1 sacred ·" />
-                        <ui:VisualElement class="omen-icon omen-icon--cursed hud__identity-icon" picking-mode="Ignore" />
+                        <ui:Label name="identity-sacred-label" class="hud__identity-line" picking-mode="Ignore" text="1 sacred" />
+                        <ui:VisualElement class="omen-icon omen-icon--cursed hud__identity-icon hud__identity-icon--second" picking-mode="Ignore" />
                         <ui:Label name="identity-cursed-label" class="hud__identity-line" picking-mode="Ignore" text="6 cursed" />
                     </ui:VisualElement>
-                    <ui:Label name="goal-label" class="hud__goal" picking-mode="Ignore" text="Goal: hold 3 temples at your turn start" />
+                    <!-- Pantheon powers only: the human's Wrath (carved name) and its Favor stars, on the god's
+                         tint (god class set by HudView). The Wrath button says when it is ready. -->
+                    <ui:VisualElement name="identity-wrath" class="hud__wrath god--zeus" picking-mode="Ignore">
+                        <ui:Label name="identity-wrath-name" class="hud__wrath-name" picking-mode="Ignore" text="Thunderbolt" />
+                        <ui:Label name="identity-favor" class="hud__favor" picking-mode="Ignore" text="★★☆" />
+                    </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
-            <!-- Rows in base cycle order, named after the God enum. -->
+            <!-- Rows in base cycle order, named after the God enum. The goal caption heads them. -->
             <ui:VisualElement name="nations-panel" class="card nations-panel" picking-mode="Ignore">
+                <ui:Label name="nations-goal" class="nations-panel__goal" picking-mode="Ignore" text="First to hold 3 temples wins" />
                 <ui:Instance template="NationRow" name="nation-zeus" picking-mode="Ignore" />
                 <ui:Instance template="NationRow" name="nation-ra" picking-mode="Ignore" />
                 <ui:Instance template="NationRow" name="nation-thor" picking-mode="Ignore" />
@@ -30,15 +41,82 @@
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement class="hud__top" picking-mode="Ignore">
-            <ui:Label name="round-label" class="card hud__round" picking-mode="Ignore" text="Round 1 · Destiny 2: Ra +2, Morrígan -2 · Ra opens" />
+            <!-- The round line is a toggle: a click (or the "i") opens the round info panel below it. -->
+            <ui:VisualElement name="round-bar" class="card hud__round info-toggle">
+                <!-- The Destiny line (h2), then the round counter under it (label, secondary). -->
+                <ui:VisualElement class="hud__round-lines" picking-mode="Ignore">
+                    <ui:Label name="round-label" class="hud__round-text" picking-mode="Ignore" text="Destiny 2: Day of Ra, Morrígan −2" />
+                    <ui:Label name="round-counter" class="hud__round-counter" picking-mode="Ignore" text="ROUND 1/15" />
+                </ui:VisualElement>
+                <ui:Label class="info-badge" picking-mode="Ignore" text="i" />
+            </ui:VisualElement>
+            <!-- A Day that lasts the whole round (Ragnarök, Night of crows); god class set by HudView. -->
+            <ui:Label name="day-badge" class="hud__day-badge god--thor" picking-mode="Ignore" text="Ragnarök: Thor wins ties, his wins cost 2" />
+            <!-- What this round means, in full sentences. Pickable while open (a click on it closes it). Text set by HudView. -->
+            <ui:VisualElement name="round-info" class="card info-panel round-info">
+                <ui:Label name="round-info-title" class="info-panel__heading" picking-mode="Ignore" text="DESTINY 2 · RA'S SACRED NUMBER" />
+                <ui:VisualElement name="round-info-zeus" class="round-info__god" picking-mode="Ignore">
+                    <ui:VisualElement class="god-chip god-chip--sm god--zeus" picking-mode="Ignore">
+                        <ui:VisualElement class="god-chip__icon" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:Label class="info-panel__text round-info__god-text" picking-mode="Ignore" text="&lt;b&gt;Zeus:&lt;/b&gt; no change" />
+                </ui:VisualElement>
+                <ui:VisualElement name="round-info-ra" class="round-info__god" picking-mode="Ignore">
+                    <ui:VisualElement class="god-chip god-chip--sm god--ra" picking-mode="Ignore">
+                        <ui:VisualElement class="god-chip__icon" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:Label class="info-panel__text round-info__god-text" picking-mode="Ignore" text="&lt;b&gt;Ra:&lt;/b&gt; favored, Sun at noon instead of +2 reinforcements" />
+                </ui:VisualElement>
+                <ui:VisualElement name="round-info-thor" class="round-info__god" picking-mode="Ignore">
+                    <ui:VisualElement class="god-chip god-chip--sm god--thor" picking-mode="Ignore">
+                        <ui:VisualElement class="god-chip__icon" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:Label class="info-panel__text round-info__god-text" picking-mode="Ignore" text="&lt;b&gt;Thor:&lt;/b&gt; no change" />
+                </ui:VisualElement>
+                <ui:VisualElement name="round-info-morrigan" class="round-info__god" picking-mode="Ignore">
+                    <ui:VisualElement class="god-chip god-chip--sm god--morrigan" picking-mode="Ignore">
+                        <ui:VisualElement class="god-chip__icon" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:Label class="info-panel__text round-info__god-text" picking-mode="Ignore" text="&lt;b&gt;Morrígan:&lt;/b&gt; weakened, -2 reinforcements" />
+                </ui:VisualElement>
+                <ui:Label name="round-info-opener-heading" class="info-panel__heading" picking-mode="Ignore" text="WHO OPENS" />
+                <ui:Label name="round-info-opener" class="info-panel__text" picking-mode="Ignore" text="Ra opens: Destiny showed 2, Ra's sacred number. Then Thor, Morrígan, Zeus." />
+                <ui:Label name="round-info-day-heading" class="info-panel__heading" picking-mode="Ignore" text="DAY OF RA · SUN AT NOON" />
+                <ui:Label name="round-info-day" class="info-panel__text" picking-mode="Ignore" text="Every Ra territory gains +1 troop at once, instead of Ra's +2 reinforcements." />
+                <ui:Label name="round-info-goal-heading" class="info-panel__heading" picking-mode="Ignore" text="GOAL" />
+                <ui:Label name="round-info-goal" class="info-panel__text" picking-mode="Ignore" text="Hold 3 of the 4 temples at the start of your turn to win." />
+                <ui:Label name="round-info-close" class="info-panel__close" picking-mode="Ignore" text="Click or Esc to close" />
+            </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement class="hud__bottom" picking-mode="Ignore">
+            <!-- What a power just did ("Zeus's Thunderbolt: Ra Capital -3"); god class set by HudView.
+                 A Favor change leads with the drawn omen icon (outcome class set by HudView), never the ✗ glyph. -->
+            <ui:VisualElement name="news" class="hud__news god--zeus hud__news--sacred" picking-mode="Ignore">
+                <ui:VisualElement class="omen-icon omen-icon--sacred hud__news-icon hud__news-icon--sacred" picking-mode="Ignore" />
+                <ui:VisualElement class="omen-icon omen-icon--cursed hud__news-icon hud__news-icon--cursed" picking-mode="Ignore" />
+                <ui:Label name="news-label" class="hud__news-text" picking-mode="Ignore" text="1 sacred: +1 Favor (2/3)" />
+            </ui:VisualElement>
             <ui:Label name="hint-label" class="hud__hint" picking-mode="Ignore" text="Click your territories to place troops" />
             <ui:Label name="prompt-label" class="hud__prompt" picking-mode="Ignore" text="" />
+            <!-- Three slots, so the center (END TURN, or the counter while reinforcing) sits at the exact
+                 bottom center whatever the Wrath button beside it shows. -->
             <ui:VisualElement class="hud__actions" picking-mode="Ignore">
-                <ui:Button name="offering-button" text="OFFER 1 TROOP · RE-ROLL" class="button button--primary" />
-                <ui:Button name="accept-button" text="ACCEPT LOSS" class="button button--secondary" />
-                <ui:Button name="end-turn-button" text="END TURN" class="button button--primary" />
+                <ui:VisualElement class="hud__actions-side hud__actions-side--left" picking-mode="Ignore">
+                    <ui:Button name="wrath-button" text="THUNDERBOLT" class="button button--primary button--wrath" />
+                </ui:VisualElement>
+                <ui:VisualElement class="hud__actions-center" picking-mode="Ignore">
+                    <!-- While the human reinforces: troops still to place, in a die-like token that pops on every
+                         placement, and where they came from on the line under the caption. -->
+                    <ui:VisualElement name="reinforce-counter" class="card reinforce-counter" picking-mode="Ignore">
+                        <ui:Label name="reinforce-count" class="reinforce-counter__count" picking-mode="Ignore" text="5" />
+                        <ui:VisualElement class="reinforce-counter__text" picking-mode="Ignore">
+                            <ui:Label name="reinforce-caption" class="reinforce-counter__label" picking-mode="Ignore" text="TROOPS TO PLACE" />
+                            <ui:Label name="reinforce-formula" class="reinforce-counter__formula" picking-mode="Ignore" text="2 base + 1 for 2 territories + 2 Destiny" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:Button name="end-turn-button" text="END TURN" class="button button--primary button--end-turn" />
+                </ui:VisualElement>
+                <ui:VisualElement class="hud__actions-side" picking-mode="Ignore" />
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="dice-panel" class="card dice-panel" picking-mode="Ignore">
@@ -74,6 +152,14 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
+            <!-- Optional Offering under the human's (attacker's) die, shown by DiceView for a short window
+                 while they lose; the bar inside drains until the combat confirms by itself. -->
+            <ui:Button name="dice-offering-button" class="button button--secondary dice-offering">
+                <ui:Label name="dice-offering-label" class="dice-offering__label" picking-mode="Ignore" />
+                <ui:VisualElement class="dice-offering__timer" picking-mode="Ignore">
+                    <ui:VisualElement name="dice-offering-timer" class="dice-offering__timer-fill" picking-mode="Ignore" />
+                </ui:VisualElement>
+            </ui:Button>
             <ui:Label name="dice-verdict" class="dice-panel__verdict" picking-mode="Ignore" />
             <!-- Shown by DiceView while the human's own combat result waits for a click. -->
             <ui:Label name="dice-continue" class="dice-panel__continue" picking-mode="Ignore" />
@@ -84,6 +170,18 @@
                 <ui:VisualElement class="god-chip__icon" picking-mode="Ignore" />
             </ui:VisualElement>
             <ui:Label name="turn-banner-label" class="turn-banner__label" picking-mode="Ignore" text="YOUR TURN" />
+        </ui:VisualElement>
+        <!-- A person's sacred die opens the Sacred Road: slides in at the center (shown class and text set by
+             TurnBannerView). Picking Ignore until shown, so it never blocks the board while hidden. -->
+        <ui:VisualElement name="road-popup" class="card road-popup" picking-mode="Ignore">
+            <ui:VisualElement class="road-popup__head" picking-mode="Ignore">
+                <ui:VisualElement name="road-popup-chip" class="god-chip god--zeus" picking-mode="Ignore">
+                    <ui:VisualElement class="god-chip__icon" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:Label name="road-popup-title" class="road-popup__title" picking-mode="Ignore" text="SACRED ROAD OPENS" />
+                <ui:Label name="road-popup-close" class="road-popup__close" picking-mode="Ignore" text="Click to close" />
+            </ui:VisualElement>
+            <ui:Label name="road-popup-text" class="road-popup__text" picking-mode="Ignore" text="Your sacred number lets you move an army up to 2 territories. Pick a ringed territory, or end your turn." />
         </ui:VisualElement>
         <!-- Round start: the Destiny Die. Pickable while shown, so a click anywhere skips it. -->
         <ui:VisualElement name="destiny-overlay" class="destiny-overlay">
@@ -97,6 +195,8 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:Label name="destiny-effect" class="destiny-card__effect" picking-mode="Ignore" text="Ra favored +2, Morrígan weakened -2 · Ra opens" />
+                <!-- Pantheon powers: the god's Day, in that god's color (god class set by DestinyView). -->
+                <ui:Label name="destiny-day" class="destiny-card__day god--ra" picking-mode="Ignore" text="Day of Ra: +1 troop on every Ra territory, instead of +2" />
                 <!-- What the face does to the human, in their color (god class set by DestinyView). -->
                 <ui:Label name="destiny-you" class="destiny-card__you god--zeus" picking-mode="Ignore" text="You: no change" />
                 <ui:Label name="destiny-skip" class="destiny-card__skip" picking-mode="Ignore" text="Click to skip" />
@@ -107,7 +207,22 @@
             <ui:VisualElement class="card menu__card" picking-mode="Ignore">
                 <ui:Label name="menu-title" class="menu__title" picking-mode="Ignore" text="GodBoard" />
                 <ui:Label name="menu-tagline" class="menu__tagline" picking-mode="Ignore" text="Your lucky number is your rival's curse." />
-                <ui:Label name="menu-prompt" class="menu__prompt" picking-mode="Ignore" text="Choose your god" />
+                <!-- Pantheon powers or Classic, then Solo or Hot-seat (1-4 people sharing one screen and mouse):
+                     the selected one of each pair is the primary button. Text set by MenuView. -->
+                <ui:VisualElement class="menu__modes" picking-mode="Ignore">
+                    <ui:Button name="mode-powers-button" text="● PANTHEON POWERS" class="button button--primary menu__mode" />
+                    <ui:Button name="mode-classic-button" text="○ CLASSIC" class="button button--secondary menu__mode" />
+                    <ui:VisualElement class="menu__modes-divider" picking-mode="Ignore" />
+                    <ui:Button name="seats-solo-button" text="● SOLO" class="button button--primary menu__mode" />
+                    <ui:Button name="seats-hotseat-button" text="○ HOT-SEAT" class="button button--secondary menu__mode" />
+                </ui:VisualElement>
+                <ui:Label name="mode-line" class="menu__mode-line" picking-mode="Ignore" text="Your sacred roll in combat earns Favor; at 3, unleash your Wrath. Destiny on a god's number brings its Day." />
+                <!-- Solo: "Choose your god" (a card click starts). Hot-seat: a card click switches Human / Bot,
+                     and START (shown only then) begins the match. -->
+                <ui:VisualElement class="menu__prompt-row" picking-mode="Ignore">
+                    <ui:Label name="menu-prompt" class="menu__prompt" picking-mode="Ignore" text="Choose your god" />
+                    <ui:Button name="menu-start-button" text="START" class="button button--primary menu__start" />
+                </ui:VisualElement>
                 <ui:VisualElement class="menu__cards" picking-mode="Ignore">
                     <ui:Instance template="GodCard" name="god-card-zeus" picking-mode="Ignore" />
                     <ui:Instance template="GodCard" name="god-card-ra" picking-mode="Ignore" />

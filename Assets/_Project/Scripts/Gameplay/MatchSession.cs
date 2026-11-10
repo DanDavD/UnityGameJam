@@ -5,14 +5,21 @@ namespace GameJam.Gameplay
 {
     /// <summary>
     /// The player choices that must survive the scene reload that restarts a match:
-    /// which god "Play again" replays, whether bots play fast and whether sound is muted.
+    /// who sits at each god when "Play again" replays (solo or hot-seat), whether the god powers are
+    /// on, whether bots play fast and whether sound is muted.
     /// Reloading the scene rebuilds the Match, board and HUD from scratch, so these are the only
     /// state carried over; a static class is enough and needs no persistent GameObject.
     /// </summary>
     public static class MatchSession
     {
-        /// <summary>Set by "Play again"; when present the menu is skipped and the match starts with it.</summary>
-        public static God? ReplayGod { get; set; }
+        /// <summary>
+        /// Set by "Play again"; when present the menu is skipped and the match starts with these
+        /// seats. "Main menu" clears it, so the menu opens on solo again.
+        /// </summary>
+        public static PlayerSeats ReplaySeats { get; set; }
+
+        /// <summary>The menu's "Pantheon powers" (true, the default) or "Classic" choice; Play again keeps it.</summary>
+        public static bool PowersEnabled { get; set; } = true;
 
         public static bool FastBots { get; set; }
 
@@ -22,7 +29,8 @@ namespace GameJam.Gameplay
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetOnPlay()
         {
-            ReplayGod = null;
+            ReplaySeats = null;
+            PowersEnabled = true;
             FastBots = false;
             Muted = false;
         }

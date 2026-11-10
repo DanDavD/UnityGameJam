@@ -172,9 +172,11 @@ namespace GameJam.Tests
             Assert.AreEqual(CombatSide.Defender, match.PendingCombat.Result.Winner);
             Assert.IsTrue(match.CanMakeOffering);
 
+            int before = _village.Troops;
             match.MakeOffering();
 
             Combat pending = match.PendingCombat;
+            Assert.AreEqual(before - Match.OfferingCost, _village.Troops);
             Assert.AreEqual(5, _village.Troops);
             Assert.AreEqual(1, pending.Result.AttackerRoll);
             Assert.AreEqual(3, pending.Result.DefenderRoll);
