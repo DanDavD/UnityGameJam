@@ -35,6 +35,8 @@ namespace GameJam.UI
 
         // Indexed like Match.BaseTurnOrder, which is also the row order.
         private readonly VisualElement[] _rows = new VisualElement[Match.BaseTurnOrder.Count];
+        private readonly VisualElement[] _instances = new VisualElement[Match.BaseTurnOrder.Count];
+        private readonly Label[] _places = new Label[Match.BaseTurnOrder.Count];
         private readonly Label[] _stats = new Label[Match.BaseTurnOrder.Count];
         private readonly VisualElement[] _temples = new VisualElement[Match.BaseTurnOrder.Count];
 
@@ -83,6 +85,11 @@ namespace GameJam.UI
                 Label youTag = row.Q<Label>(className: "nation-row__you");
 
                 _rows[i] = row;
+                _instances[i] = instance;
+                _places[i] = row.Q<Label>(className: "nation-row__place");
+                // Empty until the draw has decided; the template's text is only a placeholder.
+                _places[i].text = string.Empty;
+                _places[i].style.display = DisplayStyle.None;
                 _stats[i] = row.Q<Label>(className: "nation-row__stats");
                 _temples[i] = row.Q<VisualElement>(className: "nation-row__temples");
                 _youTags[i] = youTag;
@@ -108,6 +115,22 @@ namespace GameJam.UI
             {
                 _rows[i].UnregisterCallback<ClickEvent, int>(HandleRowClicked);
                 _powerCards[i].UnregisterCallback<ClickEvent, int>(HandleRowClicked);
+            }
+        }
+
+        /// <summary>
+        /// Sorts the rows into the drawn turn order, 1st at the top, each with its place tag. The
+        /// indexes of every other method stay the base cycle's; only the rows move.
+        /// </summary>
+        public void SetTurnOrder(System.Collections.Generic.IReadOnlyList<God> order)
+        {
+            for (int place = 0; place < order.Count; place++)
+            {
+                int i = Match.BaseTurnIndex(order[place]);
+                // Adding an existing child moves it to the end, so the four rows end up in order.
+                _panel.Add(_instances[i]);
+                _places[i].text = MatchText.PlaceBadge(place);
+                _places[i].style.display = DisplayStyle.Flex;
             }
         }
 

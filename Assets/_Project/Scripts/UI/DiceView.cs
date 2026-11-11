@@ -9,7 +9,8 @@ namespace GameJam.UI
 {
     /// <summary>
     /// The combat dice: attacker left, defender right. They tumble, land with a small overshoot,
-    /// then tag each roll with what it is for its god ("1 = Zeus's sacred number") and the verdict explaining why.
+    /// then tag each roll ("1 · SACRED") and box the verdict explaining why ("SACRED BEATS NEUTRAL"), with the
+    /// winner's chip, the loser faded and badges for an Offering re-roll or Ragnarök.
     /// After an Offering only the attacker's die rolls again, matching the rule.
     /// A die that just landed sacred pulses; one that landed cursed shakes, so the omen reads before the words.
     /// While the human loses a combat they may re-roll, an optional Offering button sits under their die
@@ -22,6 +23,9 @@ namespace GameJam.UI
         private const string DieCursedClass = "die--cursed";
         private const string OutcomeSacredClass = "outcome--sacred";
         private const string OutcomeCursedClass = "outcome--cursed";
+        private const string DieLoserClass = "die--loser";
+        private const string VerdictShownClass = "verdict--shown";
+        private const string LineShownClass = "verdict__line--shown";
 
         // TODO(MatchText): move to MatchText once the HUD text pass is merged.
         private const string OfferingLabel = "OFFERING · RE-ROLL (−1)";
@@ -72,6 +76,11 @@ namespace GameJam.UI
         private VisualElement _panel;
         private Label _title;
         private Label _verdict;
+        private VisualElement _verdictBox;
+        private VisualElement _verdictChip;
+        private Label _verdictKicker;
+        private Label _offeringBadge;
+        private Label _ragnarokBadge;
         private Label _attackerName;
         private VisualElement _attackerDie;
         private Label _attackerFace;
@@ -116,6 +125,11 @@ namespace GameJam.UI
             _panel = root.Q<VisualElement>("dice-panel");
             _title = root.Q<Label>("dice-title");
             _verdict = root.Q<Label>("dice-verdict");
+            _verdictBox = root.Q<VisualElement>("dice-verdict-box");
+            _verdictChip = root.Q<VisualElement>("dice-verdict-chip");
+            _verdictKicker = root.Q<Label>("dice-verdict-kicker");
+            _offeringBadge = root.Q<Label>("dice-badge-offering");
+            _ragnarokBadge = root.Q<Label>("dice-badge-ragnarok");
             _attackerName = root.Q<Label>("attacker-name");
             _attackerDie = root.Q<VisualElement>("attacker-die");
             _attackerFace = root.Q<Label>("attacker-face");
@@ -151,12 +165,13 @@ namespace GameJam.UI
 
         /// <summary>"Click to continue" under the verdict, while a result waits for the human.</summary>
         public void ShowContinueHint(bool shown) =>
-            _continue.style.display = shown ? DisplayStyle.Flex : DisplayStyle.None;
+            // Visibility, not display: the panel keeps its final height from the first roll, so the dice never jump.
+            _continue.style.visibility = shown ? Visibility.Visible : Visibility.Hidden;
 
         /// <summary>The optional Offering under the attacker's die, its timer bar full.</summary>
         public void ShowOffering(bool shown)
         {
-            _offeringButton.style.display = shown ? DisplayStyle.Flex : DisplayStyle.None;
+            _offeringButton.style.visibility = shown ? Visibility.Visible : Visibility.Hidden;
             SetOfferingTimeLeft(1f);
         }
 
@@ -169,10 +184,47 @@ namespace GameJam.UI
             StopAllCoroutines();
             IsAnimating = false;
             _panel.style.display = DisplayStyle.None;
+            HideVerdict();
             ShowContinueHint(false);
             ShowOffering(false);
             ResetMotion(_attackerDie);
             ResetMotion(_defenderDie);
+        }
+
+        // Clears the last combat's verdict and the faded loser; a re-roll starts from a clean table.
+        private void HideVerdict()
+        {
+            _verdictBox.RemoveFromClassList(VerdictShownClass);
+            _verdict.text = string.Empty;
+            SetLine(_verdictKicker, null);
+            SetLine(_offeringBadge, null);
+            SetLine(_ragnarokBadge, null);
+            _attackerDie.RemoveFromClassList(DieLoserClass);
+            _defenderDie.RemoveFromClassList(DieLoserClass);
+        }
+
+        // The rule that decided it in one boxed line, the winner's chip and tint (so no sentence names
+        // the winner), the loser faded, and badges for an Offering re-roll or Ragnarök.
+        private void ShowVerdict(Combat combat)
+        {
+            bool attackerWon = combat.Result.Winner == CombatSide.Attacker;
+            God winner = attackerWon ? combat.Attacker : combat.Defender;
+            GodUss.Apply(_verdictBox, winner);
+            GodUss.Apply(_verdictChip, winner);
+            SetLine(_verdictKicker, MatchText.CombatVerdictKicker(combat));
+            _verdict.text = MatchText.CombatVerdict(combat);
+            SetLine(_offeringBadge, MatchText.CombatOfferingBadge(combat));
+            SetLine(_ragnarokBadge, MatchText.CombatRagnarokBadge(combat));
+            _verdictBox.AddToClassList(VerdictShownClass);
+
+            (attackerWon ? _defenderDie : _attackerDie).AddToClassList(DieLoserClass);
+        }
+
+        // An optional line of the verdict box (the kicker, a badge): shown only while it has text.
+        private static void SetLine(Label line, string text)
+        {
+            line.text = text ?? string.Empty;
+            line.EnableInClassList(LineShownClass, !string.IsNullOrEmpty(text));
         }
 
         private IEnumerator Roll(Combat combat, float tumbleSeconds)
@@ -185,7 +237,7 @@ namespace GameJam.UI
 
             _panel.style.display = DisplayStyle.Flex;
             _title.text = MatchText.CombatTitle(combat);
-            _verdict.text = string.Empty;
+            HideVerdict();
             ShowContinueHint(false);
             ShowOffering(false);
             _attackerName.text = MatchText.GodName(combat.Attacker);
@@ -208,16 +260,16 @@ namespace GameJam.UI
                 _attackerOutcome,
                 _attackerOutcomeLabel,
                 result.AttackerOutcome,
-                MatchText.OutcomeTag(combat.Attacker, result.AttackerRoll, result.AttackerOutcome)
+                MatchText.OutcomeTag(result.AttackerRoll, result.AttackerOutcome)
             );
             ShowOutcome(
                 _defenderDie,
                 _defenderOutcome,
                 _defenderOutcomeLabel,
                 result.DefenderOutcome,
-                MatchText.OutcomeTag(combat.Defender, result.DefenderRoll, result.DefenderOutcome)
+                MatchText.OutcomeTag(result.DefenderRoll, result.DefenderOutcome)
             );
-            _verdict.text = MatchText.CombatVerdict(combat);
+            ShowVerdict(combat);
             IsAnimating = false;
             Landed?.Invoke(result);
 

@@ -16,16 +16,24 @@ namespace GameJam.UI
     [RequireComponent(typeof(UIDocument))]
     public sealed class HudView : MonoBehaviour
     {
-        private const string WrathReadyClass = "button--wrath-ready";
-        private const string PrimaryButtonClass = "button--primary";
-        private const string SecondaryButtonClass = "button--secondary";
-        private const string PromptRoadClass = "hud__prompt--road";
+        private const string WrathLockedClass = "wrath--locked";
+        private const string WrathReadyClass = "wrath--ready";
+        private const string WrathUsedClass = "wrath--used";
+        private const string WrathAimingClass = "wrath--aiming";
+        private const string WrathStarOnClass = "wrath__star--on";
+        private const string PromptRoadClass = "prompt--road";
+        private const string TurnBoxEnteringClass = "turn-box--entering";
+        private const long TurnBoxEnterDelayMs = 30;
+
+        // Every toast (hints in the right gutter, news pills) stays this much longer than its base
+        // duration: playtests found them gone before they were read. One constant for both.
+        private const float ToastExtraSeconds = 3f;
         private const string NewsSacredClass = "hud__news--sacred";
         private const string NewsCursedClass = "hud__news--cursed";
         private const string InfoOpenClass = "info-toggle--open";
         private const string CountPopClass = "reinforce-counter__count--pop";
         private const string RoundInfoGodTextClass = "round-info__god-text";
-        private const string WrathPulseClass = "button--wrath-pulse";
+        private const string WrathPulseClass = "wrath--pulse";
         private const string FavorStarClass = "favor-star";
         private const string FavorStarBackClass = "favor-star__back";
         private const string FavorStarFrontClass = "favor-star__front";
@@ -99,11 +107,27 @@ namespace GameJam.UI
 
         // Leads every prompt of a person's turn ("YOUR TURN" / "ZEUS'S TURN"); null on a bot's turn.
         private string _turnPrefix;
+        private God? _promptGod;
         private Label _dayBadge;
         private VisualElement _news;
         private Label _newsLabel;
         private Button _wrathButton;
+        private bool _wrathClickable;
+        private IVisualElementScheduledItem _wrathShake;
+        private int _shakeStep = -1;
+        private Label _wrathName;
+        private Label _wrathState;
+        private readonly VisualElement[] _wrathStars = new VisualElement[GodPowers.MaxFavor];
+        private VisualElement _boardArea;
+        private VisualElement _promptBar;
+        private VisualElement _promptChip;
+        private Label _promptTurn;
         private Label _promptLabel;
+        private VisualElement _turnBox;
+        private VisualElement _turnBoxChip;
+        private Label _turnBoxTitle;
+        private Label _turnBoxStatus;
+        private IVisualElementScheduledItem _turnBoxEnter;
         private Label _hintLabel;
         private Button _endTurnButton;
         private VisualElement _toggles;
@@ -128,6 +152,9 @@ namespace GameJam.UI
 
         public event Action EndTurnClicked;
         public event Action WrathClicked;
+
+        /// <summary>The Wrath was clicked while locked or used: the controller says why.</summary>
+        public event Action WrathBlocked;
         public event Action FastBotsClicked;
         public event Action MuteClicked;
         public event Action PlayAgainClicked;
@@ -174,7 +201,35 @@ namespace GameJam.UI
             _news = root.Q<VisualElement>("news");
             _newsLabel = root.Q<Label>("news-label");
             _wrathButton = root.Q<Button>("wrath-button");
+            _wrathName = root.Q<Label>("wrath-name");
+            _wrathState = root.Q<Label>("wrath-state");
+            int starCount = 0;
+            foreach (
+                VisualElement star in root.Q<VisualElement>("wrath-stars")
+                    .Query<VisualElement>(className: "wrath__star")
+                    .ToList()
+            )
+            {
+                if (starCount < _wrathStars.Length)
+                    _wrathStars[starCount] = star;
+                starCount++;
+            }
+            if (starCount != _wrathStars.Length)
+                Debug.LogError(
+                    $"The Wrath button has {starCount} stars in Match.uxml, expected {_wrathStars.Length}."
+                );
+            _wrathShake = _wrathButton.schedule.Execute(StepWrathShake).Every(60);
+            _wrathShake.Pause();
+            _shakeStep = -1;
+            _boardArea = root.Q<VisualElement>("board-area");
+            _promptBar = root.Q<VisualElement>("prompt-bar");
+            _promptChip = root.Q<VisualElement>("prompt-chip");
+            _promptTurn = root.Q<Label>("prompt-turn");
             _promptLabel = root.Q<Label>("prompt-label");
+            _turnBox = root.Q<VisualElement>("turn-box");
+            _turnBoxChip = root.Q<VisualElement>("turn-box-chip");
+            _turnBoxTitle = root.Q<Label>("turn-box-title");
+            _turnBoxStatus = root.Q<Label>("turn-box-status");
             _hintLabel = root.Q<Label>("hint-label");
             _endTurnButton = root.Q<Button>("end-turn-button");
             _toggles = root.Q<VisualElement>("hud-toggles");
@@ -223,10 +278,16 @@ namespace GameJam.UI
                 .schedule.Execute(() => _wrathButton.ToggleInClassList(WrathPulseClass))
                 .Every(SecondsToMs(_wrathPulseSeconds));
             _wrathPulse.Pause();
+            // Created once: re-armed on every turn change, so a new turn never allocates.
+            _turnBoxEnter = _turnBox
+                .schedule.Execute(() => _turnBox.RemoveFromClassList(TurnBoxEnteringClass))
+                .StartingIn(0);
+            _turnBoxEnter.Pause();
             CreateFavorFlyers(root.Q<VisualElement>("hud"));
 
             // Nothing about the match shows until a god is chosen and the first round starts.
             SetVisible(_identityCard, false);
+            HideTurn();
             // The sound toggle already works on the main menu; fast bots only means something in a match.
             SetVisible(_toggles, true);
             SetVisible(_fastBotsButton, false);
@@ -256,6 +317,9 @@ namespace GameJam.UI
             _newsTimeout?.Pause();
             _countPopEnd?.Pause();
             _wrathPulse?.Pause();
+            _turnBoxEnter?.Pause();
+            _wrathShake?.Pause();
+            _shakeStep = -1;
             StopFavorFlyers();
         }
 
@@ -387,40 +451,46 @@ namespace GameJam.UI
         }
 
         /// <summary>
-        /// The prompt line. On a person's turn it leads with <see cref="SetTurnPrefix"/>'s
-        /// "YOUR TURN" / "ZEUS'S TURN"; an empty prompt then shows only that (Reinforce).
+        /// The prompt bar's instruction, labeled with <see cref="SetTurnPrefix"/>'s "YOUR TURN" /
+        /// "ZEUS'S TURN". The bar shows only on a person's turn and only for non-empty text.
         /// </summary>
-        public void SetPrompt(string text)
+        public void SetPrompt(string text) => ShowPrompt(_turnPrefix, text, false);
+
+        /// <summary>The instruction currently on the prompt bar (empty when nothing is shown).</summary>
+        public string PromptText => _promptLabel.text;
+
+        /// <summary>
+        /// A prompt in Sacred Road mode: the call to act, labeled "SACRED ROAD" and framed in ink.
+        /// The next <see cref="SetPrompt"/> returns to the normal style.
+        /// </summary>
+        public void SetRoadPrompt(string text) => ShowPrompt(MatchText.RoadPromptLabel, text, true);
+
+        /// <summary>A prompt labeled with something other than the turn (the Wrath being aimed).</summary>
+        public void SetLabeledPrompt(string label, string text) => ShowPrompt(label, text, false);
+
+        // One component for every prompt: the bar shows only on a person's turn and only when there is
+        // something to say (an empty Reinforce prompt leaves the counter alone on screen).
+        private void ShowPrompt(string label, string text, bool road)
         {
-            _promptLabel.RemoveFromClassList(PromptRoadClass);
-            ShowPromptText(text);
+            bool shown = _turnPrefix != null && !string.IsNullOrEmpty(text);
+            SetVisible(_promptBar, shown);
+            _promptBar.EnableInClassList(PromptRoadClass, road);
+            _promptLabel.text = text;
+            _promptTurn.text = label ?? string.Empty;
+            GodUss.Apply(_promptBar, _promptGod);
+            GodUss.Apply(_promptChip, _promptGod);
         }
 
         /// <summary>
-        /// A prompt in Sacred Road mode: the call to act, larger and bold in ink. The next
-        /// <see cref="SetPrompt"/> returns to the normal style.
+        /// The label of every following prompt (MatchText.TurnPrefix) and the god whose chip and color
+        /// edge the bar wears. A null prefix (a bot's turn, after the match) hides the bar, so hot-seat
+        /// prompts never say "YOUR TURN" to the wrong person.
         /// </summary>
-        public void SetRoadPrompt(string text)
+        public void SetTurnPrefix(string prefix, God? god = null)
         {
-            _promptLabel.AddToClassList(PromptRoadClass);
-            ShowPromptText(text);
+            _turnPrefix = prefix;
+            _promptGod = god;
         }
-
-        private void ShowPromptText(string text)
-        {
-            if (_turnPrefix == null)
-                _promptLabel.text = text;
-            else if (string.IsNullOrEmpty(text))
-                _promptLabel.text = _turnPrefix;
-            else
-                _promptLabel.text = $"{_turnPrefix} · {text}";
-        }
-
-        /// <summary>
-        /// Whose turn every following prompt names (MatchText.TurnPrefix), or null on a bot's turn
-        /// and after the match, so hot-seat prompts never say "YOUR TURN" to the wrong person.
-        /// </summary>
-        public void SetTurnPrefix(string prefix) => _turnPrefix = prefix;
 
         /// <summary>Shows an onboarding hint that hides itself after a few seconds.</summary>
         public void ShowHint(string text)
@@ -431,7 +501,7 @@ namespace GameJam.UI
             _hintTimeout?.Pause();
             _hintTimeout = _hintLabel
                 .schedule.Execute(HideHint)
-                .StartingIn(SecondsToMs(_hintDuration));
+                .StartingIn(SecondsToMs(_hintDuration + ToastExtraSeconds));
         }
 
         /// <summary>True while an onboarding hint is on screen, so a new one can wait instead of replacing it.</summary>
@@ -502,20 +572,117 @@ namespace GameJam.UI
         }
 
         /// <summary>
-        /// The Wrath button: its text ("THUNDERBOLT · 2/3", "★ THUNDERBOLT", "CANCEL THUNDERBOLT"),
-        /// whether it can be pressed, and its look. Ready, it wears the god's tint and color; while
-        /// aiming it turns secondary, so it reads as "back out" rather than "strike".
+        /// The Wrath button: the god's Wrath name, its state line and its Favor stars, drawn in one of
+        /// four looks (<see cref="WrathButtonState"/>). Only a ready Wrath (breathing, in the god's solid
+        /// color) or one being aimed (to cancel it) can be pressed.
         /// </summary>
-        public void SetWrath(string text, bool enabled, God god, bool aiming)
+        public void SetWrath(God god, int favor, WrathButtonState state)
         {
-            _wrathButton.text = text;
-            _wrathButton.SetEnabled(enabled);
+            _wrathName.text = MatchText.WrathButton(god);
+            _wrathState.text = MatchText.WrathState(state, favor);
             GodUss.Apply(_wrathButton, god);
-            bool ready = enabled && !aiming;
-            _wrathButton.EnableInClassList(WrathReadyClass, ready);
-            _wrathButton.EnableInClassList(PrimaryButtonClass, !aiming);
-            _wrathButton.EnableInClassList(SecondaryButtonClass, aiming);
-            SetWrathPulse(ready);
+            for (int i = 0; i < _wrathStars.Length; i++)
+                _wrathStars[i].EnableInClassList(WrathStarOnClass, i < favor);
+            // Never SetEnabled(false): UI Toolkit would fade the whole button to a washed-out ghost. A
+            // locked or used Wrath stays fully drawn and simply does not answer (see HandleWrathClicked).
+            _wrathClickable = state == WrathButtonState.Ready || state == WrathButtonState.Aiming;
+            _wrathButton.EnableInClassList(WrathLockedClass, state == WrathButtonState.Locked);
+            _wrathButton.EnableInClassList(WrathReadyClass, state == WrathButtonState.Ready);
+            _wrathButton.EnableInClassList(WrathUsedClass, state == WrathButtonState.Used);
+            _wrathButton.EnableInClassList(WrathAimingClass, state == WrathButtonState.Aiming);
+            SetWrathPulse(state == WrathButtonState.Ready);
+        }
+
+        /// <summary>
+        /// The free table the board must fit in, as a fraction of the panel (0 to 1, top-left origin).
+        /// False until the first layout pass (or while the view is disabled).
+        /// </summary>
+        public bool TryGetBoardArea(out Rect area)
+        {
+            area = default;
+            if (_document == null || _document.rootVisualElement == null || _boardArea == null)
+                return false;
+            Rect panel = _document.rootVisualElement.worldBound;
+            Rect bound = _boardArea.worldBound;
+            if (
+                float.IsNaN(panel.width)
+                || panel.width <= 0f
+                || panel.height <= 0f
+                || float.IsNaN(bound.width)
+                || bound.width <= 0f
+                || bound.height <= 0f
+            )
+                return false;
+            area = new Rect(
+                bound.x / panel.width,
+                bound.y / panel.height,
+                bound.width / panel.width,
+                bound.height / panel.height
+            );
+            return true;
+        }
+
+        /// <summary>
+        /// The turn box (top right): whose turn it is, in that god's chip and color. A new turn slides
+        /// it in. <paramref name="title"/> is "YOUR TURN" / "THOR'S TURN" / "P2 · ZEUS'S TURN".
+        /// </summary>
+        public void ShowTurn(God god, string title)
+        {
+            bool sameTurn =
+                _turnBox.style.display == DisplayStyle.Flex && _turnBoxTitle.text == title;
+            GodUss.Apply(_turnBox, god);
+            GodUss.Apply(_turnBoxChip, god);
+            _turnBoxTitle.text = title;
+            SetVisible(_turnBox, true);
+            // The status always resets, so the last turn's "Rolling…" never lingers under a new title.
+            SetTurnStatus(null);
+            if (sameTurn)
+                return;
+            // Starts off to the right and faded; a moment later the class goes and USS slides it home.
+            _turnBox.AddToClassList(TurnBoxEnteringClass);
+            _turnBoxEnter.ExecuteLater(TurnBoxEnterDelayMs);
+        }
+
+        /// <summary>A tiny sideways shake of the Wrath button: "not now". Four short steps, then rest.</summary>
+        public void ShakeWrath()
+        {
+            // Ignored while a shake runs; one scheduled item, created once, so a click never allocates.
+            if (_shakeStep >= 0)
+                return;
+            _shakeStep = 0;
+            _wrathShake.Resume();
+        }
+
+        private static readonly float[] ShakeOffsets = { 8f, -8f, 5f, -5f, 0f };
+
+        private void StepWrathShake()
+        {
+            if (_shakeStep < 0)
+                return;
+            float x = ShakeOffsets[_shakeStep];
+            if (x == 0f)
+                _wrathButton.style.translate = StyleKeyword.Null;
+            else
+                _wrathButton.style.translate = new Translate(x, 0f);
+            _shakeStep++;
+            if (_shakeStep < ShakeOffsets.Length)
+                return;
+            _shakeStep = -1;
+            _wrathShake.Pause();
+        }
+
+        /// <summary>The short line under the turn title ("Rolling…"); null or empty hides it.</summary>
+        public void SetTurnStatus(string status)
+        {
+            _turnBoxStatus.text = status ?? string.Empty;
+            SetVisible(_turnBoxStatus, !string.IsNullOrEmpty(status));
+        }
+
+        public void HideTurn()
+        {
+            _turnBoxEnter?.Pause();
+            _turnBox.RemoveFromClassList(TurnBoxEnteringClass);
+            SetVisible(_turnBox, false);
         }
 
         // Only a ready Wrath breathes; any other state stands still at rest scale.
@@ -550,7 +717,9 @@ namespace GameJam.UI
             _news.EnableInClassList(NewsCursedClass, omen == RollOutcome.Cursed);
             SetVisible(_news, true);
             _newsTimeout?.Pause();
-            _newsTimeout = _news.schedule.Execute(HideNews).StartingIn(SecondsToMs(_newsDuration));
+            _newsTimeout = _news
+                .schedule.Execute(HideNews)
+                .StartingIn(SecondsToMs(_newsDuration + ToastExtraSeconds));
         }
 
         public void HideNews()
@@ -599,6 +768,8 @@ namespace GameJam.UI
             ShowWrath(false);
             StopFavorFlyers();
             _turnPrefix = null;
+            SetPrompt(string.Empty);
+            HideTurn();
             SetVisible(_toggles, false);
             SetVisible(_endBanner, true);
         }
@@ -623,7 +794,13 @@ namespace GameJam.UI
 
         private void HandleEndTurnClicked() => EndTurnClicked?.Invoke();
 
-        private void HandleWrathClicked() => WrathClicked?.Invoke();
+        private void HandleWrathClicked()
+        {
+            if (_wrathClickable)
+                WrathClicked?.Invoke();
+            else
+                WrathBlocked?.Invoke();
+        }
 
         private void HandleFastBotsClicked() => FastBotsClicked?.Invoke();
 

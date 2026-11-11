@@ -34,6 +34,10 @@ namespace GameJam.Gameplay
         [SerializeField]
         private MenuView _menu;
 
+        [Tooltip("The turn-order draw before round 1.")]
+        [SerializeField]
+        private TurnOrderView _turnOrder;
+
         [Tooltip("Read only to tell a click that skips the Destiny Die from a board click.")]
         [SerializeField]
         private DestinyView _destiny;
@@ -122,6 +126,9 @@ namespace GameJam.Gameplay
         private bool _endTurnRequested;
         private bool _wrathRequested;
 
+        // The Wrath can be unleashed this visit to the attack loop: the attack prompt names it.
+        private bool _wrathReady;
+
         // A board click that ended the human's combat window early. It confirms the combat and is
         // then replayed by the attack loop, so clicking the same enemy again attacks again at once.
         private Territory _carriedClick;
@@ -167,6 +174,7 @@ namespace GameJam.Gameplay
             _dice.OfferingClicked += HandleOfferingClicked;
             _hud.EndTurnClicked += HandleEndTurnClicked;
             _hud.WrathClicked += HandleWrathClicked;
+            _hud.WrathBlocked += HandleWrathBlocked;
             _hud.FastBotsClicked += HandleFastBotsClicked;
             _hud.MuteClicked += HandleMuteClicked;
             _hud.PlayAgainClicked += HandlePlayAgainClicked;
@@ -184,6 +192,7 @@ namespace GameJam.Gameplay
             _dice.OfferingClicked -= HandleOfferingClicked;
             _hud.EndTurnClicked -= HandleEndTurnClicked;
             _hud.WrathClicked -= HandleWrathClicked;
+            _hud.WrathBlocked -= HandleWrathBlocked;
             _hud.FastBotsClicked -= HandleFastBotsClicked;
             _hud.MuteClicked -= HandleMuteClicked;
             _hud.PlayAgainClicked -= HandlePlayAgainClicked;
@@ -274,33 +283,46 @@ namespace GameJam.Gameplay
                 _menu.Hide();
             }
 
-            _match = new Match(_boardModel, new SystemRandom(), MatchSession.PowersEnabled);
+            // The dice fix the turn order for the whole match, whoever the seats are (Classic and
+            // "Play again" draw too). The roll sound is the same single clip as every other roll.
+            TurnOrderDraw draw = TurnOrderDraw.Draw(new SystemRandom());
+            _match = new Match(
+                _boardModel,
+                new SystemRandom(),
+                MatchSession.PowersEnabled,
+                draw.Order
+            );
             AttachMatch();
-            _seats = _chosenSeats;
+            _seats = _chosenSeats.WithTurnOrder(draw.Order);
+            // The whole HUD and the board are already up behind the draw; the nations panel
+            // re-sorts into the drawn order when it ends.
             _presenter.SetSeats(_seats);
+
+            _turnOrder.RollStarted = () => _sfx.PlayRoll(_dice.FallbackTumbleDuration);
+            yield return _turnOrder.Play(draw, BotPaceFactor);
+            _sfx.StopRoll();
+            _presenter.ShowTurnOrder(draw.Order);
         }
 
         private IEnumerator HumanReinforce()
         {
-            _hud.SetPrompt(MatchText.ReinforcePrompt(_match.TurnReinforcements));
+            _hud.SetTurnStatus(MatchText.StatusYourReinforce);
+            _hud.SetPrompt(MatchText.ReinforcePrompt(_match.ReinforcementsLeft));
             _awaitingBoardClick = true;
             while (true)
             {
                 // Wait a frame first: the loop may re-enter in the frame of the previous click,
                 // and reading that click again would place several troops at once.
                 yield return null;
-                // Waits for a free hint slot, so it never replaces the Destiny hint the moment it appears.
-                if (!_hud.IsHintVisible)
-                    _presenter.ShowHintOnce(Hint.Reinforce);
                 if (!TryGetClickedTerritory(out Territory territory))
                     continue;
 
                 if (territory.Owner != _match.CurrentGod)
                 {
-                    // Appended, not replaced, so the troop count and its breakdown stay visible.
+                    // Appended, not replaced, so the instruction stays visible.
                     _hud.SetPrompt(
                         MatchText.WithHint(
-                            MatchText.ReinforcePrompt(_match.TurnReinforcements),
+                            MatchText.ReinforcePrompt(_match.ReinforcementsLeft),
                             MatchText.PickOwnTerritoryHint
                         )
                     );
@@ -318,13 +340,14 @@ namespace GameJam.Gameplay
 
         private IEnumerator HumanAttack()
         {
+            // Favor and the Road only change through commands, so the Wrath button and Road mode are
+            // set once per visit to this loop. Before Select, whose prompt names a ready Wrath.
+            bool wrathUsable = RefreshWrathButton();
             Select(NextAttacker());
+            _hud.SetTurnStatus(MatchText.StatusYourAttack);
             _endTurnRequested = false;
             _wrathRequested = false;
             _hud.ShowEndTurn(true);
-            // Favor and the Road only change through commands, so the Wrath button and Road mode are
-            // set once per visit to this loop.
-            bool wrathUsable = RefreshWrathButton();
             // A sacred roll's Road starts here, back in the attack loop, never over the combat's dice.
             if (StartRoadMode())
             {
@@ -333,9 +356,12 @@ namespace GameJam.Gameplay
                 yield return _presenter.ShowRoadPopupIfOpened();
                 ShowRoadOrigins();
             }
-            else if (!(wrathUsable && _presenter.ShowHintOnce(Hint.Wrath)))
+            else
             {
-                _presenter.ShowHintOnce(Hint.Attack);
+                // A Road no army can use gets no popup, now or later this turn.
+                _presenter.ClearPendingRoadPopup();
+                if (!(wrathUsable && _presenter.ShowHintOnce(Hint.Wrath)))
+                    _presenter.ShowHintOnce(Hint.Attack);
             }
             _awaitingBoardClick = true;
 
@@ -411,6 +437,8 @@ namespace GameJam.Gameplay
                 {
                     LeaveHumanAttack();
                     _lastTarget = clicked;
+                    // The march line starts with the attack, so the dice that follow roll for it.
+                    _presenter.ShowAttackPath(_selected, clicked);
                     _match.Attack(_selected, clicked);
                     yield break;
                 }
@@ -420,8 +448,8 @@ namespace GameJam.Gameplay
 
         // The attack loop's buttons and hint go away before a command. The selection stays, so an
         // attack keeps its rings during the combat and the next visit can reselect it. Road mode ends
-        // with any command (a march spends the Road, a Wrath or END TURN leaves the loop); its prompt
-        // is dropped so the large line never hangs over what follows, and so is the popup.
+        // with any command (a march spends the Road, a Wrath or END TURN leaves the loop). The prompt is
+        // dropped with them: "Choose a target…" must not hang over the dice it just started.
         private void LeaveHumanAttack()
         {
             _awaitingBoardClick = false;
@@ -429,11 +457,11 @@ namespace GameJam.Gameplay
             _hud.ShowEndTurn(false);
             _hud.ShowWrath(false);
             _hud.HideHint();
+            _hud.SetPrompt(string.Empty);
             if (!_roadMode)
                 return;
             StopRoadMode();
             _presenter.HideRoadPopup();
-            _hud.SetPrompt(string.Empty);
         }
 
         // Risk-style follow-up after a combat: the attacker stays selected while it can still attack,
@@ -469,13 +497,14 @@ namespace GameJam.Gameplay
 
             God god = _match.CurrentGod;
             bool usable = _match.IsWrathReady && HasWrathTarget();
-            string text = MatchText.WrathButton(
-                god,
-                _match.FavorOf(god),
-                _match.WrathUsedThisTurn,
-                usable
-            );
-            _hud.SetWrath(text, usable, god, aiming: false);
+            _wrathReady = usable;
+            // One Wrath per turn: once unleashed the button says so until the next turn; otherwise it is
+            // ready, or locked (short of Favor, or full with nothing to strike).
+            WrathButtonState state =
+                usable ? WrathButtonState.Ready
+                : _match.WrathUsedThisTurn ? WrathButtonState.Used
+                : WrathButtonState.Locked;
+            _hud.SetWrath(god, _match.FavorOf(god), state);
             return usable;
         }
 
@@ -520,7 +549,7 @@ namespace GameJam.Gameplay
                 && _selected != null
                 && HasWrathTargetFrom(_selected);
             _wrathSource = selectedCanStrike ? _selected : null;
-            _hud.SetWrath(MatchText.CancelWrathButton(god), true, god, aiming: true);
+            _hud.SetWrath(god, _match.FavorOf(god), WrathButtonState.Aiming);
             _hud.HideHint();
             ShowWrathTargets();
             _sfx.Play(SfxCue.Click);
@@ -551,7 +580,7 @@ namespace GameJam.Gameplay
         {
             _board.ClearHighlights();
             God god = _match.CurrentGod;
-            _hud.SetPrompt(MatchText.WrathTargetPrompt(god, _wrathSource));
+            SetWrathPrompt(MatchText.WrathTargetPrompt(god, _wrathSource));
             bool needsSource = GodPowers.WrathNeedsSource(god);
             if (needsSource && _wrathSource == null)
                 return;
@@ -588,7 +617,7 @@ namespace GameJam.Gameplay
                     _sfx.Play(SfxCue.Click);
                     return false;
                 }
-                _hud.SetPrompt(
+                SetWrathPrompt(
                     MatchText.WithHint(
                         MatchText.WrathTargetPrompt(god, _wrathSource),
                         MatchText.WrathNoSourceHint
@@ -603,10 +632,14 @@ namespace GameJam.Gameplay
                 GodPowers.WrathNeedsSource(god) && _wrathSource == null
                     ? MatchText.WrathPickSourceFirstHint
                     : MatchText.WrathNoTargetHint(god);
-            _hud.SetPrompt(MatchText.WithHint(MatchText.WrathTargetPrompt(god, _wrathSource), why));
+            SetWrathPrompt(MatchText.WithHint(MatchText.WrathTargetPrompt(god, _wrathSource), why));
             _sfx.Play(SfxCue.Invalid);
             return false;
         }
+
+        // The prompt bar names the Wrath being aimed ("THUNDERBOLT") where it usually says whose turn it is.
+        private void SetWrathPrompt(string text) =>
+            _hud.SetLabeledPrompt(MatchText.WrathButton(_match.CurrentGod), text);
 
         /// <summary>
         /// Enters Road mode when the human holds an open Road and has an army that can march (2+
@@ -780,8 +813,6 @@ namespace GameJam.Gameplay
             _offeringOpen = canOffer;
             _dice.ShowOffering(canOffer);
             _dice.ShowContinueHint(!canOffer);
-            if (canOffer)
-                _hud.SetPrompt(MatchText.OfferingPrompt);
 
             for (float elapsed = 0f; elapsed < window; elapsed += Time.deltaTime)
             {
@@ -804,6 +835,7 @@ namespace GameJam.Gameplay
 
         private IEnumerator BotReinforce()
         {
+            _hud.SetTurnStatus(MatchText.StatusReinforcing);
             yield return BotPause(_botPlacePause);
             _match.PlaceTroop(BotPlayer.ChooseReinforcement(_match));
             _sfx.Play(SfxCue.TroopPlaced);
@@ -812,6 +844,7 @@ namespace GameJam.Gameplay
         private IEnumerator BotAttack()
         {
             _board.ClearHighlights();
+            _hud.SetTurnStatus(MatchText.StatusThinking);
             yield return BotPause(_botStepPause);
             // Asked before every attack: Favor can fill up in the middle of the turn.
             if (BotPlayer.TryChooseWrath(_match, out Territory source, out Territory target))
@@ -832,9 +865,11 @@ namespace GameJam.Gameplay
             }
 
             // Show the intended attack first so the player can follow what the bot does.
+            _hud.SetTurnStatus(MatchText.StatusAttacking);
             _board.SetHighlight(from, TerritoryHighlight.Selected);
             _board.SetHighlight(to, TerritoryHighlight.Target);
             yield return BotPause(_botStepPause);
+            _presenter.ShowAttackPath(from, to);
             _match.Attack(from, to);
         }
 
@@ -846,30 +881,29 @@ namespace GameJam.Gameplay
                 _board.SetHighlight(source, TerritoryHighlight.Selected);
             if (target != null)
                 _board.SetHighlight(target, TerritoryHighlight.Target);
-            _hud.SetPrompt(MatchText.BotWrath(god));
+            _hud.SetTurnStatus(MatchText.StatusWrath(god));
             yield return BotPause(_botStepPause);
 
             _match.UnleashWrath(source, target);
             yield return BotPause(_botResultHold);
             // A Wrath that ended the match, or knocked the last person out, leaves the end screen alone.
             if (_match.Phase != TurnPhase.MatchOver && !AreAllHumansOut)
-                _hud.SetPrompt(MatchText.BotPlaying(god));
+                _hud.SetTurnStatus(MatchText.StatusThinking);
         }
 
         // Paced like an attack: the origin and destination show first, then the march; the presenter
         // plays the path and the turn loop waits for it before anyone acts.
         private IEnumerator BotRoad(Territory from, Territory to)
         {
-            God god = _match.CurrentGod;
             _board.SetHighlight(from, TerritoryHighlight.Selected);
             _board.SetHighlight(to, TerritoryHighlight.Target);
-            _hud.SetPrompt(MatchText.BotRoad(god));
+            _hud.SetTurnStatus(MatchText.StatusMarching);
             yield return BotPause(_botStepPause);
 
             _match.UseRoad(from, to);
             yield return BotPause(_botStepPause);
             if (_match.Phase != TurnPhase.MatchOver && !AreAllHumansOut)
-                _hud.SetPrompt(MatchText.BotPlaying(god));
+                _hud.SetTurnStatus(MatchText.StatusThinking);
         }
 
         // The factor is read every frame, so toggling fast bots mid-pause takes effect at once.
@@ -974,7 +1008,11 @@ namespace GameJam.Gameplay
             _board.ClearHighlights();
             if (territory == null)
             {
-                _hud.SetPrompt(MatchText.AttackPrompt);
+                _hud.SetPrompt(
+                    _wrathReady
+                        ? MatchText.AttackPromptWrath(_match.CurrentGod)
+                        : MatchText.AttackPrompt
+                );
                 return;
             }
 
@@ -1064,6 +1102,56 @@ namespace GameJam.Gameplay
         }
 
         private void HandleWrathClicked() => _wrathRequested = true;
+
+        // A click on a locked or used Wrath: say what it needs, and shake it a little. Only while the
+        // person is in the attack loop (the button is hidden otherwise).
+        private void HandleWrathBlocked()
+        {
+            if (!_awaitingBoardClick || _aimingWrath)
+                return;
+            God god = _match.CurrentGod;
+            string hint = MatchText.WrathLockedHint(
+                god,
+                _match.FavorOf(god),
+                _match.WrathUsedThisTurn
+            );
+            if (_roadMode)
+                _hud.SetRoadPrompt(hint);
+            else
+                _hud.SetPrompt(hint);
+            _hud.ShakeWrath();
+            _sfx.Play(SfxCue.Invalid);
+            if (_wrathHintRoutine != null)
+                StopCoroutine(_wrathHintRoutine);
+            _wrathHintRoutine = StartCoroutine(RestorePromptAfterWrathHint(hint));
+        }
+
+        private Coroutine _wrathHintRoutine;
+
+        // The hint is a short answer, not the new prompt: after a moment the real instruction returns,
+        // unless something else (a click, a refusal) already replaced the hint.
+        private IEnumerator RestorePromptAfterWrathHint(string hint)
+        {
+            for (float t = 0f; t < 2f; t += Time.deltaTime)
+                yield return null;
+            _wrathHintRoutine = null;
+            if (!_awaitingBoardClick || _aimingWrath || _hud.PromptText != hint)
+                yield break;
+            if (_roadMode)
+                _hud.SetRoadPrompt(
+                    _roadSource != null
+                        ? MatchText.RoadDestinationsPrompt
+                        : MatchText.RoadOriginsPrompt
+                );
+            else if (_selected != null)
+                _hud.SetPrompt(MatchText.TargetPrompt(_selected));
+            else
+                _hud.SetPrompt(
+                    _wrathReady
+                        ? MatchText.AttackPromptWrath(_match.CurrentGod)
+                        : MatchText.AttackPrompt
+                );
+        }
 
         // Only reachable on the menu, before the Match exists, so the mode is final once a card is clicked.
         private void HandlePowersChosen(bool enabled)

@@ -174,6 +174,11 @@ Key product, game-design and architecture decisions behind **GodBoard**, with th
 **Decision:** captures hop the piece and expand a ring in the new owner's color; only taking a rival's territory also shakes the screen (3 px, 120 ms). Losses show a "-1" and never hop.
 **Why:** restraint: empty temples are grabbed every turn, and shaking for them would make the strongest effect meaningless. One motion per piece keeps each change readable.
 
+### No dead gods on the die, no back-to-back turns
+**Decision:** (1) a Destiny face that belongs to an eliminated god is re-rolled until it shows a living god, 3 or 4. (2) The god who played last in a round cannot open the next one: the opening moves to the next living god in the base cycle. The god on the face keeps their Day and +2/-2; only the opening spot shifts, and the Destiny line says why ("Thor played last, so Morrigan opens").
+**Why:** a dead god's face still weakened its rival and wasted a round's drama; two turns in a row felt unfair in playtests. Both are small Core changes that keep the lucky number in charge.
+**Rejected:** a fixed turn cycle (removes the Destiny Die's best effect) and a full shuffle each round (hard to read and can still chain turns).
+
 ### Simplicity first
 **Decision:** no frameworks, DI containers, event buses, reflection or complex generics. Static functions for pure rules, enums and plain classes elsewhere. If something can be deleted without losing behavior, it is deleted.
 **Why:** it is a small game, and the code should read in minutes.

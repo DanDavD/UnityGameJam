@@ -26,6 +26,22 @@ namespace GameJam.Core
             }
         }
 
+        /// <summary>
+        /// Rolls the Destiny Die, re-rolling a face that belongs to an eliminated god: a dead god
+        /// can neither be favored nor weaken its rival. 3 and 4 always count, so this ends.
+        /// Extra rolls are consumed only on a re-roll, which keeps seeded matches deterministic.
+        /// </summary>
+        public static int Roll(IRandom random, System.Func<God, bool> isEliminated)
+        {
+            while (true)
+            {
+                int face = Die.Roll(random);
+                God? owner = Pantheon.GodOfFace(face);
+                if (owner == null || !isEliminated(owner.Value))
+                    return face;
+            }
+        }
+
         public static bool IsBadOmen(int destinyFace)
         {
             Die.EnsureValidFace(destinyFace);

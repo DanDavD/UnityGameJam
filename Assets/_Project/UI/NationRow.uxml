@@ -9,6 +9,8 @@
                 <ui:VisualElement class="god-chip nation-row__chip" picking-mode="Ignore">
                     <ui:VisualElement class="god-chip__icon" picking-mode="Ignore" />
                 </ui:VisualElement>
+                <!-- Place in the drawn turn order ("1st".."4th"), set by NationsView. -->
+                <ui:Label class="nation-row__place" picking-mode="Ignore" text="1st" />
                 <ui:Label class="nation-row__name" picking-mode="Ignore" text="Zeus" />
                 <ui:Label class="nation-row__you" picking-mode="Ignore" text="YOU" />
                 <!-- Pantheon powers only: "click me for this god's powers", on the name line, a rounded

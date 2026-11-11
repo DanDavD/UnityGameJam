@@ -53,7 +53,6 @@ namespace GameJam.UI
             _roadChip = root.Q<VisualElement>("road-popup-chip");
             _roadTitle = root.Q<Label>("road-popup-title");
             _roadText = root.Q<Label>("road-popup-text");
-            root.Q<Label>("road-popup-close").text = MatchText.RoadPopupClose;
             _roadPopup.RegisterCallback<PointerDownEvent>(HandleRoadPopupPointerDown);
         }
 
@@ -79,20 +78,25 @@ namespace GameJam.UI
         /// seconds, or on a click on it. It only catches clicks while it is shown, so it never
         /// blocks the board for longer than it takes to read.
         /// </summary>
-        public void ShowRoadPopup(God god, string title, string text, float durationFactor)
+        public void ShowRoadPopup(God god, string text)
         {
             HideRoadPopup();
             GodUss.Apply(_roadPopup, god);
             GodUss.Apply(_roadChip, god);
-            _roadTitle.text = title;
+            _roadTitle.text = MatchText.RoadPopupTitle;
             _roadText.text = text;
             _roadPopup.pickingMode = PickingMode.Position;
             _roadPopup.AddToClassList(RoadShownClass);
-            _roadPopupRoutine = StartCoroutine(HoldRoadPopup(_roadPopupDuration * durationFactor));
+            _roadPopupRoutine = StartCoroutine(HoldRoadPopup(_roadPopupDuration));
         }
 
         /// <summary>Slides the popup out at once (a click on it, the player's next action, a new turn).</summary>
-        public void HideRoadPopup()
+        public void HideRoadPopup() => HideRoadPopup(false);
+
+        // keepPickable: the dismissing click is still being routed this frame, so the (invisible)
+        // popup keeps catching it until the next frame; otherwise the same click would reach the
+        // territory under it.
+        private void HideRoadPopup(bool keepPickable)
         {
             if (_roadPopupRoutine != null)
             {
@@ -100,12 +104,23 @@ namespace GameJam.UI
                 _roadPopupRoutine = null;
             }
             _roadPopup.RemoveFromClassList(RoadShownClass);
-            _roadPopup.pickingMode = PickingMode.Ignore;
+            if (keepPickable && isActiveAndEnabled)
+                StartCoroutine(IgnorePickingNextFrame());
+            else
+                _roadPopup.pickingMode = PickingMode.Ignore;
+        }
+
+        private IEnumerator IgnorePickingNextFrame()
+        {
+            yield return null;
+            // A popup shown again in the meantime must stay clickable.
+            if (!_roadPopup.ClassListContains(RoadShownClass))
+                _roadPopup.pickingMode = PickingMode.Ignore;
         }
 
         private void HandleRoadPopupPointerDown(PointerDownEvent evt)
         {
-            HideRoadPopup();
+            HideRoadPopup(true);
             evt.StopPropagation();
         }
 

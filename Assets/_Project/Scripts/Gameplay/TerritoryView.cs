@@ -1,6 +1,5 @@
 using System.Collections;
 using GameJam.Core;
-using GameJam.UI;
 using TMPro;
 using UnityEngine;
 
@@ -13,6 +12,10 @@ namespace GameJam.Gameplay
     /// </summary>
     public sealed class TerritoryView : MonoBehaviour
     {
+        // The middle row of the board counts as the top half, so its tags hang below like the top row's
+        // and never meet the bottom row's tags above.
+        private const float TagSideTolerance = 0.5f;
+
         [Header("Parts")]
         [SerializeField]
         private SpriteRenderer _shadow;
@@ -106,6 +109,10 @@ namespace GameJam.Gameplay
         [Tooltip("Size of the ROAD tag relative to the troop count.")]
         [SerializeField, Range(0.2f, 1f)]
         private float _roadTagScale = 0.75f;
+
+        [Tooltip("The word on a territory that can march, so the Road ring is never the only cue.")]
+        [SerializeField]
+        private string _roadTagText = "ROAD";
 
         [Tooltip("The selected territory is drawn slightly bigger, as if lifted off the board.")]
         [SerializeField, Min(1f)]
@@ -213,10 +220,6 @@ namespace GameJam.Gameplay
         private Coroutine _captureRingRoutine;
         private Vector3 _ringRestScale;
         private bool _pulsing;
-
-        // The middle row of the board counts as the top half, so its tags hang below like the top row's
-        // and never meet the bottom row's tags above.
-        private const float TagSideTolerance = 0.5f;
 
         private Color _outlineBaseColor;
 
@@ -485,7 +488,7 @@ namespace GameJam.Gameplay
                 _roadTag = CopyTroopText("Road Tag");
                 _roadTag.transform.localScale = _troops.transform.localScale * _roadTagScale;
                 _roadTag.color = _selectedColor;
-                _roadTag.SetText(MatchText.RoadTag);
+                _roadTag.SetText(_roadTagText);
             }
 
             Bounds ring = _highlight.bounds;

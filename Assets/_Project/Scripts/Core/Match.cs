@@ -38,7 +38,10 @@ namespace GameJam.Core
         // Indexed by (int)God; always 0 while powers are off.
         private readonly int[] _favor = new int[BaseTurnOrder.Count];
 
-        // Both are positions in BaseTurnOrder.
+        // The fixed play order of the whole match (the draw's result, or BaseTurnOrder); both indexes
+        // are positions in it.
+        private readonly God[] _order;
+        private readonly bool _destinyOpens;
         private int _turnIndex;
         private int _openerIndex;
 
@@ -60,11 +63,39 @@ namespace GameJam.Core
         /// the Day of the God, Favor and the Wrath. They draw no extra random numbers.
         /// </summary>
         public Match(Board board, IRandom random, bool powersEnabled)
+            : this(board, random, powersEnabled, null) { }
+
+        /// <summary>
+        /// <paramref name="turnOrder"/> is the fixed order every round follows (the turn-order draw's
+        /// result): a permutation of the four gods, and the same god opens every round. Null keeps
+        /// <see cref="BaseTurnOrder"/> with the Destiny face choosing the opener (tests, simulations).
+        /// </summary>
+        public Match(Board board, IRandom random, bool powersEnabled, IReadOnlyList<God> turnOrder)
         {
             Board = board ?? throw new ArgumentNullException(nameof(board));
             _random = random ?? throw new ArgumentNullException(nameof(random));
             PowersEnabled = powersEnabled;
+            _destinyOpens = turnOrder == null;
+            _order = new God[BaseTurnOrder.Count];
+            IReadOnlyList<God> source = turnOrder ?? BaseTurnOrder;
+            if (source.Count != _order.Length)
+                throw new ArgumentException(
+                    "The turn order needs all four gods.",
+                    nameof(turnOrder)
+                );
+            for (int i = 0; i < _order.Length; i++)
+            {
+                _order[i] = source[i];
+                for (int j = 0; j < i; j++)
+                {
+                    if (_order[j] == _order[i])
+                        throw new ArgumentException("A god is listed twice.", nameof(turnOrder));
+                }
+            }
         }
+
+        /// <summary>The fixed order the gods play in, every round of this match.</summary>
+        public IReadOnlyList<God> TurnOrder => Array.AsReadOnly(_order);
 
         /// <summary>
         /// Round number and Destiny face, before the bad omen or the Day of the God is applied.
@@ -150,10 +181,10 @@ namespace GameJam.Core
 
         public int Round { get; private set; }
         public TurnPhase Phase { get; private set; }
-        public God CurrentGod => BaseTurnOrder[_turnIndex];
+        public God CurrentGod => _order[_turnIndex];
 
-        /// <summary>The god who plays first this round, chosen by the Destiny Die.</summary>
-        public God RoundOpener => BaseTurnOrder[_openerIndex];
+        /// <summary>The god who plays first this round: the first living god of the fixed turn order.</summary>
+        public God RoundOpener => _order[_openerIndex];
 
         /// <summary>The Destiny Die face of the current round (0 before the match starts).</summary>
         public int DestinyFace { get; private set; }
@@ -480,12 +511,12 @@ namespace GameJam.Core
         // god has played; checking the seat (not the god) also works if the opener died this round.
         private bool TryFindNextInRound(out int next)
         {
-            for (int step = 1; step <= BaseTurnOrder.Count; step++)
+            for (int step = 1; step <= _order.Length; step++)
             {
-                int candidate = (_turnIndex + step) % BaseTurnOrder.Count;
+                int candidate = (_turnIndex + step) % _order.Length;
                 if (candidate == _openerIndex)
                     break;
-                if (!IsEliminated(BaseTurnOrder[candidate]))
+                if (!IsEliminated(_order[candidate]))
                 {
                     next = candidate;
                     return true;
@@ -498,10 +529,12 @@ namespace GameJam.Core
         private void StartRound(int round)
         {
             Round = round;
-            DestinyFace = Die.Roll(_random);
+            DestinyFace = Destiny.Roll(_random, IsEliminated);
 
             // Set before the event so round listeners already see who opens the new round.
-            _openerIndex = FirstLivingFrom(DestinyOpener(round));
+            // A drawn order is fixed: the first living god opens every round. Without one (old tests,
+            // headless simulations) the Destiny face still picks the opener, as before.
+            _openerIndex = FirstLivingFrom(_destinyOpens ? DestinyOpener(round) : 0);
             _turnIndex = _openerIndex;
             DayGod = DayOf(DestinyFace);
             _crowsThisRound = 0;
@@ -514,13 +547,11 @@ namespace GameJam.Core
                 StartDay(DayGod.Value);
         }
 
-        // An eliminated god has no Day: there would be nothing to show for it.
+        // The Destiny roll never shows an eliminated god's face, so the Day always has a living god.
         private God? DayOf(int destinyFace)
         {
             God? god = Pantheon.GodOfFace(destinyFace);
-            if (!PowersEnabled || god == null || IsEliminated(god.Value))
-                return null;
-            return god;
+            return PowersEnabled ? god : null;
         }
 
         // Storm and Sun at noon resolve now, like the bad omen; Ragnarök and Night of crows are
@@ -567,21 +598,21 @@ namespace GameJam.Core
             }
         }
 
-        // A god's face lets that god open the round. 3 and 4 belong to everyone, so the opener just
-        // rotates one seat; round 1 has no previous opener and starts with Zeus.
+        // Only without a drawn order. A god's face lets that god open the round; 3 and 4 rotate the
+        // opener one seat, and round 1 starts with Zeus.
         private int DestinyOpener(int round)
         {
             God? favored = Pantheon.GodOfFace(DestinyFace);
             if (favored != null)
                 return BaseTurnIndex(favored.Value);
-            return round == 1 ? 0 : (_openerIndex + 1) % BaseTurnOrder.Count;
+            return round == 1 ? 0 : (_openerIndex + 1) % _order.Length;
         }
 
         // The match ends before fewer than two gods are alive, so a living god is always found.
         private int FirstLivingFrom(int index)
         {
-            while (IsEliminated(BaseTurnOrder[index]))
-                index = (index + 1) % BaseTurnOrder.Count;
+            while (IsEliminated(_order[index]))
+                index = (index + 1) % _order.Length;
             return index;
         }
 

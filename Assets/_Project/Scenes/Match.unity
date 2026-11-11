@@ -211,6 +211,68 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &283883295
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 283883297}
+  - component: {fileID: 283883296}
+  m_Layer: 0
+  m_Name: Attack Path
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &283883296
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 283883295}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1281c9610e11044a485a6500b7d28a12, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GameJam.Gameplay::GameJam.Gameplay.AttackPathView
+  _board: {fileID: 2012266713}
+  _dot: {fileID: 21300000, guid: 4e29a90c478759749834c10976b9d638, type: 3}
+  _head: {fileID: 21300000, guid: 2531a04e631d48040b80d9c78f3dbf41, type: 3}
+  _spriteMaterial: {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  _inkColor: {r: 0.16862746, g: 0.12941177, b: 0.09411765, a: 1}
+  _paperColor: {r: 0.9843137, g: 0.9647059, b: 0.9254902, a: 1}
+  _sortingOrder: 7
+  _dotSpacing: 0.55
+  _dotSize: 0.34
+  _outline: 0.14
+  _headLength: 1
+  _headWidth: 0.72
+  _edgeGap: 0.15
+  _minLength: 0.5
+  _lonePathHoldSeconds: 0.3
+  _holdAlpha: 0.85
+  _holdBreath: 0.15
+  _breathPeriod: 1.4
+--- !u!4 &283883297
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 283883295}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2012266714}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &438941217
 GameObject:
   m_ObjectHideFlags: 0
@@ -331,6 +393,7 @@ GameObject:
   - component: {fileID: 587999207}
   - component: {fileID: 587999206}
   - component: {fileID: 587999205}
+  - component: {fileID: 587999209}
   m_Layer: 0
   m_Name: HUD
   m_TagString: Untagged
@@ -372,6 +435,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02a15fd5ad7aa73479a4a19661a6bb38, type: 3}
   m_Name: 
   m_EditorClassIdentifier: GameJam.UI::GameJam.UI.HudView
+  _favorStarSeconds: 1
+  _favorStarArc: 120
+  _favorCrackSeconds: 0.8
+  _wrathPulseSeconds: 0.8
+  _countPopSeconds: 0.2
   _hintDuration: 4
   _newsDuration: 4
 --- !u!114 &587999203
@@ -444,6 +512,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: GameJam.UI::GameJam.UI.TurnBannerView
   _duration: 2.4
+  _roadPopupDuration: 2.2
 --- !u!114 &587999207
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -469,6 +538,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 077e94c08251e9a4bbf382f6bde09c2c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: GameJam.UI::GameJam.UI.MenuView
+--- !u!114 &587999209
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 587999200}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 959729496845d4f2ebac8dd23eec86c8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GameJam.UI::GameJam.UI.TurnOrderView
+  _faceInterval: 0.06
+  _landSeconds: 0.25
+  _duelHoldSeconds: 1.5
+  _placeStepSeconds: 0.45
+  _finalHoldSeconds: 2.5
 --- !u!1 &694111328
 GameObject:
   m_ObjectHideFlags: 0
@@ -966,6 +1052,7 @@ MonoBehaviour:
   _hud: {fileID: 587999202}
   _dice: {fileID: 587999201}
   _menu: {fileID: 587999208}
+  _turnOrder: {fileID: 587999209}
   _destiny: {fileID: 587999205}
   _presenter: {fileID: 1217682075}
   _sfx: {fileID: 1116311306}
@@ -973,6 +1060,7 @@ MonoBehaviour:
   _botPlacePause: 1
   _botStepPause: 1.2
   _resultHold: 4.5
+  _offeringWindow: 2
   _botResultHold: 3
   _fastBotFactor: 0.33333334
 --- !u!4 &1217682074
@@ -1011,6 +1099,11 @@ MonoBehaviour:
   _sfx: {fileID: 1116311306}
   _cameraShake: {fileID: 1975766538}
   _godVfx: {fileID: 1331130790}
+  _attackPath: {fileID: 283883296}
+  _attackPathSeconds: 0.35
+  _attackPathFadeSeconds: 0.4
+  _maxDayVfxSeconds: 4
+  _roadStepSeconds: 0.35
 --- !u!1001 &1331130789
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1189,6 +1282,7 @@ GameObject:
   - component: {fileID: 1975766536}
   - component: {fileID: 1975766539}
   - component: {fileID: 1975766538}
+  - component: {fileID: 1975766540}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -1328,6 +1422,22 @@ AudioListener:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1975766534}
   m_Enabled: 1
+--- !u!114 &1975766540
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1975766534}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb0d9d758e3cc436fbb7856a7c9ce3b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GameJam.Gameplay::GameJam.Gameplay.BoardCameraFit
+  _hud: {fileID: 587999202}
+  _shake: {fileID: 1975766538}
+  _boardSize: {x: 18.2, y: 11.2}
+  _tableHalfSize: {x: 24, y: 16}
 --- !u!1 &2012266712
 GameObject:
   m_ObjectHideFlags: 0
@@ -1379,6 +1489,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1331130791}
+  - {fileID: 283883297}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2015286299

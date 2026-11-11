@@ -152,11 +152,11 @@ namespace GameJam.Tests
         }
 
         [Test]
-        public void EliminatedGod_HasNoDay()
+        public void EliminatedGod_HasNoDay_BecauseItsFaceIsRerolled()
         {
             MatchSetup.RemoveNation(_board, God.Zeus);
             MatchSetup.Set(_board, Board.NorthTemple, God.Ra, 3);
-            Match match = Create(ZeusFace);
+            Match match = Create(ZeusFace, Destiny.GoodFortuneFace);
             int days = 0;
             match.DayStarted += (_, _) => days++;
 

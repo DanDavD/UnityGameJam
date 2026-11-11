@@ -34,8 +34,28 @@ namespace GameJam.UI
         // The human's prompts carry no "YOUR TURN": the HUD leads every prompt of a person's turn with
         // TurnPrefix ("YOUR TURN" solo, "ZEUS'S TURN" in hot-seat), so the god is named once, in one place.
         public const string AttackPrompt = "Choose a territory to attack from, or end your turn";
-        public const string OfferingPrompt =
-            "Losing? Click OFFERING on your die to re-roll (−1 troop), or keep attacking.";
+
+        /// <summary>The attack prompt with the ready Wrath named: "…, unleash Thunderbolt, or end your turn".</summary>
+        public static string AttackPromptWrath(God god) =>
+            $"Choose a territory to attack from, unleash {WrathName(god)}, or end your turn";
+
+        /// <summary>The Reinforce instruction: "Click your territories to place 3 troops".</summary>
+        public static string ReinforceInstruction(int left) =>
+            $"Click your territories to place {left} {(left == 1 ? "troop" : "troops")}";
+
+        public const string StatusResult = "Result";
+
+        /// <summary>Why a click on the Wrath did nothing: what it needs, in the god's own numbers.</summary>
+        public static string WrathLockedHint(God god, int favor, bool usedThisTurn)
+        {
+            string name = WrathName(god);
+            if (usedThisTurn)
+                return $"{name} was already unleashed this turn.";
+            if (favor < GodPowers.MaxFavor)
+                return $"{name} needs {GodPowers.MaxFavor} Favor. Roll your sacred {Pantheon.SacredFace(god)} to earn it.";
+            return $"{name} has no target right now.";
+        }
+
         public const string OfferingMadePrompt = "Offering made. Re-rolling…";
         public const string PickOwnTerritoryHint = "Pick one of your territories";
         public const string NoTargetsHint = "No adjacent targets from here";
@@ -124,7 +144,7 @@ namespace GameJam.UI
 
         /// <summary>
         /// "Destiny 1: Zeus +2, Thor −2": the HUD's round line, so it uses the short effect; the
-        /// Destiny Die popup and the round info panel spell it out (and who opens). The round
+        /// Destiny Die popup and the round info panel spell it out. The round
         /// counter sits under it (<see cref="RoundCounter"/>).
         /// </summary>
         /// <param name="dayReplacesFavor">True when the favored god's Day replaces its +2 (Sun at noon).</param>
@@ -135,7 +155,7 @@ namespace GameJam.UI
         public static string RoundCounter(int round) => $"ROUND {round}/{Match.RoundLimit}";
 
         public const string InfoCloseHint = "CLICK OR ESC TO CLOSE";
-        public const string OpenerHeading = "WHO OPENS";
+        public const string OpenerHeading = "TURN ORDER";
         public const string GoalHeading = "GOAL";
 
         /// <summary>The goal in full, in the round info panel (it no longer sits on the identity card).</summary>
@@ -192,29 +212,21 @@ namespace GameJam.UI
         }
 
         /// <summary>
-        /// "Ra opens: Destiny showed 2, Ra's sacred number. Then Thor, Morrígan, Zeus.": who opens the
-        /// round and why, then the order the others follow (eliminated gods skipped).
+        /// "Thor, Zeus, Morrígan, Ra: drawn at the start of the match, the same every round.": the
+        /// fixed turn order (eliminated gods skipped).
         /// </summary>
         public static string RoundInfoOpener(Match match, int destinyFace)
         {
-            God opener = match.RoundOpener;
-            God? favored = Pantheon.GodOfFace(destinyFace);
-            string why;
-            if (favored == opener)
-                why = $"Destiny showed {destinyFace}, {GodName(opener)}'s sacred number.";
-            else if (favored.HasValue)
-                why = $"{GodName(favored.Value)} is out, so the next god in order opens.";
-            else if (match.Round == 1)
-                why =
-                    $"on a {Destiny.GoodFortuneFace} or {Destiny.BadOmenFace}, round 1 starts with {GodName(Match.BaseTurnOrder[0])}.";
-            else
-                why =
-                    $"on a {Destiny.GoodFortuneFace} or {Destiny.BadOmenFace}, the first turn moves on from last round's opener to the next god still in play.";
-
-            string followers = Followers(match, opener);
-            return followers.Length == 0
-                ? $"{GodName(opener)} opens: {why}"
-                : $"{GodName(opener)} opens: {why} Then {followers}.";
+            var names = new StringBuilder();
+            foreach (God god in match.TurnOrder)
+            {
+                if (match.IsEliminated(god))
+                    continue;
+                if (names.Length > 0)
+                    names.Append(", ");
+                names.Append(GodName(god));
+            }
+            return $"{names}: drawn with the dice at the start of the match, the same every round.";
         }
 
         /// <summary>"DAY OF ZEUS · STORM": the Day block heading in the round info panel.</summary>
@@ -292,22 +304,42 @@ namespace GameJam.UI
                     $"this turn, the first {GodPowers.HarvestMaxTroops} troops enemies lose to her attacks join her.",
             };
 
-        // "Thor, Morrígan, Zeus": the living gods after the opener, in base cycle order.
-        private static string Followers(Match match, God opener)
-        {
-            var names = new StringBuilder();
-            int start = Match.BaseTurnIndex(opener);
-            for (int step = 1; step < Match.BaseTurnOrder.Count; step++)
+        // The turn-order draw overlay (shown before round 1).
+        public const string DrawTitle = "TURN ORDER";
+        public const string DrawSkipHint = "Click to skip";
+        public const string DrawTieVerdict = "TIE · ROLL AGAIN";
+
+        /// <summary>"Zeus vs Thor" / "Winners duel" / "Losers duel": the heading of a duel.</summary>
+        public static string DrawDuelTitle(int duelIndex, DrawDuel duel) =>
+            duelIndex switch
             {
-                God god = Match.BaseTurnOrder[(start + step) % Match.BaseTurnOrder.Count];
-                if (match.IsEliminated(god))
-                    continue;
-                if (names.Length > 0)
-                    names.Append(", ");
-                names.Append(GodName(god));
-            }
-            return names.ToString();
+                2 => "Winners duel for 1st and 2nd",
+                3 => "Losers duel for 3rd and 4th",
+                _ => $"{GodName(duel.First)} vs {GodName(duel.Second)}",
+            };
+
+        /// <summary>The boxed verdict of one attempt: "SACRED BEATS NEUTRAL", "HIGHER WINS", "TIE · ROLL AGAIN".</summary>
+        public static string DrawVerdict(DrawAttempt attempt)
+        {
+            if (attempt.IsTie)
+                return DrawTieVerdict;
+            if (attempt.Reason == CombatReason.HigherRoll)
+                return "NEUTRAL VS NEUTRAL · HIGHER WINS";
+            bool firstWon = attempt.Winner == attempt.First;
+            RollOutcome won = firstWon ? attempt.FirstOutcome : attempt.SecondOutcome;
+            RollOutcome lost = firstWon ? attempt.SecondOutcome : attempt.FirstOutcome;
+            return $"{OutcomeName(won)} BEATS {OutcomeName(lost)}";
         }
+
+        /// <summary>"1st".."4th": the place badge of a god in the drawn order.</summary>
+        public static string PlaceBadge(int index) =>
+            index switch
+            {
+                0 => "1st",
+                1 => "2nd",
+                2 => "3rd",
+                _ => "4th",
+            };
 
         private static string ReinforcementWord(int count) =>
             Plural(count, "reinforcement", "reinforcements");
@@ -347,11 +379,11 @@ namespace GameJam.UI
         }
 
         /// <summary>
-        /// "Zeus favored +2, Thor weakened -2 · Zeus opens": what the Destiny face does this round.
+        /// "Zeus favored +2, Thor weakened -2": what the Destiny face does this round.
         /// Stands alone under the Destiny Die, so it starts with a capital ("Bad omen, …").
         /// </summary>
-        public static string DestinyLine(int destinyFace, God opener, bool dayReplacesFavor) =>
-            $"{Capitalized(DestinyEffect(destinyFace, dayReplacesFavor))} · {GodName(opener)} opens";
+        public static string DestinyLine(int destinyFace, bool dayReplacesFavor) =>
+            Capitalized(DestinyEffect(destinyFace, dayReplacesFavor));
 
         public static string RoundTitle(int round) => $"ROUND {round}";
 
@@ -397,7 +429,7 @@ namespace GameJam.UI
             hint switch
             {
                 Hint.Destiny =>
-                    "Each round the Destiny Die picks who is favored, who is weakened and who opens.",
+                    "Each round the Destiny Die picks who is favored and who is weakened.",
                 Hint.Reinforce => "Click your territories to place troops",
                 Hint.Attack =>
                     $"Select a territory with {Match.MinTroopsToAttack}+ troops, then a ringed target",
@@ -446,7 +478,7 @@ namespace GameJam.UI
         /// the reinforcement counter carries both the count and where it came from
         /// (<see cref="ReinforceFormula"/>), so the bottom of the screen stays quiet.
         /// </summary>
-        public static string ReinforcePrompt(Reinforcements received) => string.Empty;
+        public static string ReinforcePrompt(int left) => ReinforceInstruction(left);
 
         /// <summary>
         /// "2 base + 1 for 2 territories + 2 Destiny": where this turn's troops came from, the second
@@ -460,7 +492,7 @@ namespace GameJam.UI
             count == 1 ? "TROOP TO PLACE" : "TROOPS TO PLACE";
 
         public static string TargetPrompt(Territory from) =>
-            $"Choose a target for {from.Name}, or click elsewhere to cancel";
+            $"Choose a target for {from.Name} · click away to cancel";
 
         public static string NeedsTroopsHint =>
             $"Needs {Match.MinTroopsToAttack}+ troops to attack from here";
@@ -472,19 +504,45 @@ namespace GameJam.UI
         public static string WithHint(string prompt, string hint) =>
             string.IsNullOrEmpty(prompt) ? hint : $"{prompt} · {hint}";
 
-        public static string BotPlaying(God god) => $"{GodName(god)} is playing…";
+        // The turn box (top right): one indicator for every turn.
 
-        public static string CombatTitle(Combat combat)
+        /// <summary>
+        /// "YOUR TURN" solo, "P2 · ZEUS'S TURN" for a person in hot-seat, "THOR'S TURN" for a bot.
+        /// <paramref name="seatTag"/> is the person's "P1".."P4" (null for a bot).
+        /// </summary>
+        public static string TurnBox(God god, bool isHuman, bool hotSeat, string seatTag)
         {
-            string title = $"{GodName(combat.Attacker)} attacks {GodName(combat.Defender)}";
-            return combat.OfferingMade ? title + " · Offering made" : title;
+            if (isHuman && !hotSeat)
+                return "YOUR TURN";
+            string turn = $"{GodName(god).ToUpperInvariant()}'S TURN";
+            return isHuman && !string.IsNullOrEmpty(seatTag) ? $"{seatTag} · {turn}" : turn;
         }
 
+        // The short line under the turn box title: what the acting god is doing right now.
+        public const string StatusThinking = "Thinking…";
+        public const string StatusReinforcing = "Reinforcing…";
+        public const string StatusAttacking = "Attacking…";
+        public const string StatusRolling = "Rolling…";
+        public const string StatusMarching = "Marching an army…";
+        public const string StatusYourReinforce = "Place your troops";
+        public const string StatusYourAttack = "Attack phase";
+
+        /// <summary>"Unleashing Thunderbolt…": the turn box status while a Wrath is shown.</summary>
+        public static string StatusWrath(God god) => $"Unleashing {WrathName(god)}…";
+
+        public static string CombatTitle(Combat combat) =>
+            $"{GodName(combat.Attacker)} attacks {GodName(combat.Defender)}";
+
+        /// <summary>
+        /// The rule that decided the combat, the headline of the boxed verdict, in capitals: "SACRED BEATS
+        /// NEUTRAL", "HIGHER WINS", "DEFENDER WINS", "TIES GO TO THOR". It never names the winner: the
+        /// verdict box wears the winner's chip and the loser's die is faded. When the dice read alike a
+        /// kicker over it says how (<see cref="CombatVerdictKicker"/>).
+        /// </summary>
         public static string CombatVerdict(Combat combat)
         {
             CombatResult result = combat.Result;
             bool attackerWon = result.Winner == CombatSide.Attacker;
-            string winner = GodName(attackerWon ? combat.Attacker : combat.Defender);
             switch (result.Reason)
             {
                 case CombatReason.BetterOmen:
@@ -492,35 +550,58 @@ namespace GameJam.UI
                     RollOutcome lost = attackerWon
                         ? result.DefenderOutcome
                         : result.AttackerOutcome;
-                    return $"{winner} wins: {OutcomeName(won)} beats {OutcomeName(lost)}"
-                        + RagnarokLosses(result);
+                    return $"{OutcomeName(won)} BEATS {OutcomeName(lost)}";
                 case CombatReason.HigherRoll:
-                    return $"{winner} wins: higher number" + RagnarokLosses(result);
+                    return "HIGHER WINS";
                 case CombatReason.RagnarokTie:
-                    return $"{winner} wins: Ragnarök, Thor wins ties" + RagnarokLosses(result);
+                    return "TIES GO TO THOR";
                 default:
-                    return $"{winner} holds: ties go to the defender";
+                    return "DEFENDER WINS";
             }
         }
 
-        // Only Ragnarök makes a loser lose more than one troop, so a bigger loss always names it.
-        private static string RagnarokLosses(CombatResult result) =>
-            result.LoserLosses > CombatResolver.TroopsLostPerCombat
-                ? $" · {Minus}{result.LoserLosses} (Ragnarök)"
-                : string.Empty;
+        /// <summary>
+        /// "NEUTRAL VS NEUTRAL" / "BOTH SACRED" / "BOTH CURSED": the small line over the headline when
+        /// both dice read alike (a higher number, a tie); null when one outcome beat the other.
+        /// </summary>
+        public static string CombatVerdictKicker(Combat combat) =>
+            combat.Result.Reason == CombatReason.BetterOmen ? null : SameOutcomes(combat.Result);
 
         /// <summary>
-        /// "1 = Zeus's sacred number" / "6 = Zeus's cursed number" / "4 = neutral for Ra": the tag
-        /// under a combat die, naming the real god and number so the rule teaches itself. The tag
-        /// draws the sacred / cursed icon before this text, so it carries no glyph.
+        /// "RAGNARÖK · −2 TROOPS": the badge under the verdict while Thor's Day bends the rules (a tie
+        /// won by Thor, or a Thor win that costs more than one troop); null otherwise.
         /// </summary>
-        public static string OutcomeTag(God god, int face, RollOutcome outcome) =>
-            outcome switch
-            {
-                RollOutcome.Sacred => $"{face} = {GodName(god)}'s sacred number",
-                RollOutcome.Cursed => $"{face} = {GodName(god)}'s cursed number",
-                _ => $"{face} = neutral for {GodName(god)}",
-            };
+        public static string CombatRagnarokBadge(Combat combat)
+        {
+            CombatResult result = combat.Result;
+            bool tie = result.Reason == CombatReason.RagnarokTie;
+            bool bigger = result.LoserLosses > CombatResolver.TroopsLostPerCombat;
+            if (!tie && !bigger)
+                return null;
+            string badge = DayName(God.Thor).ToUpperInvariant();
+            if (bigger)
+                badge += $" · {Minus}{result.LoserLosses} TROOPS";
+            return badge;
+        }
+
+        /// <summary>"OFFERING MADE · −1 TROOP" under the verdict of a re-rolled combat; null otherwise.</summary>
+        public static string CombatOfferingBadge(Combat combat) =>
+            combat.OfferingMade
+                ? $"OFFERING MADE · {Minus}{Match.OfferingCost} {Troops(Match.OfferingCost).ToUpperInvariant()}"
+                : null;
+
+        // "NEUTRAL VS NEUTRAL" when both dice read alike and neutral, "BOTH SACRED" / "BOTH CURSED" else.
+        private static string SameOutcomes(CombatResult result) =>
+            result.AttackerOutcome == RollOutcome.Neutral
+                ? "NEUTRAL VS NEUTRAL"
+                : $"BOTH {OutcomeName(result.AttackerOutcome)}";
+
+        /// <summary>
+        /// "1 · SACRED" / "4 · NEUTRAL" / "6 · CURSED": the short tag under a combat die. The god comes
+        /// from the die's color, name and icon; the tag draws the sacred / cursed icon before this text.
+        /// </summary>
+        public static string OutcomeTag(int face, RollOutcome outcome) =>
+            $"{face} · {OutcomeName(outcome)}";
 
         /// <summary>"Thunderbolt", "Mjölnir", "Eye of Ra", "Harvest": the god's Wrath.</summary>
         public static string WrathName(God god) =>
@@ -546,21 +627,19 @@ namespace GameJam.UI
         public static string WrathButton(God god) => WrathName(god).ToUpperInvariant();
 
         /// <summary>
-        /// The Wrath button with its state, so a disabled button says why: "THUNDERBOLT · 2/3",
-        /// "THUNDERBOLT · NEXT TURN" (once per turn), "THUNDERBOLT · NO TARGET", or "★ THUNDERBOLT"
-        /// when it can be pressed.
+        /// The state line under the Wrath's name on its button, so a locked button says why:
+        /// "FAVOR 2/3", "READY TO UNLEASH", "USED THIS TURN" (once per turn) or "NO TARGET".
         /// </summary>
-        public static string WrathButton(God god, int favor, bool usedThisTurn, bool usable)
-        {
-            if (favor < GodPowers.MaxFavor)
-                return $"{WrathButton(god)} · {favor}/{GodPowers.MaxFavor}";
-            if (usedThisTurn)
-                return $"{WrathButton(god)} · NEXT TURN";
-            return usable ? $"{SacredMark} {WrathButton(god)}" : $"{WrathButton(god)} · NO TARGET";
-        }
-
-        /// <summary>"CANCEL THUNDERBOLT": the Wrath button while aiming.</summary>
-        public static string CancelWrathButton(God god) => $"CANCEL {WrathButton(god)}";
+        public static string WrathState(WrathButtonState state, int favor) =>
+            state switch
+            {
+                WrathButtonState.Ready => "READY TO UNLEASH",
+                WrathButtonState.Used => "USED THIS TURN",
+                WrathButtonState.Aiming => "CLICK TO CANCEL",
+                _ => favor < GodPowers.MaxFavor
+                    ? $"FAVOR {favor}/{GodPowers.MaxFavor}"
+                    : "NO TARGET",
+            };
 
         /// <summary>
         /// Two lines for the god card: its Day and its Wrath, each a bold name and a short effect
@@ -652,10 +731,10 @@ namespace GameJam.UI
         {
             const string cancel = " · Esc cancels";
             if (GodPowers.WrathNeedsSource(god) && source == null)
-                return $"{WrathButton(god)}: pick your territory to strike from{cancel}";
+                return $"Pick your territory to strike from{cancel}";
             if (GodPowers.WrathNeedsSource(god))
-                return $"{WrathButton(god)}: pick a ringed enemy next to {source.Name} (−{GodPowers.MjolnirDamage}, no roll){cancel}";
-            return $"{WrathButton(god)}: pick a ringed enemy (it loses half){cancel}";
+                return $"Pick a ringed enemy next to {source.Name} (−{GodPowers.MjolnirDamage}, no roll){cancel}";
+            return $"Pick a ringed enemy (it loses half){cancel}";
         }
 
         public static string WrathNoSourceHint => "No enemy next to it to strike";
@@ -674,10 +753,7 @@ namespace GameJam.UI
             $"SACRED ROAD · {GodName(god)} may march an army {GodPowers.SacredRoadMaxSteps} territories";
 
         /// <summary>The popup's title when a person's sacred die opens the road.</summary>
-        public const string RoadPopupTitle = "SACRED ROAD OPENS";
-
-        /// <summary>The popup's last line; a click on it closes it.</summary>
-        public const string RoadPopupClose = "Click to close";
+        public const string RoadPopupTitle = "SACRED ROAD";
 
         /// <summary>
         /// The popup's sentence. The person playing solo is addressed directly; in hot-seat it names
@@ -685,15 +761,18 @@ namespace GameJam.UI
         /// </summary>
         public static string RoadPopupText(God god, bool you) =>
             you
-                ? $"Your sacred number lets you move an army up to {GodPowers.SacredRoadMaxSteps} territories. Pick a ringed territory, or end your turn."
-                : $"{GodName(god)}'s sacred number lets {GodName(god)} move an army up to {GodPowers.SacredRoadMaxSteps} territories. Pick a ringed territory, or end the turn.";
+                ? $"March an army up to {GodPowers.SacredRoadMaxSteps} territories. Pick a ringed one, or end your turn."
+                : $"{GodName(god)}: march an army up to {GodPowers.SacredRoadMaxSteps} territories. Pick a ringed one, or end the turn.";
 
         /// <summary>
         /// The prompt when the Road mode starts (powers on): the armies that can march wear a ring and
         /// a ROAD tag, and the only other choice is END TURN, so the prompt says both.
         /// </summary>
         public const string RoadOriginsPrompt =
-            "SACRED ROAD · click a ringed territory to march its army, or END TURN";
+            "Click a ringed army to march it, or press END TURN";
+
+        /// <summary>The small label over every Sacred Road prompt (the prompt bar's first line).</summary>
+        public const string RoadPromptLabel = "SACRED ROAD";
 
         /// <summary>The prompt once an origin is picked: its destinations are ringed with "+N".</summary>
         public const string RoadDestinationsPrompt =
@@ -708,12 +787,6 @@ namespace GameJam.UI
         public const string RoadNoDestinationHint =
             "Click a ringed destination, or the picked territory again to pick another";
 
-        /// <summary>The small tag on a territory that can march, so the ring is never the only cue.</summary>
-        public const string RoadTag = "ROAD";
-
-        /// <summary>"Ra marches an army…": a bot's prompt while its march is shown.</summary>
-        public static string BotRoad(God god) => $"{GodName(god)} marches an army…";
-
         /// <summary>"Zeus's army marched: Capital to Village (+9)": the HUD news of a march.</summary>
         public static string RoadUsedLine(God god, Territory from, Territory to, int troops) =>
             $"{SacredMark} {GodName(god)}'s army marched: {from.Name} to {to.Name} (+{troops})";
@@ -721,9 +794,6 @@ namespace GameJam.UI
         /// <summary>The Road in the nations panel's powers card: when it opens and what it does.</summary>
         public static string PowersRoad(God god) =>
             $"<b>Sacred Road:</b> roll {SacredMark}{Pantheon.SacredFace(god)} in your attack, then click a ringed territory to march its army up to {GodPowers.SacredRoadMaxSteps} territories.";
-
-        /// <summary>"Zeus unleashes the Thunderbolt…": a bot's prompt while its Wrath is shown.</summary>
-        public static string BotWrath(God god) => $"{GodName(god)} unleashes {WrathName(god)}…";
 
         /// <summary>"Zeus's Thunderbolt: Ra Capital -3": the HUD news for a Thunderbolt.</summary>
         public static string ThunderboltLine(Territory target, int loss) =>
@@ -844,9 +914,9 @@ namespace GameJam.UI
         private static string OutcomeName(RollOutcome outcome) =>
             outcome switch
             {
-                RollOutcome.Sacred => "sacred",
-                RollOutcome.Cursed => "cursed",
-                _ => "neutral",
+                RollOutcome.Sacred => "SACRED",
+                RollOutcome.Cursed => "CURSED",
+                _ => "NEUTRAL",
             };
 
         private static string DestinyEffect(int face, bool dayReplacesFavor)
