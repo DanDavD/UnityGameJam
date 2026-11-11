@@ -35,6 +35,17 @@ namespace GameJam.Gameplay
             transform.localPosition = _restPosition;
         }
 
+        /// <summary>
+        /// Where the camera rests between shakes. BoardCameraFit moves it when the board is refitted
+        /// (a window resize), so a shake always returns to the fitted spot, never the scene's.
+        /// </summary>
+        public void SetRestPosition(Vector3 position)
+        {
+            _restPosition = position;
+            if (_shake == null)
+                transform.localPosition = position;
+        }
+
         public void Shake()
         {
             if (!isActiveAndEnabled)

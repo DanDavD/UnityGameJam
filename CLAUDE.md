@@ -39,7 +39,9 @@ Adjacency: Capital – own Village. Each Village – the two Temples flanking it
 | 3, good fortune | Everyone **+1 reinforcement** |
 | 4, bad omen | Each nation **loses 1 troop from its largest army** (only if that territory has 2+ troops; ties: lowest territory id) |
 
-**Turn order (decided by the Destiny Die):** base cycle Zeus → Ra → Thor → Morrígan. If the Destiny face is a god's face, **that god opens the round** and the others follow in the cycle. On 3 or 4 the opener rotates one step from the previous round's opener (round 1 on 3/4: Zeus). Eliminated nations are skipped.
+The Destiny Die **never shows the face of an eliminated god**: such a face is re-rolled, so the chance is split among the living gods, 3 and 4.
+
+**Turn order (decided by the Destiny Die):** base cycle Zeus → Ra → Thor → Morrígan. If the Destiny face is a god's face, **that god opens the round** and the others follow in the cycle. On 3 or 4 the opener rotates one step from the previous round's opener (round 1 on 3/4: Zeus). **The god who played last in the previous round cannot open the next one** (no back-to-back turns): the opening spot moves to the next living god after them in the cycle (wrapping); the god on the face keeps their Day and modifiers. Eliminated nations are skipped.
 
 **Turn: Reinforce → Attack → End.**
 

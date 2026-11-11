@@ -6,6 +6,7 @@ namespace GameJam.Tests
 {
     // Who opens each round. A god's Destiny face lets that god open; 3 and 4 rotate the opener one
     // seat from the previous round (Zeus in round 1). The base cycle Zeus, Ra, Thor, Morrigan follows.
+    // (Without a drawn order. A drawn order is fixed for the match: see the DrawnOrder tests.)
     public sealed class MatchTurnOrderTests
     {
         private Board _board;
@@ -65,17 +66,81 @@ namespace GameJam.Tests
         [Test]
         public void GodFaceAfterARotation_StillLetsThatGodOpen()
         {
+            // Zeus opens round 1 and Morrigan plays last; Thor's face then opens round 2.
             Match match = MatchSetup.Start(
                 _board,
                 Destiny.GoodFortuneFace,
-                Pantheon.SacredFace(God.Morrigan)
+                Pantheon.SacredFace(God.Thor)
             );
 
             PlayRound(match);
 
             Assert.AreEqual(2, match.Round);
-            Assert.AreEqual(God.Morrigan, match.RoundOpener);
-            Assert.AreEqual(God.Morrigan, match.CurrentGod);
+            Assert.AreEqual(God.Thor, match.RoundOpener);
+            Assert.AreEqual(God.Thor, match.CurrentGod);
+        }
+
+        // A drawn order is fixed for the whole match: the Destiny face no longer picks the opener.
+        [Test]
+        public void DrawnOrder_IsFollowedEveryRound_WhateverTheDestinyFace()
+        {
+            var order = new[] { God.Thor, God.Zeus, God.Morrigan, God.Ra };
+            var random = new FakeRandom(
+                Pantheon.SacredFace(God.Ra),
+                Pantheon.SacredFace(God.Morrigan),
+                Destiny.GoodFortuneFace
+            );
+            var match = new Match(_board, random, false, order);
+            match.Start();
+
+            CollectionAssert.AreEqual(order, PlayRound(match));
+            CollectionAssert.AreEqual(order, PlayRound(match));
+            Assert.AreEqual(God.Thor, match.RoundOpener);
+            CollectionAssert.AreEqual(order, match.TurnOrder);
+        }
+
+        [Test]
+        public void DrawnOrder_SkipsAnEliminatedGod()
+        {
+            MatchSetup.RemoveNation(_board, God.Zeus);
+            var order = new[] { God.Thor, God.Zeus, God.Morrigan, God.Ra };
+            var match = new Match(_board, new FakeRandom(3, 3), false, order);
+            match.Start();
+
+            CollectionAssert.AreEqual(new[] { God.Thor, God.Morrigan, God.Ra }, PlayRound(match));
+        }
+
+        [Test]
+        public void DestinyRoll_NeverShowsAnEliminatedGodsFace_AcrossManySeededRounds()
+        {
+            MatchSetup.RemoveNation(_board, God.Thor);
+            var random = new SystemRandom(7);
+            var seen = new HashSet<int>();
+
+            for (int i = 0; i < 2000; i++)
+                seen.Add(Destiny.Roll(random, god => god == God.Thor));
+
+            CollectionAssert.DoesNotContain(seen, Pantheon.SacredFace(God.Thor));
+            CollectionAssert.AreEquivalent(new[] { 1, 2, 3, 4, 5 }, seen);
+        }
+
+        [Test]
+        public void DestinyRoll_RerollsOnlyWhenNeeded_ConsumingExtraRollsDeterministically()
+        {
+            // 6 is Thor's face and Thor is out: re-rolled into 2, and the queued 3 stays unread.
+            var random = new FakeRandom(6, 2, 3);
+
+            Assert.AreEqual(2, Destiny.Roll(random, god => god == God.Thor));
+            Assert.AreEqual(3, Destiny.Roll(random, god => god == God.Thor));
+        }
+
+        [Test]
+        public void DestinyRoll_FacesThreeAndFourAreAlwaysValid()
+        {
+            var random = new FakeRandom(3, 4);
+
+            Assert.AreEqual(3, Destiny.Roll(random, _ => true));
+            Assert.AreEqual(4, Destiny.Roll(random, _ => true));
         }
 
         [Test]
@@ -185,15 +250,7 @@ namespace GameJam.Tests
             {
                 God? favored = Pantheon.GodOfFace(face);
                 God expected =
-                    favored
-                    ?? (
-                        previousOpener == null
-                            ? God.Zeus
-                            : Match.BaseTurnOrder[
-                                (Match.BaseTurnIndex(previousOpener.Value) + 1)
-                                    % Match.BaseTurnOrder.Count
-                            ]
-                    );
+                    favored ?? (previousOpener == null ? God.Zeus : Next(previousOpener.Value));
                 Assert.AreEqual(expected, match.RoundOpener, $"round {round}, face {face}");
                 previousOpener = match.RoundOpener;
                 roundsChecked++;
@@ -207,6 +264,9 @@ namespace GameJam.Tests
             Assert.AreEqual(Match.RoundLimit, roundsChecked);
             Assert.AreEqual(VictoryReason.RoundLimit, match.WinReason);
         }
+
+        private static God Next(God god) =>
+            Match.BaseTurnOrder[(Match.BaseTurnIndex(god) + 1) % Match.BaseTurnOrder.Count];
 
         // Plays passive turns until a new round starts (or the match ends); returns who played.
         private static List<God> PlayRound(Match match)

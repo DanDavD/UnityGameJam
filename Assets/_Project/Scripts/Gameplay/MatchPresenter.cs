@@ -49,6 +49,19 @@ namespace GameJam.Gameplay
         [SerializeField]
         private GodVfx _godVfx;
 
+        [SerializeField]
+        private AttackPathView _attackPath;
+
+        [Tooltip(
+            "Seconds the attack's march line takes to reach its target; the dice roll meanwhile."
+        )]
+        [SerializeField, Min(0.05f)]
+        private float _attackPathSeconds = 0.35f;
+
+        [Tooltip("Seconds the march line takes to fade out once the combat resolves.")]
+        [SerializeField, Min(0.05f)]
+        private float _attackPathFadeSeconds = 0.4f;
+
         [Tooltip(
             "Longest wait for a Day's effect before the turn goes on: a cosmetic effect must never freeze the game."
         )]
@@ -228,6 +241,9 @@ namespace GameJam.Gameplay
             _nations.Refresh(_match);
         }
 
+        /// <summary>Sorts the nations panel into the drawn turn order, for the whole match.</summary>
+        public void ShowTurnOrder(IReadOnlyList<God> order) => _nations.SetTurnOrder(order);
+
         // Solo: "YOU" on the player. Hot-seat: "P1".."P4" in base turn order, since "YOU" would be
         // wrong for everyone but the person holding the mouse.
         private static string[] PlayerTags(PlayerSeats seats)
@@ -297,6 +313,23 @@ namespace GameJam.Gameplay
             RefreshReinforceCounter();
         }
 
+        /// <summary>
+        /// The march line of an attack, drawn from <paramref name="from"/> to <paramref name="to"/> as
+        /// the attack starts. Called by MatchController just before the attack command, for the person
+        /// and for the bots alike. It stays lit through the roll and fades when the combat resolves.
+        /// </summary>
+        public void ShowAttackPath(Territory from, Territory to)
+        {
+            // An empty territory is taken with no dice: its path fades by itself.
+            _attackPath.Play(
+                from,
+                to,
+                _match.CurrentGod,
+                _attackPathSeconds * VfxPace,
+                fadeByItself: to.Owner == null
+            );
+        }
+
         private IEnumerator PlayTurnBanner(float botPaceFactor)
         {
             God god = _pendingTurnBanner.Value;
@@ -304,6 +337,16 @@ namespace GameJam.Gameplay
             // The turn highlight moves with the banner, not before the Destiny Die has landed.
             _nations.Refresh(_match);
             bool human = IsHumanTurn;
+            // The turn box is the persistent indicator, so it shows even when the slide-in banner is skipped.
+            _hud.ShowTurn(
+                god,
+                MatchText.TurnBox(
+                    god,
+                    human,
+                    _seats.IsHotSeat,
+                    _playerTags[Match.BaseTurnIndex(god)]
+                )
+            );
             if (human)
             {
                 // "YOUR TURN" is the moment to act: the board top must be clear. In hot-seat the
@@ -370,6 +413,9 @@ namespace GameJam.Gameplay
 
         private bool ShowHintOnce(Hint hint, God about)
         {
+            // The prompt bar already says what these two hints would: never both.
+            if (hint == Hint.Reinforce || hint == Hint.Attack)
+                return false;
             if (!_seats.HasHuman || !_shownHints.Add(hint))
                 return false;
             _hud.ShowHint(MatchText.HintText(hint, about));
@@ -423,11 +469,7 @@ namespace GameJam.Gameplay
             _pendingRoundLine = MatchText.RoundLine(destinyFace, dayReplacesFavor);
             _pendingRoundCounter = MatchText.RoundCounter(round);
             KeepRoundInfo(destinyFace);
-            string destiny = MatchText.DestinyLine(
-                destinyFace,
-                _match.RoundOpener,
-                dayReplacesFavor
-            );
+            string destiny = MatchText.DestinyLine(destinyFace, dayReplacesFavor);
             // The sound starts here and the die tumbles in the same call below: same frame, and the
             // tumble lasts exactly as long as the sound.
             float tumble = _sfx.PlayRoll(_destiny.FallbackTumbleDuration);
@@ -584,18 +626,31 @@ namespace GameJam.Gameplay
             // An unused Road is lost with the turn, and so is its popup.
             _roadPopupFor = null;
             _board.ClearHighlights();
+            _attackPath.Clear();
+            // The turn box follows at once (hidden under the Destiny Die anyway), never showing the last
+            // god's title and status.
+            _hud.ShowTurn(
+                god,
+                MatchText.TurnBox(
+                    god,
+                    IsHumanTurn,
+                    _seats.IsHotSeat,
+                    _playerTags[Match.BaseTurnIndex(god)]
+                )
+            );
             // The last combat stays readable until the next roll or the next turn.
             _dice.Hide();
             if (IsHumanTurn)
             {
                 // Every prompt of this turn names whose it is ("ZEUS'S TURN" in hot-seat). Cleared to
                 // just that, so the previous bot's "X is playing…" never lingers into it.
-                _hud.SetTurnPrefix(MatchText.TurnPrefix(god, _seats.IsHotSeat));
+                _hud.SetTurnPrefix(MatchText.TurnPrefix(god, _seats.IsHotSeat), god);
                 _hud.SetPrompt(string.Empty);
                 return;
             }
+            // A bot's turn has no prompt bar: the turn box says whose turn it is and what it is doing.
             _hud.SetTurnPrefix(null);
-            _hud.SetPrompt(MatchText.BotPlaying(god));
+            _hud.SetPrompt(string.Empty);
             // A human hint would otherwise hang over the bot's turn.
             _hud.HideHint();
         }
@@ -640,6 +695,7 @@ namespace GameJam.Gameplay
 
         private void HandleCombatRolled(Combat combat)
         {
+            _hud.SetTurnStatus(MatchText.StatusRolling);
             // The re-roll after an Offering is the moment its troop is paid.
             if (combat.OfferingMade)
                 _board.ShowTroopChange(combat.From, -Match.OfferingCost);
@@ -656,6 +712,7 @@ namespace GameJam.Gameplay
             Combat combat = _match.PendingCombat;
             if (combat == null)
                 return;
+            _hud.SetTurnStatus(MatchText.StatusResult);
             SfxCue? cue = SfxCueChooser.CombatLanding(
                 combat,
                 result,
@@ -668,6 +725,12 @@ namespace GameJam.Gameplay
         // The dice panel is not hidden here, so the verdict stays readable after the troop is lost.
         private void HandleCombatResolved(Combat combat)
         {
+            // The march line goes out with the combat: the result has been read.
+            _attackPath.Fade(_attackPathFadeSeconds);
+            // Back from "Result". A bot goes back to thinking; a person's status is set by the attack
+            // loop (CombatResolved fires after the result window, so "Result" stayed while it was read).
+            if (!IsHumanTurn)
+                _hud.SetTurnStatus(MatchText.StatusThinking);
             bool attackerWon = combat.Result.Winner == CombatSide.Attacker;
             _combatsWon[Match.BaseTurnIndex(attackerWon ? combat.Attacker : combat.Defender)]++;
 
@@ -857,7 +920,6 @@ namespace GameJam.Gameplay
                 _roadPopupFor = god;
                 return;
             }
-            _sfx.PlaySubtle(SfxCue.Sacred);
             StartCoroutine(ShowRoadNoticeAfter(MatchText.RoadOpenedLine(god), god, RoadNoticeWait));
         }
 
@@ -868,6 +930,8 @@ namespace GameJam.Gameplay
         {
             if (wait > 0f)
                 yield return new WaitForSeconds(wait);
+            // The chime comes with the line, not with the die.
+            _sfx.PlaySubtle(SfxCue.Sacred);
             _hud.ShowNews(line, god, RollOutcome.Sacred);
         }
 
@@ -888,13 +952,11 @@ namespace GameJam.Gameplay
                 yield return new WaitForSeconds(wait);
             bool you = !_seats.IsHotSeat;
             _sfx.PlaySubtle(SfxCue.Sacred);
-            _turnBanner.ShowRoadPopup(
-                god,
-                MatchText.RoadPopupTitle,
-                MatchText.RoadPopupText(god, you),
-                1f
-            );
+            _turnBanner.ShowRoadPopup(god, MatchText.RoadPopupText(god, you));
         }
+
+        /// <summary>Drops a Road popup that never got shown (no army could march), so it never appears later unrelated to a die.</summary>
+        public void ClearPendingRoadPopup() => _roadPopupFor = null;
 
         /// <summary>Closes the Sacred Road popup when the person acts on it (or a new turn starts).</summary>
         public void HideRoadPopup() => _turnBanner.HideRoadPopup();
@@ -1010,6 +1072,7 @@ namespace GameJam.Gameplay
             _destiny.Hide();
             ShowRoundStartChanges();
             _board.ClearHighlights();
+            _attackPath.Clear();
             _nations.Refresh(_match);
             // A temple win at a round's first turn ends the match before the loop shows the line.
             ApplyPendingRoundLine();

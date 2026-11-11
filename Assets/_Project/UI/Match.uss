@@ -20,6 +20,16 @@
     -unity-font-definition: var(--font-body);
 }
 
+/* The free table the board is fitted into (BoardCameraFit reads this rectangle): the screen minus the
+   left column, the combat panel, the round line and the bottom actions. Never drawn, never clickable. */
+.hud__board-area {
+    position: absolute;
+    left: var(--board-gutter-left);
+    right: var(--board-gutter-right);
+    top: var(--board-gutter-top);
+    bottom: var(--board-gutter-bottom);
+}
+
 /* Carved display capitals: only at h2 size and up. */
 .menu__title,
 .god-card__name,
@@ -65,7 +75,10 @@
     position: absolute;
     left: var(--space-8);
     top: var(--space-8);
-    align-items: flex-start;
+    /* Exactly the nations panel's width: --board-gutter-left is this column plus its margins, so the
+       identity card (whatever its Wrath band holds) can never reach the board. */
+    width: var(--nations-panel-width);
+    align-items: stretch;
 }
 
 .hud__identity {
@@ -177,23 +190,62 @@
     border-left-color: var(--wood);
     border-bottom-color: var(--shadow);
     border-radius: var(--radius-md);
-    padding: var(--space-3) var(--space-6);
-    margin-bottom: var(--space-4);
+    padding: var(--space-3) var(--space-4);
+    margin-top: var(--space-2);
+    white-space: normal;
     -unity-text-align: middle-center;
 }
 
-.hud__prompt {
-    font-size: var(--font-size-body);
-    color: var(--ink);
+/* The action prompt: one paper bar for every prompt (turn, Road, Wrath aiming, refusals), like a note
+   laid on the table. The acting god's chip and color edge say whose it is; a small label over the
+   instruction says what kind of prompt it is. The instruction is h2 (Inter), readable at 1280x720. */
+.prompt {
+    flex-direction: row;
+    align-items: center;
+    max-width: var(--prompt-max-width);
     margin-bottom: var(--space-3);
-    -unity-text-align: middle-center;
+    padding: var(--space-3) var(--space-6) var(--space-3) var(--space-4);
+    background-color: var(--paper);
+    border-width: var(--border-width);
+    border-left-width: var(--space-2);
+    border-bottom-width: var(--shadow-offset);
+    border-color: var(--paper-shade);
+    border-bottom-color: var(--shadow);
+    border-radius: var(--radius-md);
 }
 
-/* Sacred Road mode: the prompt is the call to act, so it stands larger and bold, still plain ink. */
-.hud__prompt--road {
+.prompt.god--zeus { border-left-color: var(--nation-zeus); }
+.prompt.god--thor { border-left-color: var(--nation-thor); }
+.prompt.god--ra { border-left-color: var(--nation-ra); }
+.prompt.god--morrigan { border-left-color: var(--nation-morrigan); }
+
+.prompt__text {
+    flex-shrink: 1;
+    margin-left: var(--space-4);
+}
+
+.prompt__turn {
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-strong);
+    letter-spacing: var(--letter-spacing-label);
+    color: var(--ink-soft);
+    padding: 0;
+    margin: 0;
+}
+
+.prompt__instruction {
     font-size: var(--font-size-h2);
-    -unity-font-style: bold;
+    -unity-font-definition: var(--font-strong);
     color: var(--ink);
+    white-space: normal;
+    padding: 0;
+    margin: 0;
+}
+
+/* Sacred Road: the call to act, so its frame turns ink all round (the god's edge stays on the left). */
+.prompt--road {
+    border-top-color: var(--ink);
+    border-right-color: var(--ink);
 }
 
 /* Three slots across the bottom: the two sides share the leftover width equally, so the center
@@ -339,6 +391,8 @@
     right: var(--space-8);
     top: 50%;
     translate: 0 -50%;
+    /* Fixed width: it is the --board-gutter-right the board is fitted beside, so it never covers it. */
+    width: var(--dice-panel-width);
     align-items: center;
     padding: var(--space-4);
 }
@@ -458,37 +512,41 @@
     display: flex;
 }
 
-/* Both tags share one width and grow to the same height, so the two dice stay evenly spaced whatever
-   the god names are. The icon sits above the text, so the explanation gets the whole width (two lines)
-   and the panel stays clear of the board frame at 1280x720. */
+/* A short boxed tag under each die, "1 · SACRED": the drawn omen icon (sacred and cursed only), then the
+   number and its outcome in capitals. Whose die it is comes from the god's tint and border and the
+   name over the die. Both tags share one width and height, so the dice stay evenly spaced. */
 .outcome {
     width: var(--outcome-tag-width);
-    flex-grow: 1;
+    flex-direction: row;
     align-items: center;
     justify-content: center;
     margin-top: var(--space-2);
-    padding: var(--space-1);
+    padding: var(--space-2) var(--space-1);
     background-color: var(--paper);
     border-width: var(--border-width);
     border-color: var(--paper-shade);
     border-radius: var(--radius-sm);
 }
 
-/* An explanation ("1 = Zeus's sacred number"), so sentence case and untracked, at label size and weight. */
 .outcome__label {
-    flex-shrink: 1;
     font-size: var(--font-size-label);
+    letter-spacing: var(--letter-spacing-label);
     color: var(--ink);
-    white-space: normal;
+    white-space: nowrap;
     -unity-text-align: middle-center;
     padding: 0;
     margin: 0;
 }
 
-/* Icon over the explanation: the icon only appears for sacred and cursed; neutral is the plain text. */
+/* The icon only appears for sacred and cursed; neutral is just the text. */
 .outcome__icon {
-    margin-bottom: var(--space-1);
+    margin-right: var(--space-2);
     display: none;
+}
+
+/* The loser of the combat steps back: only its die fades; its tag stays fully readable. */
+.die.die--loser {
+    opacity: 0.6;
 }
 
 .outcome--sacred > .outcome__icon--sacred,
@@ -501,37 +559,111 @@
 .outcome.god--ra { background-color: var(--nation-ra-tint); border-color: var(--nation-ra); }
 .outcome.god--morrigan { background-color: var(--nation-morrigan-tint); border-color: var(--nation-morrigan); }
 
-/* The "why": body size, sentence case */
-.dice-panel__verdict {
+/* The verdict: one clear boxed "why" under the dice. The winner's chip and tint say who won (the
+   sentence never repeats the name); the rule that decided it is the main line, in capitals at body
+   size; badges (Offering re-roll, Ragnarök) are small chips under it. */
+.verdict {
+    flex-direction: row;
+    align-items: center;
+    align-self: stretch;
     margin-top: var(--space-4);
-    font-size: var(--font-size-body);
-    color: var(--ink);
-    -unity-text-align: middle-center;
-    white-space: normal;
-    max-width: var(--dice-panel-text-width);
+    padding: var(--space-3) var(--space-2);
+    background-color: var(--paper-shade);
+    border-width: var(--border-width);
+    border-left-width: var(--space-2);
+    border-color: var(--ink-faint);
+    border-radius: var(--radius-md);
+    visibility: hidden;
 }
 
-/* Same caption as the Destiny "Click to skip", so both "click" hints read alike. */
-.dice-panel__continue {
-    margin-top: var(--space-2);
-    font-size: var(--font-size-caption);
+.verdict.god--zeus { background-color: var(--nation-zeus-tint); border-color: var(--nation-zeus); }
+.verdict.god--thor { background-color: var(--nation-thor-tint); border-color: var(--nation-thor); }
+.verdict.god--ra { background-color: var(--nation-ra-tint); border-color: var(--nation-ra); }
+.verdict.god--morrigan { background-color: var(--nation-morrigan-tint); border-color: var(--nation-morrigan); }
+
+.verdict--shown {
+    visibility: visible;
+}
+
+.verdict__chip {
+    margin-right: var(--space-2);
+}
+
+.verdict__text {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+/* Over the headline when both dice read alike ("NEUTRAL VS NEUTRAL"): label size, soft ink. */
+.verdict__kicker {
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-strong);
+    letter-spacing: var(--letter-spacing-label);
     color: var(--ink-soft);
+    white-space: normal;
+    padding: 0;
+    margin: 0 0 var(--space-1) 0;
     display: none;
+}
+
+.verdict__kicker.verdict__line--shown {
+    display: flex;
+}
+
+.verdict__main {
+    font-size: var(--font-size-h2);
+    -unity-font-definition: var(--font-strong);
+    color: var(--ink);
+    white-space: normal;
+    padding: 0;
+    margin: 0;
+}
+
+.verdict__badge {
+    align-self: flex-start;
+    margin: var(--space-2) 0 0 0;
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-strong);
+    letter-spacing: var(--letter-spacing-label);
+    color: var(--wood-dark);
+    background-color: var(--paper);
+    border-width: var(--border-width);
+    border-color: var(--wood);
+    border-radius: var(--radius-sm);
+    white-space: normal;
+    display: none;
+}
+
+.verdict__badge.verdict__line--shown {
+    display: flex;
+}
+
+/* Label size like the other "click" hints of the HUD, so the combat panel keeps to body and label. */
+.dice-panel__continue {
+    margin-top: var(--space-3);
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-strong);
+    letter-spacing: var(--letter-spacing-label);
+    color: var(--ink-soft);
+    /* Hidden, not removed: the panel keeps its final height so the dice never jump. */
+    visibility: hidden;
 }
 
 /* --- Dice panel: optional Offering (owned by DiceView) ---
-   Sits under the attacker's die, as wide as its outcome tag. Hidden until the human loses a combat
-   they may re-roll; the timer bar drains over the Offering window, so its disappearance is expected. */
+   A centered secondary button under the dice, the full width of the panel's content and at least a
+   button tall. Hidden (still taking its room) until the human loses a combat they may re-roll; the
+   timer bar drains over the Offering window, so its disappearance is expected. */
 .button.dice-offering {
-    display: none;
-    align-self: flex-start;
-    width: var(--outcome-tag-width);
-    margin: var(--space-2) var(--space-1) 0;
-    padding: var(--space-2) var(--space-2) var(--space-1);
+    visibility: hidden;
+    align-self: stretch;
+    min-height: var(--button-min-height);
+    margin: var(--space-3) 0 0;
+    padding: var(--space-2) var(--space-3) var(--space-1);
 }
 
 .dice-offering__label {
-    font-size: var(--font-size-label);
+    font-size: var(--font-size-body);
     letter-spacing: var(--letter-spacing-label);
     -unity-text-align: middle-center;
     white-space: normal;
@@ -628,6 +760,16 @@
     margin: var(--space-1) 0 0 0;
 }
 
+/* Toasts (the news line and the one-time hint) live in the free corner of the right gutter, as wide as
+   the combat panel, so they never straddle the board frame. The prompt bar is narrower, so they never
+   meet it either. */
+.hud__toasts {
+    position: absolute;
+    right: var(--space-8);
+    bottom: var(--space-8);
+    width: var(--dice-panel-width);
+}
+
 /* Sound and fast bots toggles, side by side at the top right */
 .hud__toggles {
     position: absolute;
@@ -716,6 +858,18 @@
     margin: 0 0 0 var(--space-2);
 }
 
+/* The place in the drawn turn order, a small numbered tag right after the chip. */
+.nation-row__place {
+    margin-left: var(--space-2);
+    padding: 0 var(--space-1);
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-strong);
+    color: var(--ink-soft);
+    border-width: var(--border-width);
+    border-color: var(--ink-faint);
+    border-radius: var(--radius-sm);
+}
+
 .nation-row__you {
     margin-left: var(--space-2);
     padding: 0 var(--space-1);
@@ -790,6 +944,57 @@
     display: none;
 }
 
+/* Turn box: the one turn indicator, top right under the toggles. A paper card whose left edge, chip and
+   icon are the acting god's ("THOR'S TURN" with a short status under it). When the turn changes it
+   slides in from the right (turn-box--entering is set, then removed a moment later). */
+.turn-box {
+    position: absolute;
+    right: var(--space-8);
+    top: var(--turn-box-top);
+    width: var(--turn-box-width);
+    flex-direction: row;
+    align-items: center;
+    padding: var(--space-3) var(--space-4);
+    border-left-width: var(--space-2);
+    border-radius: var(--radius-md);
+    transition-property: translate, opacity;
+    transition-duration: var(--duration-slow);
+    transition-timing-function: var(--ease-enter);
+}
+
+.turn-box--entering {
+    translate: var(--space-6) 0;
+    opacity: 0;
+}
+
+.turn-box.god--zeus { border-left-color: var(--nation-zeus); }
+.turn-box.god--thor { border-left-color: var(--nation-thor); }
+.turn-box.god--ra { border-left-color: var(--nation-ra); }
+.turn-box.god--morrigan { border-left-color: var(--nation-morrigan); }
+
+.turn-box__text {
+    flex-shrink: 1;
+    margin-left: var(--space-3);
+}
+
+.turn-box__title {
+    font-size: var(--font-size-body);
+    -unity-font-definition: var(--font-strong);
+    color: var(--ink);
+    white-space: nowrap;
+    padding: 0;
+    margin: 0;
+}
+
+.turn-box__status {
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-strong);
+    color: var(--ink-soft);
+    white-space: nowrap;
+    padding: 0;
+    margin: var(--space-1) 0 0 0;
+}
+
 /* Turn banner: above the top edge until shown, then slides down */
 .turn-banner {
     position: absolute;
@@ -797,7 +1002,7 @@
     top: var(--turn-banner-top);
     flex-direction: row;
     align-items: center;
-    padding: var(--space-3) var(--space-6);
+    padding: var(--space-2) var(--space-6);
     border-left-width: var(--space-2);
     translate: -50% var(--turn-banner-hidden-offset);
     opacity: 0;
@@ -835,7 +1040,7 @@
     left: 50%;
     top: var(--road-popup-top);
     width: var(--road-popup-width);
-    padding: var(--space-3) var(--space-6);
+    padding: var(--space-2) var(--space-6) var(--space-2) var(--space-4);
     border-left-width: var(--space-2);
     translate: -50% var(--space-4);
     scale: 0.94 0.94;
@@ -863,19 +1068,22 @@
 }
 
 .road-popup__title {
-    flex-grow: 1;
     margin-left: var(--space-4);
     font-size: var(--font-size-h2);
     -unity-font-style: bold;
     color: var(--ink);
+    white-space: nowrap;
     padding: 0;
 }
 
+/* One short sentence after the title, filling the row up to "Click to close". */
 .road-popup__text {
-    margin-top: var(--space-2);
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin: 0 0 0 var(--space-4);
     font-size: var(--font-size-body);
     color: var(--ink);
-    white-space: normal;
+    white-space: nowrap;
     padding: 0;
 }
 
@@ -1231,9 +1439,10 @@
    stars (Inter h2, ink) on the god's tint with a nation-color edge, like the Day badge: it is that
    god's power. Never "ready": the Wrath button says that. */
 .hud__wrath {
-    flex-direction: row;
-    align-items: center;
-    align-self: flex-start;
+    /* Name over stars, so the band never makes the left column wider than the nations panel. */
+    flex-direction: column;
+    align-items: flex-start;
+    align-self: stretch;
     margin-top: var(--space-2);
     padding: var(--space-1) var(--space-3);
     border-width: var(--border-width);
@@ -1252,8 +1461,7 @@
     -unity-font-style: bold;
     color: var(--ink);
     padding: 0;
-    /* Room for the stars' bump (--favor-bump-scale) without touching the name. */
-    margin: 0 var(--space-4) 0 0;
+    margin: 0;
 }
 
 .hud__favor {
@@ -1350,11 +1558,13 @@
     border-width: var(--border-width);
     border-left-width: var(--space-2);
     border-radius: var(--radius-md);
-    padding: var(--space-2) var(--space-6);
-    margin-bottom: var(--space-3);
+    padding: var(--space-2) var(--space-4);
+    margin-top: var(--space-2);
 }
 
 .hud__news-text {
+    flex-shrink: 1;
+    white-space: normal;
     font-size: var(--font-size-body);
     -unity-font-style: bold;
     color: var(--ink);
@@ -1378,45 +1588,188 @@
 .hud__day-badge.god--ra, .hud__news.god--ra { background-color: var(--nation-ra-tint); border-color: var(--nation-ra); }
 .hud__day-badge.god--morrigan, .hud__news.god--morrigan { background-color: var(--nation-morrigan-tint); border-color: var(--nation-morrigan); }
 
-/* The Wrath button keeps the button language. Disabled it still names the Wrath and its progress,
-   so its text stays ink (readable) on the paper-shade fill. Ready, it wears the god's tint and color
-   and a ★; while aiming it turns secondary (set by HudView). */
-.button.button--wrath {
+/* The Wrath button: the god's signature power, not a grey "disabled" button. A big tile with the god's
+   icon, the Wrath's name in carved capitals over its state, and the three Favor stars. Four states set
+   by HudView as classes next to the god class, all drawn with ink and the god's own colors:
+     locked  paper face, a frame in the god's color, stars filling up ("FAVOR 1/3" or "NO TARGET")
+     ready   solid nation color, ink frame, white stars, a halo ring and a slow breath
+     used    quiet paper-shade face ("USED THIS TURN")
+     aiming  paper face in wood ("CLICK TO CANCEL")
+   The .wrath.wrath--* selectors out-rank .button:disabled, so a locked Wrath keeps its face. */
+.button.wrath {
+    flex-direction: row;
+    align-items: center;
     min-width: var(--wrath-button-min-width);
-    height: var(--action-button-height);
-    margin-right: var(--space-4);
-    /* The ready pulse breathes slowly; hover, press and color changes stay fast. */
-    transition-duration: var(--duration-fast), var(--duration-fast), var(--duration-fast), var(--duration-fast), var(--duration-slow);
+    height: var(--wrath-button-height);
+    margin: 0 var(--space-4) 0 0;
+    padding: 0 var(--space-4) 0 var(--space-3);
+    border-width: var(--space-1);
+    border-bottom-width: var(--space-2);
+    background-color: var(--paper);
+    /* The breath is slow; hover, press and color changes stay fast. */
+    transition-property: background-color, border-color, translate, scale;
+    transition-duration: var(--duration-fast), var(--duration-fast), var(--duration-fast), var(--duration-slow);
 }
 
-.button--wrath:disabled {
-    color: var(--ink);
+.wrath__icon {
+    width: var(--icon-lg);
+    height: var(--icon-lg);
+    flex-shrink: 0;
+    margin-right: var(--space-3);
 }
 
-/* Ready, it is the god's own power: solid nation color, an ink frame with a deeper ink bottom edge
-   (a painted tile, like the pieces), the Wrath name in carved h2 capitals after a ★, and a slow
-   breath (button--wrath-pulse, toggled by HudView). Text is ink, paper on Morrígan's black. */
-.button.button--wrath-ready {
-    font-size: var(--font-size-h2);
+.wrath > .wrath__icon {
+    -unity-background-image-tint-color: var(--ink);
+}
+
+.wrath__text {
+    flex-grow: 1;
+    justify-content: center;
+}
+
+.wrath__name {
     -unity-font-definition: var(--font-display);
+    font-size: var(--font-size-h2);
     -unity-font-style: bold;
-    letter-spacing: 0;
-    border-color: var(--ink);
-    border-bottom-width: var(--shadow-offset);
     color: var(--ink);
+    white-space: nowrap;
+    padding: 0;
+    margin: 0;
 }
 
-.button--wrath-ready.god--zeus { background-color: var(--nation-zeus); }
-.button--wrath-ready.god--thor { background-color: var(--nation-thor); }
-.button--wrath-ready.god--ra { background-color: var(--nation-ra); }
-.button--wrath-ready.god--morrigan { background-color: var(--nation-morrigan); color: var(--paper); }
+.wrath__state {
+    -unity-font-definition: var(--font-strong);
+    font-size: var(--font-size-label);
+    letter-spacing: var(--letter-spacing-label);
+    color: var(--ink-soft);
+    white-space: nowrap;
+    padding: 0;
+    margin: 0;
+}
+
+/* Three Favor stars: the drawn sacred star, pale when empty, nation color on an ink outline when full. */
+.wrath__stars {
+    flex-direction: row;
+    flex-shrink: 0;
+    margin-left: var(--space-3);
+}
+
+.wrath__star {
+    width: var(--wrath-star-size);
+    height: var(--wrath-star-size);
+    margin-left: var(--space-1);
+}
+
+.wrath__star-back,
+.wrath__star-front {
+    position: absolute;
+    -unity-background-scale-mode: scale-to-fit;
+    background-image: url("../Art/Placeholder/icon_sacred.png");
+}
+
+.wrath__star-back {
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    -unity-background-image-tint-color: var(--ink-faint);
+}
+
+.wrath__star-front {
+    left: 3px;
+    top: 3px;
+    right: 3px;
+    bottom: 3px;
+    display: none;
+}
+
+.wrath__star--on > .wrath__star-back { -unity-background-image-tint-color: var(--ink); }
+.wrath__star--on > .wrath__star-front { display: flex; }
+
+/* A full star is solid ink here, like the "★" of the identity card and the nation rows: one fill everywhere. */
+.wrath__star--on > .wrath__star-front { -unity-background-image-tint-color: var(--ink); }
+
+/* The halo: a ring just outside the button, only while ready. */
+.wrath__halo {
+    position: absolute;
+    left: var(--wrath-halo-offset);
+    top: var(--wrath-halo-offset);
+    right: var(--wrath-halo-offset);
+    bottom: var(--wrath-halo-offset);
+    border-width: var(--space-1);
+    border-color: var(--clear);
+    border-radius: var(--radius-lg);
+    opacity: 0.35;
+    display: none;
+    transition-property: opacity;
+    transition-duration: var(--duration-slow);
+    transition-timing-function: var(--ease-enter);
+}
+
+/* Locked: the god's frame on paper. */
+.button.wrath.wrath--locked.god--zeus { border-color: var(--nation-zeus); }
+.button.wrath.wrath--locked.god--thor { border-color: var(--nation-thor); }
+.button.wrath.wrath--locked.god--ra { border-color: var(--nation-ra); }
+.button.wrath.wrath--locked.god--morrigan { border-color: var(--nation-morrigan); }
+
+/* Used: the same frame on a quiet face. */
+.button.wrath.wrath--used {
+    background-color: var(--paper-shade);
+}
+
+.button.wrath.wrath--used.god--zeus { border-color: var(--nation-zeus); }
+.button.wrath.wrath--used.god--thor { border-color: var(--nation-thor); }
+.button.wrath.wrath--used.god--ra { border-color: var(--nation-ra); }
+.button.wrath.wrath--used.god--morrigan { border-color: var(--nation-morrigan); }
+
+.wrath--used .wrath__name { color: var(--ink-soft); }
+
+/* Ready: the god's own power. A solid nation-color tile in an ink frame with a deeper bottom edge (a
+   painted token, like the pieces), white stars, a halo ring and a slow breath (wrath--pulse, toggled
+   by HudView). Text is ink; paper on Morrígan's black. */
+.button.wrath.wrath--ready {
+    border-color: var(--ink);
+}
+
+.button.wrath.wrath--ready.god--zeus { background-color: var(--nation-zeus); }
+.button.wrath.wrath--ready.god--thor { background-color: var(--nation-thor); }
+.button.wrath.wrath--ready.god--ra { background-color: var(--nation-ra); }
+.button.wrath.wrath--ready.god--morrigan { background-color: var(--nation-morrigan); }
+
+.wrath--ready .wrath__state { color: var(--ink); }
+.wrath--ready.god--morrigan .wrath__name,
+.wrath--ready.god--morrigan .wrath__state { color: var(--paper); }
+.wrath.wrath--ready.god--morrigan > .wrath__icon { -unity-background-image-tint-color: var(--paper); }
+.wrath.wrath--ready .wrath__star--on > .wrath__star-front { -unity-background-image-tint-color: var(--paper); }
+
+.wrath--ready > .wrath__halo { display: flex; }
+.wrath--ready.god--zeus > .wrath__halo { border-color: var(--nation-zeus); }
+.wrath--ready.god--thor > .wrath__halo { border-color: var(--nation-thor); }
+.wrath--ready.god--ra > .wrath__halo { border-color: var(--nation-ra); }
+.wrath--ready.god--morrigan > .wrath__halo { border-color: var(--nation-morrigan); }
+
+.wrath--ready.wrath--pulse > .wrath__halo { opacity: 1; }
 
 /* Hover keeps the god's color and frames it in wood-dark; the lift and grow come from .button:hover. */
-.button--wrath-ready:hover {
+.button.wrath.wrath--ready:hover {
     border-color: var(--wood-dark);
 }
 
-.button--wrath-pulse {
+/* A locked or used Wrath does not answer the pointer: no lift, no grow, no press. */
+.button.wrath.wrath--locked:hover,
+.button.wrath.wrath--locked:active,
+.button.wrath.wrath--used:hover,
+.button.wrath.wrath--used:active {
+    translate: 0 0;
+    scale: 1 1;
+}
+
+/* Aiming: back to paper, framed in wood, so it reads as "back out" rather than "strike". */
+.button.wrath.wrath--aiming {
+    border-color: var(--wood);
+}
+
+.wrath--pulse {
     scale: var(--wrath-pulse-scale);
 }
 
@@ -1747,4 +2100,164 @@
     color: var(--ink-soft);
     padding: 0;
     margin: var(--space-1) 0 0 0;
+}
+
+/* Turn-order draw (before round 1): a scrim and a card like the Destiny Die's, with the dice of the
+   duel under a heading, the boxed verdict, then the final order as four numbered god cards. */
+.draw-overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+    /* The card sits on the board's centre: the same insets as the board area (HudView), so it is
+       centred on the board horizontally and vertically, not on the raw screen. */
+    padding: var(--board-gutter-top) var(--board-gutter-right) var(--board-gutter-bottom) var(--board-gutter-left);
+    background-color: var(--scrim-light);
+    opacity: 1;
+    transition-property: opacity;
+    transition-duration: var(--duration-slow);
+    transition-timing-function: var(--ease-exit);
+}
+
+.draw-overlay--hidden {
+    opacity: 0;
+}
+
+.draw-card {
+    align-items: center;
+    justify-content: center;
+    width: var(--draw-card-width);
+    height: var(--draw-card-height);
+    padding: var(--space-6) var(--space-8);
+}
+
+.draw-card__title {
+    -unity-font-definition: var(--font-display);
+    font-size: var(--font-size-h1);
+    -unity-font-style: bold;
+    color: var(--ink);
+    margin-bottom: var(--space-1);
+}
+
+.draw-card__duel {
+    font-size: var(--font-size-h2);
+    -unity-font-definition: var(--font-strong);
+    color: var(--ink-soft);
+    margin-bottom: var(--space-6);
+}
+
+/* Pinned to the bottom centre of the fixed card, out of the content's flow. */
+.draw-card__skip {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: var(--space-4);
+    margin: 0;
+    -unity-text-align: middle-center;
+}
+
+.draw-card__block {
+    align-self: stretch;
+    align-items: center;
+}
+
+.draw-card__row {
+    flex-direction: row;
+    justify-content: center;
+}
+
+/* The two slots are wider apart than the combat dice: a duel is the whole card. */
+.draw-card__row > .die-slot {
+    margin: 0 var(--space-6);
+}
+
+.draw-card__row .god-chip {
+    margin-bottom: var(--space-2);
+}
+
+.draw-card__row .die-slot__name {
+    margin-bottom: var(--space-3);
+}
+
+.draw-card__row .outcome {
+    margin-top: var(--space-3);
+    padding: var(--space-2) var(--space-3);
+}
+
+/* Verdict text centred on the box; the winner's chip always sits at the right edge (hidden, its
+   place kept, on a tie), and the text keeps equal side room so it never shifts. */
+.draw-card__verdict .verdict__chip {
+    position: absolute;
+    right: var(--space-2);
+    top: 50%;
+    translate: 0 -50%;
+    margin: 0;
+}
+
+.draw-card__verdict .verdict__text {
+    padding: 0 var(--space-8);
+    align-items: center;
+}
+
+.draw-card__verdict .verdict__main,
+.draw-card__verdict .verdict__kicker {
+    -unity-text-align: middle-center;
+}
+
+.draw-card__verdict {
+    justify-content: center;
+    align-self: stretch;
+    height: var(--draw-verdict-height);
+    margin-top: var(--space-6);
+}
+
+.draw-card__final {
+    flex-direction: row;
+    justify-content: center;
+}
+
+/* One numbered god card: the place on top, the chip, the name; it pops in one after another. */
+.draw-place {
+    align-items: center;
+    margin: 0 var(--space-2);
+    padding: var(--space-4) var(--space-2);
+    width: var(--draw-place-width);
+    background-color: var(--paper);
+    border-width: var(--border-width);
+    border-top-width: var(--space-2);
+    border-bottom-width: var(--shadow-offset);
+    border-color: var(--paper-shade);
+    border-bottom-color: var(--shadow);
+    border-radius: var(--radius-md);
+    opacity: 0;
+    scale: 0.9 0.9;
+    transition-property: opacity, scale;
+    transition-duration: var(--duration-base);
+    transition-timing-function: var(--ease-enter);
+}
+
+.draw-place--shown {
+    opacity: 1;
+    scale: 1 1;
+}
+
+.draw-place.god--zeus { border-top-color: var(--nation-zeus); background-color: var(--nation-zeus-tint); }
+.draw-place.god--thor { border-top-color: var(--nation-thor); background-color: var(--nation-thor-tint); }
+.draw-place.god--ra { border-top-color: var(--nation-ra); background-color: var(--nation-ra-tint); }
+.draw-place.god--morrigan { border-top-color: var(--nation-morrigan); background-color: var(--nation-morrigan-tint); }
+
+.draw-place__badge {
+    font-size: var(--font-size-h2);
+    -unity-font-definition: var(--font-strong);
+    color: var(--ink);
+    margin-bottom: var(--space-2);
+}
+
+.draw-place__name {
+    font-size: var(--font-size-body);
+    -unity-font-definition: var(--font-strong);
+    color: var(--ink);
 }

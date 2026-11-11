@@ -310,9 +310,15 @@ namespace GameJam.Tests
         }
 
         [Test]
-        public void EndTurn_DestinyFavorsAnEliminatedGod_NextLivingGodOpens()
+        public void EndTurn_DestinyShowsAnEliminatedGodsFace_ItIsRerolledSoThatGodNeverOpens()
         {
-            Match match = MatchSetup.Start(_board, ZeusOpens, Pantheon.SacredFace(God.Zeus));
+            // Round 2 rolls Zeus's face, which is re-rolled into Ra's.
+            Match match = MatchSetup.Start(
+                _board,
+                ZeusOpens,
+                Pantheon.SacredFace(God.Zeus),
+                Pantheon.SacredFace(God.Ra)
+            );
             MatchSetup.PlayPassiveTurn(match);
             MatchSetup.RemoveNation(_board, God.Zeus);
             God? godAtRoundStart = null;

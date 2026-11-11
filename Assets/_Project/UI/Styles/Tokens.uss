@@ -20,6 +20,7 @@
     --ink-soft: #6E5F4E;
     --ink-faint: #A89580;
     --scrim: rgba(43, 33, 24, 0.45);
+    --scrim-light: rgba(43, 33, 24, 0.18);
     --clear: rgba(43, 33, 24, 0);
     /* Flat paper shadow: drawn as a thicker bottom border (USS has no box-shadow) */
     --shadow: #D2C2A4;
@@ -60,22 +61,45 @@
     --icon-md: 32px;
     --icon-lg: 48px;
     --chip-lg: 80px;
-    --die-size: 112px;
+    --die-size: 140px;
     --die-border: 4px;
     --die-border-sacred: 8px;
-    --dice-panel-text-width: 240px;
-    /* Width of the outcome tag under each combat die; its explanation wraps to two lines */
+    /* Width of the outcome tag under each combat die: "1 · SACRED" with its icon on one line */
     --outcome-tag-width: 144px;
     --round-line-width: 800px;
     --end-card-width: 480px;
+    /* Turn-order draw card: one fixed size for every duel, tie, verdict and the final order */
+    --draw-card-width: 680px;
+    --draw-card-height: 650px;
+    --draw-place-width: 128px;
+    --draw-verdict-height: 88px;
     --icon-sm: 20px;
     --nations-panel-width: 300px;
     /* Wide enough that every power line (Day, Wrath) fits on one line at body size */
     --god-card-width: 352px;
-    /* Wide enough for "★ THUNDERBOLT" in carved h2 capitals, so the ready state never resizes it */
-    --wrath-button-min-width: 320px;
-    /* The two main actions (END TURN, the Wrath) stand taller than every other button */
-    --action-button-height: 64px;
+    /* The Wrath button: icon, carved name over its state, the three Favor stars. Wide and tall enough
+       that locked, ready, used and aiming never resize it */
+    --wrath-button-min-width: 420px;
+    --wrath-button-height: 84px;
+    --wrath-star-size: 36px;
+    /* How far the ready Wrath's halo ring stands outside the button */
+    --wrath-halo-offset: -10px;
+    /* END TURN, the main action, stands taller than every other button */
+    --action-button-height: 72px;
+    /* The action prompt above the buttons: one paper bar (god chip, label, instruction) for every prompt */
+    --prompt-max-width: 900px;
+    /* The turn box: top right, under the sound and fast-bots toggles */
+    --turn-box-width: 288px;
+    --turn-box-top: 96px;
+    /* Combat panel (right): two dice, a tag under each, and the boxed verdict */
+    --dice-panel-width: 352px;
+    /* Free table kept clear for the board: what the panels, toggles and bottom actions leave. The camera
+       fits the board frame inside it (BoardCameraFit), so no panel ever covers the board at any aspect.
+       Left = screen padding + nations panel + gap; right = screen padding + combat panel + gap. */
+    --board-gutter-left: 416px;
+    --board-gutter-right: 416px;
+    --board-gutter-top: 160px;
+    --board-gutter-bottom: 232px;
     /* Fixed box of each temple dot, so the ringed goal dot is a circle around its "3" */
     --temple-dot-size: 32px;
     /* The star that flies from a sacred combat die to its god's Favor stars */
@@ -83,14 +107,15 @@
     --die-size-destiny: 200px;
     /* Thicker bottom edge of the Destiny Die: the side of a real die seen slightly from above */
     --die-edge-destiny: 16px;
-    /* Below the round line (even wrapped) and the Day badge under it */
-    --turn-banner-top: 192px;
+    /* Just under the round line, in the table's top margin (it covers a Day badge for its few seconds,
+       rather than the top row of the board) */
+    --turn-banner-top: 108px;
     --turn-banner-hidden-offset: -288px;
     /* The Sacred Road popup, centered above the board's middle row: wide enough for its sentence in two
        lines; starts just under the round line (covering a round-long Day badge instead of leaving a
        sliver of it) and ends above the north temple */
-    --road-popup-width: 720px;
-    --road-popup-top: 112px;
+    --road-popup-width: 1160px;
+    --road-popup-top: 108px;
     /* The round "i" badge that says "click for the full explanation" (round line, nation rows) */
     --info-badge-size: 28px;
     /* Max width of the round info panel under the round line */

@@ -22,6 +22,14 @@ namespace GameJam.Core
         /// <param name="playerSeats">One entry per god in Match.BaseTurnOrder: true for a person.</param>
         /// <param name="botsPlayEverySeat">Debug: bots also play the player seats.</param>
         public PlayerSeats(IReadOnlyList<bool> playerSeats, bool botsPlayEverySeat)
+            : this(playerSeats, botsPlayEverySeat, null) { }
+
+        /// <param name="turnOrder">The drawn play order (null: the base cycle); "first player" follows it.</param>
+        public PlayerSeats(
+            IReadOnlyList<bool> playerSeats,
+            bool botsPlayEverySeat,
+            IReadOnlyList<God> turnOrder
+        )
         {
             if (!IsValid(playerSeats))
                 throw new ArgumentException(
@@ -29,19 +37,31 @@ namespace GameJam.Core
                     nameof(playerSeats)
                 );
 
-            God? first = null;
             for (int i = 0; i < _playerSeats.Length; i++)
             {
                 _playerSeats[i] = playerSeats[i];
-                if (!playerSeats[i])
-                    continue;
-                PlayerCount++;
-                first ??= Match.BaseTurnOrder[i];
+                if (playerSeats[i])
+                    PlayerCount++;
             }
-            // IsValid guarantees at least one player seat.
-            FirstPlayer = first.Value;
             _botsPlayEverySeat = botsPlayEverySeat;
+            _turnOrder = turnOrder;
+
+            // IsValid guarantees at least one player seat.
+            foreach (God god in turnOrder ?? Match.BaseTurnOrder)
+            {
+                if (_playerSeats[Match.BaseTurnIndex(god)])
+                {
+                    FirstPlayer = god;
+                    break;
+                }
+            }
         }
+
+        private readonly IReadOnlyList<God> _turnOrder;
+
+        /// <summary>The same seats once the turn-order draw has fixed the play order.</summary>
+        public PlayerSeats WithTurnOrder(IReadOnlyList<God> turnOrder) =>
+            new PlayerSeats(_playerSeats, _botsPlayEverySeat, turnOrder);
 
         /// <summary>One person at <paramref name="god"/>, bots at the other three.</summary>
         public static PlayerSeats Solo(God god, bool botsPlayEverySeat)
@@ -67,7 +87,7 @@ namespace GameJam.Core
         /// <summary>How many gods the menu gave to people (1 to 4).</summary>
         public int PlayerCount { get; }
 
-        /// <summary>The first player seat in base turn order: the solo player, or hot-seat's first view.</summary>
+        /// <summary>The first player seat in the (drawn) turn order: the solo player, or hot-seat's first view.</summary>
         public God FirstPlayer { get; }
 
         /// <summary>Two or more people share the screen: the HUD names gods instead of saying "you".</summary>

@@ -69,6 +69,30 @@ namespace GameJam.Gameplay
 
         public void Refresh(Territory territory) => _views[territory.Id].Refresh();
 
+        /// <summary>World position of a territory's center; its link lines and the attack path start here.</summary>
+        public Vector3 PositionOf(Territory territory) => _views[territory.Id].transform.position;
+
+        /// <summary>
+        /// How far from its center a piece's edge lies along a direction (a unit vector), so a path
+        /// ends at the edge instead of running under the piece. Capitals are squares, temples diamonds,
+        /// villages and the Altar circles.
+        /// </summary>
+        public float EdgeDistance(Territory territory, Vector3 direction)
+        {
+            float half = _layout.GetSize(territory.Kind) * 0.5f;
+            float x = Mathf.Abs(direction.x);
+            float y = Mathf.Abs(direction.y);
+            return territory.Kind switch
+            {
+                TerritoryKind.Capital => half / Mathf.Max(x, y),
+                TerritoryKind.Temple => half / (x + y),
+                _ => half,
+            };
+        }
+
+        /// <summary>The nation color (--nation-*) of a god, for lines and effects on the board.</summary>
+        public Color ColorOf(God god) => _visuals.Get(god).Color;
+
         /// <summary>Floats "-2" / "+1" over the piece; see <see cref="TerritoryView.ShowTroopChange"/>.</summary>
         public void ShowTroopChange(Territory territory, int delta) =>
             _views[territory.Id].ShowTroopChange(delta);
