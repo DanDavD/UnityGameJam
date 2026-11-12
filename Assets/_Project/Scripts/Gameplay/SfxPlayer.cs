@@ -8,7 +8,7 @@ namespace GameJam.Gameplay
     /// Offering re-roll) is the same clip on its own voice: a new roll restarts it and nothing ever
     /// stacks. The clip is exactly as long as the dice tumble and ends with the landing clack, so
     /// the sound starts with the dice and ends as they land. Every other cue plays as an
-    /// overlapping one-shot.
+    /// overlapping one-shot. The main theme loops on a third, low-priority source created at runtime.
     /// It only knows cues, never the rules: MatchPresenter decides when each one plays and
     /// <see cref="SfxCueChooser"/> picks the landing stings.
     /// </summary>
@@ -16,6 +16,9 @@ namespace GameJam.Gameplay
     {
         // A roll must never be inaudible by a stray Inspector value.
         private const float MinRollVolume = 0.1f;
+
+        // Lower is more important: under the roll (0), above default one-shots (128).
+        private const int MusicPriority = 64;
 
         [SerializeField]
         private AudioCues _cues;
@@ -38,12 +41,22 @@ namespace GameJam.Gameplay
         [SerializeField, Min(0.01f)]
         private float _fadeSeconds = 0.1f;
 
+        [Tooltip(
+            "Seconds the music takes to fade out when the match ends, so the end sting plays on silence."
+        )]
+        [SerializeField, Min(0.01f)]
+        private float _musicFadeSeconds = 1.5f;
+
         private AudioClip _rollClip;
 
         // Carries the tail of an interrupted roll so the new roll can start on its own frame.
         private AudioSource _tailSource;
         private Coroutine _tailFade;
         private Coroutine _stopFade;
+
+        // Created in Awake, so the scene needs no extra component; null when there is no music clip.
+        private AudioSource _musicSource;
+        private Coroutine _musicFade;
 
         /// <summary>Mutes the sources rather than AudioListener.volume, so no global state outlives the scene.</summary>
         public void SetMuted(bool muted)
@@ -52,6 +65,8 @@ namespace GameJam.Gameplay
             _effectsSource.mute = muted;
             if (_tailSource != null)
                 _tailSource.mute = muted;
+            if (_musicSource != null)
+                _musicSource.mute = muted;
         }
 
         /// <summary>Plays a one-shot cue. Rolls go through <see cref="PlayRoll"/>.</summary>
@@ -62,6 +77,9 @@ namespace GameJam.Gameplay
 
         private void Awake()
         {
+            // Before the roll setup, whose early return must not leave the match without music.
+            SetUpMusic();
+
             // The clip is set once and never swapped: changing .clip on a source that is playing or
             // just stopped can drop the next Play, which is how rolls used to go silent.
             _rollClip = _cues.DiceRoll;
@@ -87,6 +105,48 @@ namespace GameJam.Gameplay
             // did not, so the first roll still starts on its frame instead of after a load.
             if (_rollClip.loadState == AudioDataLoadState.Unloaded)
                 _rollClip.LoadAudioData();
+        }
+
+        private void SetUpMusic()
+        {
+            AudioClip music = _cues.Music;
+            if (music == null)
+            {
+                Debug.LogWarning(
+                    "AudioCues has no music clip: the match will have no music.",
+                    _cues
+                );
+                return;
+            }
+
+            _musicSource = gameObject.AddComponent<AudioSource>();
+            _musicSource.clip = music;
+            _musicSource.playOnAwake = false;
+            _musicSource.loop = true;
+            _musicSource.spatialBlend = 0f;
+            _musicSource.volume = _cues.MusicVolume;
+            // Lower number = more important. Below the rolls (0) so a busy moment never steals a
+            // roll's voice for the music, above the default (128) so effects never cut the theme.
+            _musicSource.priority = MusicPriority;
+            _musicSource.outputAudioMixerGroup = _effectsSource.outputAudioMixerGroup;
+            StartCoroutine(PlayMusicWhenLoaded(music));
+        }
+
+        // The theme loads in background so it never delays the scene. A Play() issued while the
+        // clip is still loading is dropped and leaves the source stuck silent, so wait for it.
+        private IEnumerator PlayMusicWhenLoaded(AudioClip music)
+        {
+            if (music.loadState == AudioDataLoadState.Unloaded)
+                music.LoadAudioData();
+            while (music.loadState == AudioDataLoadState.Loading)
+                yield return null;
+            if (music.loadState == AudioDataLoadState.Loaded)
+                _musicSource.Play();
+            else
+                Debug.LogWarning(
+                    "The music clip failed to load: the match will have no music.",
+                    music
+                );
         }
 
         private void Play(SfxCue cue, float volumeScale)
@@ -129,7 +189,17 @@ namespace GameJam.Gameplay
         {
             if (!_rollSource.isPlaying || _stopFade != null)
                 return;
-            _stopFade = StartCoroutine(FadeOut(_rollSource, () => _stopFade = null));
+            _stopFade = StartCoroutine(FadeOut(_rollSource, _fadeSeconds, () => _stopFade = null));
+        }
+
+        /// <summary>Fades the theme out (the match ended) so the victory or defeat sting plays on silence.</summary>
+        public void FadeOutMusic()
+        {
+            if (_musicSource == null || !_musicSource.isPlaying || _musicFade != null)
+                return;
+            _musicFade = StartCoroutine(
+                FadeOut(_musicSource, _musicFadeSeconds, () => _musicFade = null)
+            );
         }
 
         private void HandOverTail()
@@ -140,16 +210,16 @@ namespace GameJam.Gameplay
             _tailSource.volume = _rollSource.volume;
             _tailSource.Play();
             _tailSource.time = Mathf.Min(_rollSource.time, _rollClip.length - 0.01f);
-            _tailFade = StartCoroutine(FadeOut(_tailSource, () => _tailFade = null));
+            _tailFade = StartCoroutine(FadeOut(_tailSource, _fadeSeconds, () => _tailFade = null));
         }
 
         // Real time, so a fade still finishes if the game's time scale is ever changed.
-        private IEnumerator FadeOut(AudioSource source, System.Action done)
+        private IEnumerator FadeOut(AudioSource source, float seconds, System.Action done)
         {
             float start = source.volume;
-            for (float t = 0f; t < _fadeSeconds; t += Time.unscaledDeltaTime)
+            for (float t = 0f; t < seconds; t += Time.unscaledDeltaTime)
             {
-                source.volume = start * (1f - t / _fadeSeconds);
+                source.volume = start * (1f - t / seconds);
                 yield return null;
             }
             source.Stop();

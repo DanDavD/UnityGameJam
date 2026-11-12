@@ -121,7 +121,6 @@ namespace GameJam.Gameplay
         // "You" line, which is only known once the Day starts. Solo only.
         private int _humanDestinyModifier;
 
-
         // Every god's Favor as last shown, indexed like Match.BaseTurnOrder, so a change can say +1 or -1.
         private readonly int[] _shownFavor = new int[Match.BaseTurnOrder.Count];
 
@@ -359,10 +358,7 @@ namespace GameJam.Gameplay
             _nations.Refresh(_match);
             bool human = IsHumanTurn;
             // The turn box is the persistent indicator, so it shows even when the slide-in banner is skipped.
-            _hud.ShowTurn(
-                god,
-                MatchText.TurnBox(god, human)
-            );
+            _hud.ShowTurn(god, MatchText.TurnBox(god, human));
             if (human)
             {
                 // "YOUR TURN" is the moment to act: the board top must be clear.
@@ -375,11 +371,7 @@ namespace GameJam.Gameplay
                 yield break;
             }
 
-            _turnBanner.Show(
-                god,
-                MatchText.TurnBanner(god, human),
-                human ? 1f : botPaceFactor
-            );
+            _turnBanner.Show(god, MatchText.TurnBanner(god, human), human ? 1f : botPaceFactor);
             // Only a person's turn is announced by sound; bot turns change often and stay silent.
             if (human)
                 _sfx.Play(SfxCue.TurnChange);
@@ -659,10 +651,7 @@ namespace GameJam.Gameplay
             _attackPath.Clear();
             // The turn box follows at once (hidden under the Destiny Die anyway), never showing the last
             // god's title and status.
-            _hud.ShowTurn(
-                god,
-                MatchText.TurnBox(god, IsHumanTurn)
-            );
+            _hud.ShowTurn(god, MatchText.TurnBox(god, IsHumanTurn));
             // The last combat stays readable until the next roll or the next turn.
             _dice.Hide();
             if (IsHumanTurn)
@@ -1120,6 +1109,7 @@ namespace GameJam.Gameplay
                 return;
             _endCuePlayed = true;
             _sfx.StopRoll();
+            _sfx.FadeOutMusic();
             _sfx.Play(humanWon ? SfxCue.Victory : SfxCue.Defeat);
         }
     }

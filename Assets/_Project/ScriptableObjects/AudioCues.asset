@@ -12,6 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1966cb4ff2e647945a3fe68cd9e81d80, type: 3}
   m_Name: AudioCues
   m_EditorClassIdentifier: GameJam.Gameplay::GameJam.Gameplay.AudioCues
+  _music: {fileID: 8300000, guid: 3c5bee09e61fe4954b8d841d40755b10, type: 3}
+  _musicVolume: 0.25
   _diceRoll: {fileID: 8300000, guid: aee6e62d89ce046c7bf4d357ea83a5a9, type: 3}
   _diceRollVolume: 0.9
   _sacred:
