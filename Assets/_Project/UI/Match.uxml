@@ -387,7 +387,7 @@
                                 <ui:Label class="menu__deity-subtitle" picking-mode="Ignore" text="Olympus · Sacred VI · Cursed I (Rival: Ra)" />
                             </ui:VisualElement>
                         </ui:VisualElement>
-                        <ui:Label class="menu__deity-desc" picking-mode="Ignore" text="<b>Day: Storm of Olympus</b>&#10;Every enemy territory with 2+ troops loses 1 troop to Zeus.&#10;&#10;<b>Wrath: Thunderbolt</b>&#10;Hurls two lightning strikes at enemy armies, reducing each targeted garrison by half!" />
+                        <ui:Label class="menu__deity-desc" picking-mode="Ignore" text="&lt;b&gt;Day: Storm of Olympus&lt;/b&gt;&#10;Every enemy territory with 2+ troops loses 1 troop to Zeus.&#10;&#10;&lt;b&gt;Wrath: Thunderbolt&lt;/b&gt;&#10;Hurls two lightning strikes at enemy armies, reducing each targeted garrison by half!" />
                     </ui:VisualElement>
 
                     <ui:VisualElement class="menu__deity-box god--ra" picking-mode="Ignore">
@@ -400,7 +400,7 @@
                                 <ui:Label class="menu__deity-subtitle" picking-mode="Ignore" text="The Sun · Sacred I · Cursed VI (Rival: Zeus)" />
                             </ui:VisualElement>
                         </ui:VisualElement>
-                        <ui:Label class="menu__deity-desc" picking-mode="Ignore" text="<b>Day: Sun at Noon</b>&#10;Grants +1 troop reinforcement to every Ra territory across the board.&#10;&#10;<b>Wrath: Eye of Ra</b>&#10;Instantly converts an enemy territory bordering 2 or more of Ra's armies." />
+                        <ui:Label class="menu__deity-desc" picking-mode="Ignore" text="&lt;b&gt;Day: Sun at Noon&lt;/b&gt;&#10;Grants +1 troop reinforcement to every Ra territory across the board.&#10;&#10;&lt;b&gt;Wrath: Eye of Ra&lt;/b&gt;&#10;Instantly converts an enemy territory bordering 2 or more of Ra's armies." />
                     </ui:VisualElement>
 
                     <ui:VisualElement class="menu__deity-box god--thor" picking-mode="Ignore">
@@ -413,7 +413,7 @@
                                 <ui:Label class="menu__deity-subtitle" picking-mode="Ignore" text="Asgard · Sacred V · Cursed II (Rival: Morrígan)" />
                             </ui:VisualElement>
                         </ui:VisualElement>
-                        <ui:Label class="menu__deity-desc" picking-mode="Ignore" text="<b>Day: Ragnarök</b>&#10;Thor wins all ties in combat, and each victory eliminates 2 enemy troops.&#10;&#10;<b>Wrath: Mjölnir</b>&#10;Delivers an irresistible 3-troop hammer strike to an adjacent enemy, capturing empty lands." />
+                        <ui:Label class="menu__deity-desc" picking-mode="Ignore" text="&lt;b&gt;Day: Ragnarök&lt;/b&gt;&#10;Thor wins all ties in combat, and each victory eliminates 2 enemy troops.&#10;&#10;&lt;b&gt;Wrath: Mjölnir&lt;/b&gt;&#10;Delivers an irresistible 3-troop hammer strike to an adjacent enemy, capturing empty lands." />
                     </ui:VisualElement>
 
                     <ui:VisualElement class="menu__deity-box god--morrigan" picking-mode="Ignore">
@@ -426,7 +426,7 @@
                                 <ui:Label class="menu__deity-subtitle" picking-mode="Ignore" text="The Celts · Sacred II · Cursed V (Rival: Thor)" />
                             </ui:VisualElement>
                         </ui:VisualElement>
-                        <ui:Label class="menu__deity-desc" picking-mode="Ignore" text="<b>Day: Night of Crows</b>&#10;Fallen troops from any battle across the board rise to join Morrígan's armies.&#10;&#10;<b>Wrath: Harvest of Crows</b>&#10;Her next combat victory harvests the defeated enemy troops directly into her ranks." />
+                        <ui:Label class="menu__deity-desc" picking-mode="Ignore" text="&lt;b&gt;Day: Night of Crows&lt;/b&gt;&#10;Fallen troops from any battle across the board rise to join Morrígan's armies.&#10;&#10;&lt;b&gt;Wrath: Harvest of Crows&lt;/b&gt;&#10;Her next combat victory harvests the defeated enemy troops directly into her ranks." />
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
