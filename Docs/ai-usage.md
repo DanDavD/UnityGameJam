@@ -22,3 +22,7 @@ This game was made for the Official 2026 Unity Game Jam, which requires disclosi
 ## Not AI-generated
 
 *(List what was made entirely by hand or comes from credited third-party assets, see `credits.md`.)*
+
+## Power sounds
+
+The god-power and soft result sound effects were produced by Python synthesis scripts written with Claude (`Tools/MusicGen/`); the wiring through `AudioCues` and `MatchPresenter` was also written with Claude and reviewed by the developer. Music was tried and removed on Nov 12.

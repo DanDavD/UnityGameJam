@@ -191,3 +191,5 @@ Key product, game-design and architecture decisions behind **GodBoard**, with th
 - **Short-lived branch per system, merged through a documented PR.** `main` always builds.
 - **Rules are verified headlessly** (netstandard2.1, C# 9, Unity's NUnit) and in the Unity Test Runner.
 - **AI-assisted development is disclosed** in [`ai-usage.md`](ai-usage.md).
+
+**Decision (Nov 11):** hot-seat mode (and `PlayerSeats`, P1..P4 tags, the Solo / Hot-seat toggle) was removed for scope. The game is solo only: 1 human vs 3 bots, with the human's god chosen in the menu.

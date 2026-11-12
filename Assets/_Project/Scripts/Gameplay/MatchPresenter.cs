@@ -14,9 +14,7 @@ namespace GameJam.Gameplay
     /// the god powers (Day line and badge, Favor meters, Wrath and conversion news, "+1" / "-3" floats).
     /// It never issues Core commands; MatchController owns the Match and the turn loop, attaches
     /// this presenter to the Match, and yields on <see cref="PlayAnnouncements"/> before anyone acts.
-    /// Everything personal (identity card, hints, stings, Favor news) speaks to one person at a time:
-    /// solo, always the player; hot-seat, the person whose turn it is, or the person a combat
-    /// involves (<see cref="PlayerSeats.PerspectiveOf"/>).
+    /// Everything personal (identity card, hints, stings, Favor news) speaks to the one human player.
     /// </summary>
     public sealed class MatchPresenter : MonoBehaviour
     {
@@ -73,7 +71,11 @@ namespace GameJam.Gameplay
         private float _roadStepSeconds = 0.35f;
 
         private Match _match;
-        private PlayerSeats _seats;
+
+        // The one human (solo: 1 human vs 3 bots). The debug flag hands that seat to a bot, so a match
+        // plays by itself while the HUD still speaks to the chosen god.
+        private God _human;
+        private bool _botPlaysHuman;
 
         // A Sacred Road march is lighting its path; the turn loop waits so nothing else plays over it.
         private bool _roadPlaying;
@@ -108,7 +110,7 @@ namespace GameJam.Gameplay
         // its targets) and DayStarted, and shown with the round line. One line per god, BaseTurnOrder.
         private readonly string[] _roundInfoGodLines = new string[Match.BaseTurnOrder.Count];
         private string _roundInfoTitle;
-        private string _roundInfoOpener;
+        private int _roundFace;
         private string _roundInfoDayHeading;
         private string _roundInfoDay;
 
@@ -119,14 +121,11 @@ namespace GameJam.Gameplay
         // "You" line, which is only known once the Day starts. Solo only.
         private int _humanDestinyModifier;
 
-        // The person the identity card shows and the hints speak to: solo, the player; hot-seat,
-        // the person who played last (it swaps with the banner of each person's turn).
-        private God _viewer;
 
         // Every god's Favor as last shown, indexed like Match.BaseTurnOrder, so a change can say +1 or -1.
         private readonly int[] _shownFavor = new int[Match.BaseTurnOrder.Count];
 
-        // "YOU" or "P1".."P4" per god (null for a bot), shared by the nations panel and identity card.
+        // "YOU" on the human's nation (null for bots), shared by the nations panel and identity card.
         private string[] _playerTags;
 
         // The end banner can show twice (human eliminated, then the last bot wins); the sting plays once.
@@ -151,7 +150,40 @@ namespace GameJam.Gameplay
         private readonly int[] _combatsWon = new int[Match.BaseTurnOrder.Count];
         private readonly HashSet<Hint> _shownHints = new HashSet<Hint>();
 
-        private bool IsHumanTurn => _seats.IsHuman(_match.CurrentGod);
+        private bool IsHumanTurn => IsHuman(_match.CurrentGod);
+
+        // True when the person plays this god by clicking; false for a bot (or the debug bot seat).
+        private bool IsHuman(God god) => !_botPlaysHuman && god == _human;
+
+        // The human a combat is read through (dice sting, Favor news, combat hint): the human when they
+        // attack or defend, else nobody.
+        private God? PerspectiveOf(God attacker, God defender)
+        {
+            if (IsHuman(attacker))
+                return attacker;
+            if (IsHuman(defender))
+                return defender;
+            return null;
+        }
+
+        // The match is over for the player once the human is out, even though bots could play on.
+        private bool IsHumanOut => !_botPlaysHuman && _match.IsEliminated(_human);
+
+        // True when this elimination ends the match for the player: the human is out, or one nation is left.
+        private bool EndsMatchForHuman(God eliminated)
+        {
+            if (!_match.IsEliminated(eliminated))
+                return false;
+            if (IsHumanOut)
+                return true;
+            int living = 0;
+            foreach (God god in Match.BaseTurnOrder)
+            {
+                if (!_match.IsEliminated(god))
+                    living++;
+            }
+            return living == 1;
+        }
 
         private void OnEnable()
         {
@@ -224,11 +256,13 @@ namespace GameJam.Gameplay
             _match.RoadUsed -= HandleRoadUsed;
         }
 
-        /// <summary>Shows who plays which god, once the seats are chosen and before the match starts.</summary>
-        public void SetSeats(PlayerSeats seats)
+        /// <summary>Shows who plays which god, once the human's god is chosen and before the match starts.</summary>
+        public void SetHuman(God human, bool botPlaysHuman)
         {
-            _seats = seats;
-            _playerTags = PlayerTags(seats);
+            _human = human;
+            _botPlaysHuman = botPlaysHuman;
+            _playerTags = new string[Match.BaseTurnOrder.Count];
+            _playerTags[Match.BaseTurnIndex(human)] = MatchText.YouTag;
             _nations.SetPlayerTags(_playerTags);
             for (int i = 0; i < Match.BaseTurnOrder.Count; i++)
             {
@@ -237,34 +271,17 @@ namespace GameJam.Gameplay
                 // Favor is only redrawn on FavorChanged after this, so a meter can wait for its star.
                 _nations.SetFavor(god, _shownFavor[i]);
             }
-            ShowIdentity(seats.FirstPlayer);
+            ShowIdentity();
             _nations.Refresh(_match);
         }
 
         /// <summary>Sorts the nations panel into the drawn turn order, for the whole match.</summary>
         public void ShowTurnOrder(IReadOnlyList<God> order) => _nations.SetTurnOrder(order);
 
-        // Solo: "YOU" on the player. Hot-seat: "P1".."P4" in base turn order, since "YOU" would be
-        // wrong for everyone but the person holding the mouse.
-        private static string[] PlayerTags(PlayerSeats seats)
+        // The identity card (chip, name, sacred / cursed, Wrath stars) of the human's god.
+        private void ShowIdentity()
         {
-            var tags = new string[Match.BaseTurnOrder.Count];
-            int number = 0;
-            for (int i = 0; i < tags.Length; i++)
-            {
-                if (!seats.IsPlayerSeat(Match.BaseTurnOrder[i]))
-                    continue;
-                number++;
-                tags[i] = seats.IsHotSeat ? MatchText.PlayerTag(number) : MatchText.YouTag;
-            }
-            return tags;
-        }
-
-        // The identity card (chip, name, sacred / cursed, Wrath stars) for this person.
-        private void ShowIdentity(God god)
-        {
-            _viewer = god;
-            _hud.SetIdentity(god, _playerTags[Match.BaseTurnIndex(god)]);
+            _hud.SetIdentity(_human);
             RefreshIdentityFavor();
         }
 
@@ -289,7 +306,7 @@ namespace GameJam.Gameplay
                 if (_pendingDayVfx.HasValue)
                 {
                     God dayGod = _pendingDayVfx.Value;
-                    PlayPendingDayVfx(_seats.IsHuman(dayGod) ? 1f : botPaceFactor);
+                    PlayPendingDayVfx(IsHuman(dayGod) ? 1f : botPaceFactor);
                     // Capped: a broken cosmetic effect must never freeze the turn loop.
                     float waited = 0f;
                     while (_godVfx.IsPlaying && waited < _maxDayVfxSeconds)
@@ -309,7 +326,11 @@ namespace GameJam.Gameplay
             }
 
             if (_pendingTurnBanner != null)
+            {
                 yield return PlayTurnBanner(botPaceFactor);
+                // Reinforcements granted by the rules: heard once per turn, softer for bots.
+                PlayTroopsGain(!IsHumanTurn, TurnReinforcementCue());
+            }
             RefreshReinforceCounter();
         }
 
@@ -340,23 +361,12 @@ namespace GameJam.Gameplay
             // The turn box is the persistent indicator, so it shows even when the slide-in banner is skipped.
             _hud.ShowTurn(
                 god,
-                MatchText.TurnBox(
-                    god,
-                    human,
-                    _seats.IsHotSeat,
-                    _playerTags[Match.BaseTurnIndex(god)]
-                )
+                MatchText.TurnBox(god, human)
             );
             if (human)
             {
-                // "YOUR TURN" is the moment to act: the board top must be clear. In hot-seat the
-                // identity card swaps to this person with the banner that asks for the mouse.
+                // "YOUR TURN" is the moment to act: the board top must be clear.
                 _hud.CloseRoundInfo();
-                // A hint worded for the previous person (their numbers) must not carry over, nor
-                // hold back this person's Reinforce hint.
-                if (god != _viewer)
-                    _hud.HideHint();
-                ShowIdentity(god);
             }
             else if (_hud.IsRoundInfoOpen)
             {
@@ -367,7 +377,7 @@ namespace GameJam.Gameplay
 
             _turnBanner.Show(
                 god,
-                MatchText.TurnBanner(god, human, _seats.IsHotSeat),
+                MatchText.TurnBanner(god, human),
                 human ? 1f : botPaceFactor
             );
             // Only a person's turn is announced by sound; bot turns change often and stay silent.
@@ -397,7 +407,7 @@ namespace GameJam.Gameplay
         public void ShowCombatHint(bool humanCanOffer)
         {
             Combat combat = _match.PendingCombat;
-            God? perspective = _seats.PerspectiveOf(combat.Attacker, combat.Defender);
+            God? perspective = PerspectiveOf(combat.Attacker, combat.Defender);
             if (perspective == null)
                 return;
             if (humanCanOffer && ShowHintOnce(Hint.Offering))
@@ -406,17 +416,17 @@ namespace GameJam.Gameplay
         }
 
         /// <summary>
-        /// Shows the hint the first time its situation happens in this match (once for the whole
-        /// table in hot-seat), worded for the person on the identity card; false afterwards.
+        /// Shows the hint the first time its situation happens in this match, worded for the
+        /// human's god; false afterwards.
         /// </summary>
-        public bool ShowHintOnce(Hint hint) => ShowHintOnce(hint, _viewer);
+        public bool ShowHintOnce(Hint hint) => ShowHintOnce(hint, _human);
 
         private bool ShowHintOnce(Hint hint, God about)
         {
             // The prompt bar already says what these two hints would: never both.
             if (hint == Hint.Reinforce || hint == Hint.Attack)
                 return false;
-            if (!_seats.HasHuman || !_shownHints.Add(hint))
+            if (_botPlaysHuman || !_shownHints.Add(hint))
                 return false;
             _hud.ShowHint(MatchText.HintText(hint, about));
             return true;
@@ -436,12 +446,12 @@ namespace GameJam.Gameplay
         {
             if (_pendingRoundLine == null)
                 return;
-            _hud.SetRound(_pendingRoundLine, _pendingRoundCounter);
+            _hud.SetRound(_pendingRoundLine, _pendingRoundCounter, _roundFace);
             _pendingRoundLine = null;
             _hud.SetRoundInfo(
+                _roundFace,
                 _roundInfoTitle,
                 _roundInfoGodLines,
-                _roundInfoOpener,
                 _roundInfoDayHeading,
                 _roundInfoDay
             );
@@ -461,29 +471,15 @@ namespace GameJam.Gameplay
 
         private void HandleRoundStarted(int round, int destinyFace)
         {
-            // Match already holds the round's Day here, so its modifiers are final (Sun at noon
-            // replaces Ra's +2); the text only says so when that happened.
-            God? favored = Pantheon.GodOfFace(destinyFace);
-            bool dayReplacesFavor =
-                favored.HasValue && _match.DestinyModifierOf(favored.Value) < Destiny.FavoredBonus;
-            _pendingRoundLine = MatchText.RoundLine(destinyFace, dayReplacesFavor);
+            _pendingRoundLine = MatchText.RoundLine(destinyFace, _match.PowersEnabled);
             _pendingRoundCounter = MatchText.RoundCounter(round);
+            _roundFace = destinyFace;
             KeepRoundInfo(destinyFace);
-            string destiny = MatchText.DestinyLine(destinyFace, dayReplacesFavor);
+            string destiny = MatchText.DestinyLine(destinyFace, _match.PowersEnabled);
             // The sound starts here and the die tumbles in the same call below: same frame, and the
             // tumble lasts exactly as long as the sound.
             float tumble = _sfx.PlayRoll(_destiny.FallbackTumbleDuration);
-            // Hot-seat: the die speaks to the whole table, so it has no "You" line and no personal
-            // sting (a Day still rings softly); the round info panel gives every god its line.
-            if (_seats.IsHotSeat)
-            {
-                _destinyLandCue = null;
-                _destiny.Show(round, destinyFace, destiny, null, null, tumble);
-            }
-            else
-            {
-                ShowSoloDestiny(round, destinyFace, destiny, tumble);
-            }
+            ShowSoloDestiny(round, destinyFace, destiny, tumble);
             // The last round's Day is over; this round's (if any) follows in DayStarted.
             _dayThisRound = false;
             _pendingDayVfx = null;
@@ -497,7 +493,7 @@ namespace GameJam.Gameplay
         // Solo: the "You" line and the landing sting say what the face means for the player.
         private void ShowSoloDestiny(int round, int destinyFace, string destiny, float tumble)
         {
-            God human = _viewer;
+            God human = _human;
             bool yourDay = _match.DayGod == human;
             // Read before the bad omen is applied (it follows this event), so ask Core who it will hit.
             int modifier = _match.DestinyModifierOf(human);
@@ -517,6 +513,11 @@ namespace GameJam.Gameplay
             _destinyLandCue = yourDay
                 ? SfxCue.Sacred
                 : SfxCueChooser.DestinyLanding(modifier, humanLosesTroop);
+            // Their own stings replace the chime for the two faces that belong to nobody.
+            if (destinyFace == 3)
+                _destinyLandCue = SfxCue.GoodFortune;
+            else if (destinyFace == 4)
+                _destinyLandCue = SfxCue.BadOmen;
         }
 
         // Read now, before the bad omen is applied (it follows RoundStarted): the per-god lines can
@@ -530,7 +531,6 @@ namespace GameJam.Gameplay
                     Match.BaseTurnOrder[i],
                     destinyFace
                 );
-            _roundInfoOpener = MatchText.RoundInfoOpener(_match, destinyFace);
             _roundInfoDayHeading = null;
             _roundInfoDay = null;
         }
@@ -549,15 +549,12 @@ namespace GameJam.Gameplay
             if (_match.IsRagnarokActive || _match.IsNightOfCrowsActive)
                 _pendingDayBadge = MatchText.DayBadge(god);
             else
-                _pendingDayNews = MatchText.DayResultLine(god, changed.Count);
+                _pendingDayNews = MatchText.DayResultLine(god);
 
             // A Day only ever strikes enemies of its god (Storm), so human territories in the list
-            // are troops the human is about to lose: the "You" line and the landing cue say so (solo
-            // only, like the rest of the "You" line). The troops it sends to the god's own
+            // are troops the human is about to lose: the "You" line and the landing cue say so. The troops it sends to the god's own
             // territories arrive while the die rolls and float "+N" with the rest when it lands.
-            if (_seats.IsHotSeat)
-                return;
-            int humanStruck = god == _viewer ? 0 : CountOwnedBy(changed, _viewer);
+            int humanStruck = god == _human ? 0 : CountOwnedBy(changed, _human);
             if (humanStruck == 0)
                 return;
             _destiny.SetYouLine(
@@ -593,6 +590,18 @@ namespace GameJam.Gameplay
                 return;
             God god = _pendingDayVfx.Value;
             _pendingDayVfx = null;
+            _sfx.Play(
+                god switch
+                {
+                    God.Zeus => SfxCue.DayZeus,
+                    God.Ra => SfxCue.DayRa,
+                    God.Thor => SfxCue.DayThor,
+                    _ => SfxCue.DayMorrigan,
+                }
+            );
+            // Storm, Sun at noon and Night of crows add troops (Ragnarök does not).
+            if (god != God.Thor)
+                PlayTroopsGain(true, SfxCue.SoftGood);
             switch (god)
             {
                 case God.Zeus:
@@ -620,6 +629,27 @@ namespace GameJam.Gameplay
                 _sfx.PlaySubtle(SfxCue.Sacred);
         }
 
+        // Troops gained are heard softly by quality: better than usual, worse, or just the base amount.
+        private void PlayTroopsGain(bool subtle, SfxCue cue)
+        {
+            if (subtle)
+                _sfx.PlaySubtle(cue);
+            else
+                _sfx.Play(cue);
+        }
+
+        // Turn-start reinforcements: above base through favor or good fortune, below it when weakened
+        // (a bad omen round also reads as bad news), otherwise neutral.
+        private SfxCue TurnReinforcementCue()
+        {
+            int modifier = _match.DestinyModifierOf(_match.CurrentGod);
+            if (modifier > 0)
+                return SfxCue.SoftGood;
+            if (modifier < 0 || Destiny.IsBadOmen(_match.DestinyFace))
+                return SfxCue.SoftBad;
+            return SfxCue.BotResult;
+        }
+
         private void HandleTurnStarted(God god, int reinforcements)
         {
             _pendingTurnBanner = god;
@@ -631,20 +661,15 @@ namespace GameJam.Gameplay
             // god's title and status.
             _hud.ShowTurn(
                 god,
-                MatchText.TurnBox(
-                    god,
-                    IsHumanTurn,
-                    _seats.IsHotSeat,
-                    _playerTags[Match.BaseTurnIndex(god)]
-                )
+                MatchText.TurnBox(god, IsHumanTurn)
             );
             // The last combat stays readable until the next roll or the next turn.
             _dice.Hide();
             if (IsHumanTurn)
             {
-                // Every prompt of this turn names whose it is ("ZEUS'S TURN" in hot-seat). Cleared to
-                // just that, so the previous bot's "X is playing…" never lingers into it.
-                _hud.SetTurnPrefix(MatchText.TurnPrefix(god, _seats.IsHotSeat), god);
+                // Every prompt of this turn leads with "YOUR TURN". Cleared to just that, so the
+                // previous bot's "X is playing…" never lingers into it.
+                _hud.SetTurnPrefix(MatchText.TurnPrefix, god);
                 _hud.SetPrompt(string.Empty);
                 return;
             }
@@ -685,7 +710,7 @@ namespace GameJam.Gameplay
 
             // Fired before NationEliminated and MatchWon: when this capture ends the match for the
             // human, the end sting that follows plays alone.
-            if (previousOwner.HasValue && _seats.EndsMatchForHumans(_match, previousOwner.Value))
+            if (previousOwner.HasValue && EndsMatchForHuman(previousOwner.Value))
                 return;
             _sfx.Play(SfxCue.Capture);
             // A temple is the goal, so its capture carries a quiet chime under the capture cue.
@@ -716,10 +741,13 @@ namespace GameJam.Gameplay
             SfxCue? cue = SfxCueChooser.CombatLanding(
                 combat,
                 result,
-                _seats.PerspectiveOf(combat.Attacker, combat.Defender)
+                PerspectiveOf(combat.Attacker, combat.Defender)
             );
+            // Bot vs bot: no sacred/cursed sting, only the quiet bot-result sound.
             if (cue.HasValue)
                 _sfx.Play(cue.Value);
+            else
+                _sfx.Play(SfxCue.BotResult);
         }
 
         // The dice panel is not hidden here, so the verdict stays readable after the troop is lost.
@@ -802,10 +830,9 @@ namespace GameJam.Gameplay
             _shownFavor[index] = favor;
             ShowFavorFromDie(god, favor, delta);
 
-            // The news speaks to the person the combat is read through (see PerspectiveOf): the
-            // attacker on their own turn, else a person defending. Bots (and the debug bot seat)
-            // only bump their meter.
-            if (_seats.PerspectiveOf(_match.CurrentGod, god) != god)
+            // The news speaks to the human the combat is read through (see PerspectiveOf). Bots (and
+            // the debug bot seat) only bump their meter.
+            if (PerspectiveOf(_match.CurrentGod, god) != god)
                 return;
             // Only a combat die moves Favor by one step; a Wrath or an elimination empties it and
             // has its own news, so only the one-step changes of a nation still in play are explained.
@@ -834,7 +861,7 @@ namespace GameJam.Gameplay
                 && combat != null
                 && (combat.Attacker == god || combat.Defender == god)
                 && _dice.IsShown;
-            bool toIdentity = god == _viewer && _hud.IsIdentityShown;
+            bool toIdentity = god == _human && _hud.IsIdentityShown;
             UnityEngine.UIElements.VisualElement meter = toIdentity
                 ? _hud.IdentityFavor
                 : _nations.FavorMeter(god);
@@ -860,13 +887,13 @@ namespace GameJam.Gameplay
         private void RedrawFavor(God god, int favor)
         {
             _nations.ShowFavorChanged(god, favor);
-            if (god == _viewer)
+            if (god == _human)
                 RefreshIdentityFavor();
         }
 
         // The identity card's Wrath line follows Favor, so it changes on FavorChanged and when the
         // card swaps to another person.
-        private void RefreshIdentityFavor() => _hud.SetFavor(_viewer, _match.FavorOf(_viewer));
+        private void RefreshIdentityFavor() => _hud.SetFavor(_human, _match.FavorOf(_human));
 
         // Raised before the effect, so the losses are read from the troops still on the board.
         // Captures and conversions follow as TerritoryCaptured, which brings its own ring and cue.
@@ -905,8 +932,18 @@ namespace GameJam.Gameplay
                     news = MatchText.HarvestLine;
                     break;
             }
-            // The god answers with the sacred chime, the sound of its Favor.
-            _sfx.PlaySubtle(SfxCue.Sacred);
+            _sfx.Play(
+                god switch
+                {
+                    God.Zeus => SfxCue.WrathZeus,
+                    God.Thor => SfxCue.WrathThor,
+                    God.Ra => SfxCue.WrathRa,
+                    _ => SfxCue.WrathMorrigan,
+                }
+            );
+            // Harvest adds troops to the attacking territory.
+            if (god == God.Morrigan)
+                PlayTroopsGain(true, SfxCue.SoftGood);
             _hud.ShowNews(news, god);
         }
 
@@ -915,7 +952,7 @@ namespace GameJam.Gameplay
         // for ShowRoadPopupIfOpened. Both wait for the Favor line of the same die to be read first.
         private void HandleRoadOpened(God god)
         {
-            if (_seats.IsHuman(god))
+            if (IsHuman(god))
             {
                 _roadPopupFor = god;
                 return;
@@ -950,9 +987,8 @@ namespace GameJam.Gameplay
             float wait = RoadNoticeWait;
             if (wait > 0f)
                 yield return new WaitForSeconds(wait);
-            bool you = !_seats.IsHotSeat;
             _sfx.PlaySubtle(SfxCue.Sacred);
-            _turnBanner.ShowRoadPopup(god, MatchText.RoadPopupText(god, you));
+            _turnBanner.ShowRoadPopup(god, MatchText.RoadPopupText());
         }
 
         /// <summary>Drops a Road popup that never got shown (no army could march), so it never appears later unrelated to a die.</summary>
@@ -1023,45 +1059,28 @@ namespace GameJam.Gameplay
             return count;
         }
 
-        // The turn loop stops on its own once every person is out (PlayerSeats.AreAllHumansOut);
-        // this only shows it.
+        // The turn loop stops on its own once the human is out (MatchController); this only shows it.
         private void HandleNationEliminated(God god)
         {
             _nations.Refresh(_match);
-            if (_seats.EndsMatchForHumans(_match, god))
+            if (EndsMatchForHuman(god))
             {
                 // No winner yet: the bots could keep playing, so the banner stays neutral. When one
                 // nation is left instead, MatchWon follows and its end sting plays alone.
-                if (_seats.AreAllHumansOut(_match))
-                    ShowEndBanner(
-                        _seats.IsHotSeat ? MatchText.AllPlayersOutTitle : MatchText.LoseTitle,
-                        _seats.IsHotSeat
-                            ? MatchText.AllPlayersOutLine
-                            : MatchText.EliminatedLine(god),
-                        null
-                    );
+                if (IsHumanOut)
+                    ShowEndBanner(MatchText.LoseTitle, MatchText.EliminatedLine(god), null);
                 return;
             }
 
-            // A nation falling is news, not the end: a quiet defeat cue. In hot-seat a person can
-            // fall while the others play on, so the news line says so.
+            // A bot falling is news, not the end: a quiet defeat cue.
             _sfx.PlaySubtle(SfxCue.Defeat);
-            if (!_seats.IsHuman(god))
-                return;
-            _hud.ShowNews(MatchText.PlayerOutLine(god), god);
-            // The card would speak for someone who is out; the next person's banner brings it back.
-            if (god == _viewer)
-                _hud.HideIdentity();
         }
 
-        // When the last person's elimination leaves one nation, this follows HandleNationEliminated
-        // and the banner names that winner instead. Solo it is the player's verdict (YOU WIN /
-        // YOU LOSE); hot-seat speaks to the whole table (THOR WINS).
+        // When the human's elimination leaves one nation, this follows HandleNationEliminated and the
+        // banner names that winner instead: the player's verdict (YOU WIN / YOU LOSE).
         private void HandleMatchWon(God winner, VictoryReason reason) =>
             ShowEndBanner(
-                _seats.IsHotSeat
-                    ? MatchText.WinsTitle(winner)
-                    : MatchText.EndTitle(winner == _seats.FirstPlayer),
+                MatchText.EndTitle(winner == _human),
                 MatchText.VictoryLine(reason, _match.RoundLimitDecider),
                 winner
             );
@@ -1080,15 +1099,9 @@ namespace GameJam.Gameplay
             _hud.ShowEndTurn(false);
             _hud.SetTurnPrefix(null);
             _hud.SetPrompt(string.Empty);
-            // A person won (solo: the player; hot-seat: any of them) or not.
-            PlayEndCueOnce(winner.HasValue && _seats.IsPlayerSeat(winner.Value));
+            PlayEndCueOnce(winner == _human);
             int winnerTemples = winner.HasValue ? _match.Board.TempleCount(winner.Value) : 0;
-            // Hot-seat's title already says "THOR WINS", so the card only names the god.
-            string winnerName = winner.HasValue
-                ? _seats.IsHotSeat
-                    ? MatchText.GodName(winner.Value)
-                    : MatchText.WinnerName(winner.Value)
-                : null;
+            string winnerName = winner.HasValue ? MatchText.WinnerName(winner.Value) : null;
             _hud.ShowEndBanner(
                 title,
                 detail,
@@ -1096,33 +1109,9 @@ namespace GameJam.Gameplay
                 winnerName,
                 _match.Round,
                 winnerTemples,
-                CombatsWonStat(winner, out string combatsLabel),
-                combatsLabel
+                _combatsWon[Match.BaseTurnIndex(_human)],
+                MatchText.CombatsWonStat
             );
-        }
-
-        // Solo: the player's combats. Hot-seat: the winner's, or every person's when nobody won.
-        private int CombatsWonStat(God? winner, out string label)
-        {
-            if (!_seats.IsHotSeat)
-            {
-                label = MatchText.CombatsWonStat;
-                return _combatsWon[Match.BaseTurnIndex(_seats.FirstPlayer)];
-            }
-            if (winner.HasValue)
-            {
-                label = MatchText.CombatsWonByStat(winner.Value);
-                return _combatsWon[Match.BaseTurnIndex(winner.Value)];
-            }
-
-            label = MatchText.CombatsWonByPlayersStat;
-            int total = 0;
-            for (int i = 0; i < _combatsWon.Length; i++)
-            {
-                if (_seats.IsPlayerSeat(Match.BaseTurnOrder[i]))
-                    total += _combatsWon[i];
-            }
-            return total;
         }
 
         private void PlayEndCueOnce(bool humanWon)

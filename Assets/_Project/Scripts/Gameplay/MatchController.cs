@@ -11,13 +11,12 @@ using UnityEngine.SceneManagement;
 namespace GameJam.Gameplay
 {
     /// <summary>
-    /// Runs one match in the scene. A single coroutine loop waits for the seats (solo: a god card;
-    /// hot-seat: Human / Bot per god, then START) and the Pantheon powers / Classic mode, builds the
+    /// Runs one match in the scene. A single coroutine loop waits for the human's god card and the Pantheon powers / Classic mode, builds the
     /// Match, then issues every Core command (human clicks or bot decisions, including the Wrath)
     /// one step at a time. Core events are turned
     /// into visuals and sound by <see cref="MatchPresenter"/>; keeping commands out of event handlers
     /// respects Match's rule that handlers must not re-enter it. Buttons only set flags that the
-    /// loop reads, and <see cref="PlayerSeats"/> answers who plays each god.
+    /// loop reads.
     /// </summary>
     public sealed class MatchController : MonoBehaviour
     {
@@ -54,7 +53,7 @@ namespace GameJam.Gameplay
 
         [Header("Players")]
         [Tooltip(
-            "Debug: bots also play the human seats (solo or hot-seat), so a whole match plays by itself."
+            "Debug: the bots also play the human's god, so a whole match plays by itself."
         )]
         [SerializeField]
         private bool _botPlaysHuman;
@@ -94,7 +93,10 @@ namespace GameJam.Gameplay
 
         private Board _boardModel;
         private Match _match;
-        private PlayerSeats _seats;
+
+        // The human's god (1 human vs 3 bots), chosen in the menu or kept by "Play again".
+        private God? _chosenGod;
+        private God _human;
         private Territory _selected;
 
         // While the human aims a Wrath, clicks pick its target instead of an attack. Thor's Mjölnir
@@ -111,13 +113,7 @@ namespace GameJam.Gameplay
         private readonly List<Territory> _roadOrigins = new List<Territory>();
         private readonly List<Territory> _roadDestinations = new List<Territory>();
 
-        // The menu's hot-seat choice: Human (true) or Bot per god, indexed like Match.BaseTurnOrder.
-        // Everyone is Human when hot-seat opens; a card click hands a god to a bot and back.
-        private bool _menuHotSeat;
-        private readonly bool[] _menuSeats = { true, true, true, true };
-
         // Set by menu, HUD and dice button events and consumed by the loop, so clicks never issue commands.
-        private PlayerSeats _chosenSeats;
         private bool _offeringRequested;
 
         // True only while the Offering button is on screen, so a click queued for the frame the window
@@ -147,11 +143,11 @@ namespace GameJam.Gameplay
         private bool _destinyWasPlaying;
 
         // Only read once the match started, when both exist.
-        private bool IsHumanTurn => _seats.IsHuman(_match.CurrentGod);
+        private bool IsHumanTurn => !_botPlaysHuman && _match.CurrentGod == _human;
 
-        // Every person is out: the match is over for them even though the bots could keep playing.
-        // Solo that is the player; in hot-seat the match goes on while one person is left.
-        private bool AreAllHumansOut => _seats != null && _seats.AreAllHumansOut(_match);
+        // The human is out: the match is over for the player even though the bots could keep playing.
+        private bool AreAllHumansOut =>
+            _match != null && !_botPlaysHuman && _match.IsEliminated(_human);
 
         private float BotPaceFactor => MatchSession.FastBots ? _fastBotFactor : 1f;
 
@@ -168,9 +164,9 @@ namespace GameJam.Gameplay
             if (_match != null)
                 AttachMatch();
             _menu.GodCardClicked += HandleGodCardClicked;
+            _menu.CardHovered += HandleCardHovered;
+            _turnOrder.Landed += HandleDrawVerdict;
             _menu.PowersChosen += HandlePowersChosen;
-            _menu.HotSeatChosen += HandleHotSeatChosen;
-            _menu.StartClicked += HandleStartClicked;
             _dice.OfferingClicked += HandleOfferingClicked;
             _hud.EndTurnClicked += HandleEndTurnClicked;
             _hud.WrathClicked += HandleWrathClicked;
@@ -186,9 +182,9 @@ namespace GameJam.Gameplay
             if (_match != null)
                 DetachMatch();
             _menu.GodCardClicked -= HandleGodCardClicked;
+            _menu.CardHovered -= HandleCardHovered;
+            _turnOrder.Landed -= HandleDrawVerdict;
             _menu.PowersChosen -= HandlePowersChosen;
-            _menu.HotSeatChosen -= HandleHotSeatChosen;
-            _menu.StartClicked -= HandleStartClicked;
             _dice.OfferingClicked -= HandleOfferingClicked;
             _hud.EndTurnClicked -= HandleEndTurnClicked;
             _hud.WrathClicked -= HandleWrathClicked;
@@ -219,7 +215,6 @@ namespace GameJam.Gameplay
             _hud.SetMuted(MatchSession.Muted);
             _sfx.SetMuted(MatchSession.Muted);
             _menu.SetPowers(MatchSession.PowersEnabled);
-            RefreshMenuSeats();
             StartCoroutine(Run());
         }
 
@@ -269,21 +264,21 @@ namespace GameJam.Gameplay
             }
         }
 
-        // "Play again" already knows the seats and the mode; otherwise the menu waits for a card
-        // click (solo) or START (hot-seat). The Match is built here, once the mode is final.
+        // "Play again" already knows the god and the mode; otherwise the menu waits for a god card
+        // click. The Match is built here, once the mode is final.
         private IEnumerator ChooseSeats()
         {
-            _chosenSeats = MatchSession.ReplaySeats;
-            MatchSession.ReplaySeats = null;
-            if (_chosenSeats == null)
+            _chosenGod = MatchSession.ReplayGod;
+            MatchSession.ReplayGod = null;
+            if (_chosenGod == null)
             {
                 _menu.Show();
-                while (_chosenSeats == null)
+                while (_chosenGod == null)
                     yield return null;
                 _menu.Hide();
             }
 
-            // The dice fix the turn order for the whole match, whoever the seats are (Classic and
+            // The dice fix the turn order for the whole match, whoever the human is (Classic and
             // "Play again" draw too). The roll sound is the same single clip as every other roll.
             TurnOrderDraw draw = TurnOrderDraw.Draw(new SystemRandom());
             _match = new Match(
@@ -293,10 +288,10 @@ namespace GameJam.Gameplay
                 draw.Order
             );
             AttachMatch();
-            _seats = _chosenSeats.WithTurnOrder(draw.Order);
+            _human = _chosenGod.Value;
             // The whole HUD and the board are already up behind the draw; the nations panel
             // re-sorts into the drawn order when it ends.
-            _presenter.SetSeats(_seats);
+            _presenter.SetHuman(_human, _botPlaysHuman);
 
             _turnOrder.RollStarted = () => _sfx.PlayRoll(_dice.FallbackTumbleDuration);
             yield return _turnOrder.Play(draw, BotPaceFactor);
@@ -1045,8 +1040,7 @@ namespace GameJam.Gameplay
         }
 
         // A new turn starts clean: nothing selected, no Wrath being aimed and no button press left
-        // over, so in hot-seat the next person never inherits the last one's input. The presenter
-        // clears the highlights.
+        // over. The presenter clears the highlights.
         private void HandleTurnStarted(God god, int reinforcements)
         {
             _selected = null;
@@ -1059,39 +1053,18 @@ namespace GameJam.Gameplay
             _wrathRequested = false;
         }
 
-        // Solo: the card starts the match as that god. Hot-seat: it switches the god between Human
-        // and Bot. On WebGL the browser only allows audio after a user gesture; this click provides it.
+        // The card starts the match as that god. On WebGL the browser only allows audio after a user
+        // gesture; this click provides it.
+        private void HandleCardHovered() => _sfx.Play(SfxCue.CardHover);
+
+        // Every duel verdict of the draw (tie re-rolls included) gets the bot-result sound.
+        private void HandleDrawVerdict() => _sfx.Play(SfxCue.BotResult);
+
         private void HandleGodCardClicked(God god)
         {
             _sfx.Play(SfxCue.Click);
-            if (!_menuHotSeat)
-            {
-                _chosenSeats = PlayerSeats.Solo(god, _botPlaysHuman);
-                return;
-            }
-            int seat = Match.BaseTurnIndex(god);
-            _menuSeats[seat] = !_menuSeats[seat];
-            RefreshMenuSeats();
+            _chosenGod = god;
         }
-
-        private void HandleHotSeatChosen(bool hotSeat)
-        {
-            _menuHotSeat = hotSeat;
-            RefreshMenuSeats();
-            _sfx.Play(SfxCue.Click);
-        }
-
-        // START is disabled without a person, but the rule is checked here too: the button is only a view.
-        private void HandleStartClicked()
-        {
-            if (!PlayerSeats.IsValid(_menuSeats))
-                return;
-            _chosenSeats = new PlayerSeats(_menuSeats, _botPlaysHuman);
-            _sfx.Play(SfxCue.Click);
-        }
-
-        private void RefreshMenuSeats() =>
-            _menu.SetSeats(_menuHotSeat, _menuSeats, PlayerSeats.IsValid(_menuSeats));
 
         private void HandleOfferingClicked()
         {
@@ -1184,18 +1157,16 @@ namespace GameJam.Gameplay
         }
 
         // Restarting is a scene reload: Match, board and views are rebuilt from scratch, so no
-        // state can leak between matches. Only the seats (solo or hot-seat) cross over, through
-        // MatchSession; PlayerSeats never changes, so the same instance is safe to hand over.
+        // state can leak between matches. Only the human's god crosses over, through MatchSession.
         private void HandlePlayAgainClicked()
         {
-            MatchSession.ReplaySeats = _seats;
+            MatchSession.ReplayGod = _human;
             ReloadScene();
         }
 
-        // The menu opens on solo again: the hot-seat choice lives only in this scene's controller.
         private void HandleMainMenuClicked()
         {
-            MatchSession.ReplaySeats = null;
+            MatchSession.ReplayGod = null;
             ReloadScene();
         }
 

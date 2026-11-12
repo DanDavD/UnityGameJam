@@ -54,6 +54,64 @@ namespace GameJam.Gameplay
         [SerializeField]
         private CueSound _invalid = new CueSound();
 
+        [Header("God powers")]
+        [SerializeField]
+        private CueSound _dayZeus = new CueSound();
+
+        [SerializeField]
+        private CueSound _dayRa = new CueSound();
+
+        [SerializeField]
+        private CueSound _dayThor = new CueSound();
+
+        [SerializeField]
+        private CueSound _dayMorrigan = new CueSound();
+
+        [Tooltip("Destiny Die lands on 4. Replaces the sacred/cursed sting.")]
+        [SerializeField]
+        private CueSound _badOmen = new CueSound();
+
+        [Tooltip("Destiny Die lands on 3. Replaces the sacred/cursed sting.")]
+        [SerializeField]
+        private CueSound _goodFortune = new CueSound();
+
+        [SerializeField]
+        private CueSound _wrathZeus = new CueSound();
+
+        [SerializeField]
+        private CueSound _wrathThor = new CueSound();
+
+        [SerializeField]
+        private CueSound _wrathRa = new CueSound();
+
+        [SerializeField]
+        private CueSound _wrathMorrigan = new CueSound();
+
+        [Header("Menu and bots")]
+        [Tooltip("Pointer enters a god card in the main menu. Calm and quiet.")]
+        [SerializeField]
+        private CueSound _cardHover = new CueSound();
+
+        [Tooltip("A combat between two bots, and each duel verdict of the turn-order draw.")]
+        [SerializeField]
+        private CueSound _botResult = new CueSound();
+
+        [Tooltip("Soft good news: the human wins a combat, or gains more troops than the base.")]
+        [SerializeField]
+        private CueSound _softGood = new CueSound();
+
+        [Tooltip("Soft bad news: the human loses a combat, or gains fewer troops than the base.")]
+        [SerializeField]
+        private CueSound _softBad = new CueSound();
+
+        [Tooltip("The human wins a combat without a sacred die of their own.")]
+        [SerializeField]
+        private CueSound _neutralWin = new CueSound();
+
+        [Tooltip("The human loses a combat and no sacred die was involved.")]
+        [SerializeField]
+        private CueSound _neutralLose = new CueSound();
+
         public AudioClip DiceRoll => _diceRoll;
 
         public float DiceRollVolume => _diceRollVolume;
@@ -70,6 +128,22 @@ namespace GameJam.Gameplay
                 SfxCue.Defeat => _defeat,
                 SfxCue.Click => _click,
                 SfxCue.Invalid => _invalid,
+                SfxCue.DayZeus => _dayZeus,
+                SfxCue.DayRa => _dayRa,
+                SfxCue.DayThor => _dayThor,
+                SfxCue.DayMorrigan => _dayMorrigan,
+                SfxCue.BadOmen => _badOmen,
+                SfxCue.GoodFortune => _goodFortune,
+                SfxCue.WrathZeus => _wrathZeus,
+                SfxCue.WrathThor => _wrathThor,
+                SfxCue.WrathRa => _wrathRa,
+                SfxCue.WrathMorrigan => _wrathMorrigan,
+                SfxCue.CardHover => _cardHover,
+                SfxCue.BotResult => _botResult,
+                SfxCue.SoftGood => _softGood,
+                SfxCue.SoftBad => _softBad,
+                SfxCue.NeutralWin => _neutralWin,
+                SfxCue.NeutralLose => _neutralLose,
                 _ => throw new ArgumentOutOfRangeException(nameof(cue), cue, null),
             };
     }

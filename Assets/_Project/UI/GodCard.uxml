@@ -19,7 +19,5 @@
         <ui:Label class="god-card__rival" picking-mode="Ignore" text="Rival: Thor" />
         <!-- Pantheon powers only: the god's Day and Wrath names. -->
         <ui:Label class="god-card__powers" picking-mode="Ignore" text="&lt;b&gt;Storm:&lt;/b&gt; enemies −1, to Zeus&#10;&lt;b&gt;Thunderbolt:&lt;/b&gt; halve an army" />
-        <!-- Hot-seat only: who plays this god (HUMAN / BOT), pinned to the band's corner so the card keeps its height. -->
-        <ui:Label class="god-card__seat god-card__seat--human" picking-mode="Ignore" text="HUMAN" />
     </ui:VisualElement>
 </ui:UXML>

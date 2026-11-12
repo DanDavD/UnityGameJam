@@ -57,6 +57,8 @@ namespace GameJam.UI
         private VisualElement _chip;
         private Label _face;
         private Label _effect;
+        private VisualElement _nameGodIcon;
+        private VisualElement _nameOmenIcon;
         private Label _day;
         private Label _you;
         private Label _skip;
@@ -91,6 +93,8 @@ namespace GameJam.UI
             _chip = root.Q<VisualElement>("destiny-chip");
             _face = root.Q<Label>("destiny-face");
             _effect = root.Q<Label>("destiny-effect");
+            _nameGodIcon = root.Q<VisualElement>("destiny-god-icon");
+            _nameOmenIcon = root.Q<VisualElement>("destiny-omen-icon");
             _day = root.Q<Label>("destiny-day");
             _you = root.Q<Label>("destiny-you");
             _skip = root.Q<Label>("destiny-skip");
@@ -107,7 +111,7 @@ namespace GameJam.UI
 
         /// <param name="youLine">
         /// What the face does to the human, shown in <paramref name="human"/>'s color; null hides the
-        /// line (hot-seat: the die speaks to the whole table, and the round info has every god's line).
+        /// line.
         /// </param>
         /// <param name="tumbleSeconds">How long the die tumbles: the roll clip's length, see SfxPlayer.PlayRoll.</param>
         public void Show(
@@ -173,6 +177,8 @@ namespace GameJam.UI
             _you.style.visibility = Visibility.Hidden;
             GodUss.Apply(_die, null);
             GodUss.Apply(_chip, null);
+            _nameGodIcon.style.display = DisplayStyle.None;
+            _nameOmenIcon.style.display = DisplayStyle.None;
 
             yield return Tumble(tumbleSeconds);
 
@@ -181,6 +187,7 @@ namespace GameJam.UI
             _face.text = MatchText.FaceText(face);
             GodUss.Apply(_die, favored);
             GodUss.Apply(_chip, favored);
+            GodUss.ApplyDestinyIcon(_nameGodIcon, _nameOmenIcon, face);
             yield return Land();
 
             _landed = true;

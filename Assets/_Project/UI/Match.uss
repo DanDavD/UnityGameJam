@@ -85,7 +85,7 @@
     flex-direction: row;
     align-items: center;
     /* At least as wide as the nations panel under it, so the left column reads as one and the card
-       barely resizes when hot-seat hands it to the next person. */
+       keeps its width. */
     min-width: var(--nations-panel-width);
     padding: var(--space-3) var(--space-4);
     border-radius: var(--radius-md);
@@ -140,8 +140,16 @@
     flex-direction: row;
     align-items: center;
     max-width: var(--round-line-width);
-    padding: var(--space-2) var(--space-3) var(--space-2) var(--space-6);
+    padding: var(--space-2) var(--info-badge-gutter) var(--space-2) var(--info-badge-gutter);
     border-radius: var(--radius-md);
+}
+
+/* The round line's "i": fixed at the card's right edge, vertically centered, never in the flow. */
+.hud__round > .info-badge {
+    position: absolute;
+    right: var(--space-3);
+    top: 50%;
+    margin-top: -14px;
 }
 
 /* Two lines: the Destiny line (h2) and, under it, the round counter (label, secondary), so the top
@@ -846,6 +854,8 @@
 .nation-row__head {
     flex-direction: row;
     align-items: center;
+    min-height: var(--info-badge-size);
+    padding-right: var(--info-badge-reserve);
 }
 
 /* Chip, name, then the info key pushed to the head's right end (same x on every row). */
@@ -1230,20 +1240,15 @@
     margin: 0;
 }
 
-/* The prompt, and in hot-seat the START button beside it, so the menu grows by one button height at most.
-   The mode toggles above already separate it from the title. */
+/* The prompt under the mode toggles, which already separate it from the title. */
 .menu__prompt-row {
     flex-direction: row;
     align-items: center;
-    /* As tall as START, so switching Solo / Hot-seat never makes the cards jump. */
     min-height: var(--button-min-height);
     margin-top: var(--space-4);
     margin-bottom: var(--space-4);
 }
 
-.menu__start {
-    margin: 0 0 0 var(--space-4);
-}
 
 .menu__cards {
     flex-direction: row;
@@ -1364,33 +1369,6 @@
     color: var(--ink-soft);
     padding: 0;
     margin: var(--space-3) 0 0 0;
-}
-
-/* Hot-seat: who plays this god, a small tag in the band's top-right corner (absolute, so the four
-   cards keep their height). HUMAN reads like a primary button, BOT like a secondary one: the word
-   carries the meaning, the fill only repeats it. */
-.god-card__seat {
-    position: absolute;
-    top: var(--space-2);
-    right: var(--space-2);
-    padding: 0 var(--space-2);
-    font-size: var(--font-size-label);
-    letter-spacing: var(--letter-spacing-label);
-    -unity-font-definition: var(--font-strong);
-    -unity-font-style: normal;
-    border-width: var(--border-width);
-    border-radius: var(--radius-sm);
-    border-color: var(--wood);
-}
-
-.god-card__seat--human {
-    background-color: var(--wood);
-    color: var(--paper);
-}
-
-.god-card__seat--bot {
-    background-color: var(--paper);
-    color: var(--wood);
 }
 
 /* End screen: three stats split by thin paper-shade dividers, then two actions */
@@ -1798,12 +1776,6 @@
     margin-top: var(--space-6);
 }
 
-/* A thin paper-shade rule between the two pairs (powers / classic, solo / hot-seat). */
-.menu__modes-divider {
-    width: var(--border-width);
-    margin: var(--space-1) var(--space-4);
-    background-color: var(--paper-shade);
-}
 
 .menu__mode-line {
     font-size: var(--font-size-body);
@@ -1936,8 +1908,11 @@
     border-color: var(--wood);
 }
 
+/* Anchored to the head's top-right corner: same spot on every row whatever the tags or name. */
 .nation-row__info {
-    margin-left: var(--space-2);
+    position: absolute;
+    top: 0;
+    right: 0;
     flex-shrink: 0;
     display: none;
 }
@@ -2260,4 +2235,28 @@
     font-size: var(--font-size-body);
     -unity-font-definition: var(--font-strong);
     color: var(--ink);
+}
+
+/* Destiny names (round bar, round info heading, Destiny card effect) lead with their icon: the favored
+   god's chip, or the sacred / cursed mark for good fortune / bad omen. Shown by GodUss.ApplyDestinyIcon. */
+.destiny-name {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.destiny-name--heading {
+    margin-top: var(--space-3);
+    justify-content: flex-start;
+}
+
+.destiny-name--heading > .info-panel__heading { margin-top: 0; }
+
+.destiny-name--effect { margin-top: var(--space-6); }
+
+.destiny-name--effect > .destiny-card__effect { margin-top: 0; }
+
+.destiny-name__icon {
+    display: none;
+    margin-right: var(--space-2);
 }

@@ -5,19 +5,29 @@ namespace GameJam.Gameplay
     /// <summary>
     /// Picks the landing stings. Both are read from one person's side, like the "You:" line on the
     /// Destiny Die: a chime is good news for you, a bong is bad news, and anything that does not
-    /// touch you stays quiet. In hot-seat the combat is read through the person
-    /// <see cref="PlayerSeats.PerspectiveOf"/> names. Kept apart from <see cref="SfxPlayer"/>,
+    /// touch you stays quiet. Kept apart from <see cref="SfxPlayer"/>,
     /// which only plays cues.
     /// </summary>
     public static class SfxCueChooser
     {
-        /// <summary>Chime when the human wins the combat, bong when they lose; null when they are not in it.</summary>
+        /// <summary>
+        /// Soft good/bad when a sacred die decides the human's combat, the neutral win/lose sound
+        /// otherwise; null when they are not in it.
+        /// </summary>
         public static SfxCue? CombatLanding(Combat combat, CombatResult result, God? human)
         {
             if (!human.HasValue || (combat.Attacker != human && combat.Defender != human))
                 return null;
-            God winner = result.Winner == CombatSide.Attacker ? combat.Attacker : combat.Defender;
-            return winner == human ? SfxCue.Sacred : SfxCue.Cursed;
+            bool humanIsAttacker = combat.Attacker == human;
+            RollOutcome mine = humanIsAttacker ? result.AttackerOutcome : result.DefenderOutcome;
+            RollOutcome theirs = humanIsAttacker ? result.DefenderOutcome : result.AttackerOutcome;
+            bool won = (result.Winner == CombatSide.Attacker) == humanIsAttacker;
+            // A sacred die on either side is the headline; otherwise the plain win/lose sound.
+            if (won)
+                return mine == RollOutcome.Sacred ? SfxCue.SoftGood : SfxCue.NeutralWin;
+            return mine == RollOutcome.Sacred || theirs == RollOutcome.Sacred
+                ? SfxCue.SoftBad
+                : SfxCue.NeutralLose;
         }
 
         /// <summary>What the Destiny Die means for the human (null: neutral, no sting).</summary>
