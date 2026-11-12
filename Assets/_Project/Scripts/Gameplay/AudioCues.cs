@@ -10,6 +10,15 @@ namespace GameJam.Gameplay
     [CreateAssetMenu(fileName = "AudioCues", menuName = "GodBoard/Audio Cues")]
     public sealed class AudioCues : ScriptableObject
     {
+        [Header("Music")]
+        [Tooltip("The main theme. Loops for the whole scene (menu and match); restarts on Play again / Main menu.")]
+        [SerializeField]
+        private AudioClip _music;
+
+        [Tooltip("Kept low: the theme is mastered loud and must sit under every effect.")]
+        [SerializeField, Range(0f, 1f)]
+        private float _musicVolume = 0.25f;
+
         [Header("Dice")]
         [Tooltip(
             "The one sound of every roll (combat, Destiny Die, Offering re-roll). Its length is the tumble: it starts with the dice and ends with the landing clack."
@@ -111,6 +120,10 @@ namespace GameJam.Gameplay
         [Tooltip("The human loses a combat and no sacred die was involved.")]
         [SerializeField]
         private CueSound _neutralLose = new CueSound();
+
+        public AudioClip Music => _music;
+
+        public float MusicVolume => _musicVolume;
 
         public AudioClip DiceRoll => _diceRoll;
 
