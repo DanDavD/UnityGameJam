@@ -25,4 +25,8 @@ This game was made for the Official 2026 Unity Game Jam, which requires disclosi
 
 ## Power sounds
 
-The god-power and soft result sound effects were produced by Python synthesis scripts written with Claude (`Tools/MusicGen/`); the wiring through `AudioCues` and `MatchPresenter` was also written with Claude and reviewed by the developer. Music was tried and removed on Nov 12.
+The god-power and soft result sound effects were produced by Python synthesis scripts written with Claude (`Tools/MusicGen/`); the wiring through `AudioCues` and `MatchPresenter` was also written with Claude and reviewed by the developer. A first set of procedural music loops was tried and removed on Nov 12.
+
+## Main theme
+
+"The Six Faces" (`Assets/_Project/Audio/music-the-six-faces.wav`) was composed with Claude from the developer's brief (slow modal folk, acoustic instruments, no synths): Claude wrote the score as a MIDI file (`Tools/MusicGen/compose_theme.py`) and a pure-Python renderer that models every instrument (plucked-string synthesis for the bouzouki, breath and bow noise for flute and cello, formant voices for the choir) (`Tools/MusicGen/render_theme.py`). No samples, recordings or AI music services were used. The main six-note motif is the die: the "destiny" phrase D-A-G-F-E-D and its inversion for the rival god. The playback code was written with Claude and reviewed by the developer.
