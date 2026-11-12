@@ -352,7 +352,14 @@ namespace GameJam.UI
         public static string FastBotsButton(bool on) =>
             on ? "▶▶ FAST BOTS: ON" : "▶▶ FAST BOTS: OFF";
 
-        public static string MuteButton(bool muted) => muted ? "SOUND: OFF" : "SOUND: ON";
+        public const string SoundButton = "SOUND";
+        public const string SoundHeading = "SOUND";
+        public const string MusicLabel = "MUSIC";
+        public const string EffectsLabel = "EFFECTS";
+        public const string SoundCloseHint = "CLICK OUTSIDE OR ESC TO CLOSE";
+
+        /// <summary>A volume slider's readout, 0..100.</summary>
+        public static string VolumePercent(int percent) => $"{percent}%";
 
         // God card on the main menu: the god's lucky number, unlucky number and rival.
         // The tags draw the sacred / cursed icon beside this text, so it carries no glyph.

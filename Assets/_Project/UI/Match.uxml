@@ -442,8 +442,23 @@
         </ui:VisualElement>
         <!-- Last, so the sound toggle draws above the main menu overlay. -->
         <ui:VisualElement name="hud-toggles" class="hud__toggles" picking-mode="Ignore">
-            <ui:Button name="mute-button" text="SOUND: ON" class="button button--secondary hud__toggle" />
+            <ui:Button name="sound-button" text="SOUND" class="button button--secondary hud__toggle" />
             <ui:Button name="fast-bots-button" text="▶▶ FAST BOTS: OFF" class="button button--secondary hud__toggle" />
+            <!-- Music and effects volumes. Clicks inside never close it (the sliders drag); a click outside, Esc or SOUND does. Text set by HudView. -->
+            <ui:VisualElement name="sound-panel" class="card info-panel sound-panel">
+                <ui:Label name="sound-heading" class="info-panel__heading sound-panel__heading" picking-mode="Ignore" text="SOUND" />
+                <ui:VisualElement class="sound-panel__row">
+                    <ui:Label name="music-label" class="info-panel__heading sound-panel__label" picking-mode="Ignore" text="MUSIC" />
+                    <ui:Slider name="music-slider" class="sound-panel__slider" fill="true" low-value="0" high-value="100" value="100" />
+                    <ui:Label name="music-value" class="info-panel__text sound-panel__value" picking-mode="Ignore" text="100%" />
+                </ui:VisualElement>
+                <ui:VisualElement class="sound-panel__row">
+                    <ui:Label name="effects-label" class="info-panel__heading sound-panel__label" picking-mode="Ignore" text="EFFECTS" />
+                    <ui:Slider name="effects-slider" class="sound-panel__slider" fill="true" low-value="0" high-value="100" value="100" />
+                    <ui:Label name="effects-value" class="info-panel__text sound-panel__value" picking-mode="Ignore" text="100%" />
+                </ui:VisualElement>
+                <ui:Label name="sound-close" class="info-panel__close" picking-mode="Ignore" text="CLICK OUTSIDE OR ESC TO CLOSE" />
+            </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>
