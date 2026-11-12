@@ -31,8 +31,8 @@ namespace GameJam.UI
         // "☆☆☆" .. "★★★", one per Favor value, cached so a Favor change never builds a string.
         private static readonly string[] FavorMeters = BuildFavorMeters();
 
-        // The human's prompts carry no "YOUR TURN": the HUD leads every prompt of a person's turn with
-        // TurnPrefix ("YOUR TURN" solo, "ZEUS'S TURN" in hot-seat), so the god is named once, in one place.
+        // The human's prompts carry no "YOUR TURN": the HUD leads every prompt of the human's turn with
+        // TurnPrefix, so it is said once, in one place.
         public const string AttackPrompt = "Choose a territory to attack from, or end your turn";
 
         /// <summary>The attack prompt with the ready Wrath named: "…, unleash Thunderbolt, or end your turn".</summary>
@@ -105,29 +105,8 @@ namespace GameJam.UI
         /// <summary>"● SOLO" when selected: one person against three bots.</summary>
         public static string SoloButton(bool selected) => $"{TempleDot(selected)} SOLO";
 
-        /// <summary>"● HOT-SEAT" when selected: one to four people share the screen and mouse.</summary>
-        public static string HotSeatButton(bool selected) => $"{TempleDot(selected)} HOT-SEAT";
-
-        public const string StartButton = "START";
-        public const string HotSeatPrompt = "Click a god to switch Human / Bot, then START";
-        public const string SeatHuman = "HUMAN";
-        public const string SeatBot = "BOT";
-
-        // Hot-seat marks every person's nation by seat number in base turn order; solo says "YOU".
-        private static readonly string[] PlayerTags = { "P1", "P2", "P3", "P4" };
-
-        /// <summary>"P2": the nations panel tag of the second person in base turn order (1-based).</summary>
-        public static string PlayerTag(int number) => PlayerTags[number - 1];
-
-        /// <summary>
-        /// "P2 · HUMAN": a hot-seat god card's seat tag, numbered like the match's tags (base turn
-        /// order, bots skipped), so the menu and the nations panel name each person the same way.
-        /// </summary>
-        public static string SeatHumanTag(int number) => $"{PlayerTag(number)} · {SeatHuman}";
-
-        /// <summary>"YOUR TURN" solo, "ZEUS'S TURN" in hot-seat: leads every prompt of a person's turn.</summary>
-        public static string TurnPrefix(God god, bool isHotSeat) =>
-            isHotSeat ? $"{GodName(god).ToUpperInvariant()}'S TURN" : "YOUR TURN";
+        /// <summary>Leads every prompt of the human's turn.</summary>
+        public const string TurnPrefix = "YOUR TURN";
 
         /// <summary>"First to hold 3 temples wins": the goal, always on screen above the nation rows.</summary>
         public static string NationsGoal => $"First to hold {Match.TemplesToWin} temples wins";
@@ -143,19 +122,16 @@ namespace GameJam.UI
         public static string FaceText(int face) => FaceTexts[face];
 
         /// <summary>
-        /// "Destiny 1: Zeus +2, Thor −2": the HUD's round line, so it uses the short effect; the
-        /// Destiny Die popup and the round info panel spell it out. The round
-        /// counter sits under it (<see cref="RoundCounter"/>).
+        /// "Destiny 1 · STORM": the HUD's round line is only the name; the effects live in the round info
+        /// panel. The round counter sits under it (<see cref="RoundCounter"/>).
         /// </summary>
-        /// <param name="dayReplacesFavor">True when the favored god's Day replaces its +2 (Sun at noon).</param>
-        public static string RoundLine(int destinyFace, bool dayReplacesFavor) =>
-            $"Destiny {destinyFace}: {ShortDestinyEffect(destinyFace, dayReplacesFavor)}";
+        public static string RoundLine(int destinyFace, bool powers) =>
+            $"Destiny {destinyFace} · {DestinyName(destinyFace, powers)}";
 
         /// <summary>"ROUND 3/15": the secondary line under the Destiny line.</summary>
         public static string RoundCounter(int round) => $"ROUND {round}/{Match.RoundLimit}";
 
         public const string InfoCloseHint = "CLICK OR ESC TO CLOSE";
-        public const string OpenerHeading = "TURN ORDER";
         public const string GoalHeading = "GOAL";
 
         /// <summary>The goal in full, in the round info panel (it no longer sits on the identity card).</summary>
@@ -209,24 +185,6 @@ namespace GameJam.UI
                         ? $"{name}+{modifier} {ReinforcementWord(modifier)} (good fortune)"
                         : $"{name}no change";
             }
-        }
-
-        /// <summary>
-        /// "Thor, Zeus, Morrígan, Ra: drawn at the start of the match, the same every round.": the
-        /// fixed turn order (eliminated gods skipped).
-        /// </summary>
-        public static string RoundInfoOpener(Match match, int destinyFace)
-        {
-            var names = new StringBuilder();
-            foreach (God god in match.TurnOrder)
-            {
-                if (match.IsEliminated(god))
-                    continue;
-                if (names.Length > 0)
-                    names.Append(", ");
-                names.Append(GodName(god));
-            }
-            return $"{names}: drawn with the dice at the start of the match, the same every round.";
         }
 
         /// <summary>"DAY OF ZEUS · STORM": the Day block heading in the round info panel.</summary>
@@ -379,25 +337,17 @@ namespace GameJam.UI
         }
 
         /// <summary>
-        /// "Zeus favored +2, Thor weakened -2": what the Destiny face does this round.
-        /// Stands alone under the Destiny Die, so it starts with a capital ("Bad omen, …").
+        /// "STORM" / "GOOD FORTUNE" / "BAD OMEN": the Destiny card shows only the name; what it does is
+        /// explained in the round info panel.
         /// </summary>
-        public static string DestinyLine(int destinyFace, bool dayReplacesFavor) =>
-            Capitalized(DestinyEffect(destinyFace, dayReplacesFavor));
+        public static string DestinyLine(int destinyFace, bool powers) =>
+            DestinyName(destinyFace, powers);
 
         public static string RoundTitle(int round) => $"ROUND {round}";
 
-        /// <summary>
-        /// "YOUR TURN" for the solo human, "THOR'S TURN" for a bot, and in hot-seat
-        /// "THOR'S TURN · PASS THE MOUSE" for a person, so the next player knows to take over.
-        /// </summary>
-        public static string TurnBanner(God god, bool isHuman, bool hotSeat)
-        {
-            if (isHuman && !hotSeat)
-                return "YOUR TURN";
-            string turn = $"{GodName(god).ToUpperInvariant()}'S TURN";
-            return isHuman ? $"{turn} · PASS THE MOUSE" : turn;
-        }
+        /// <summary>"YOUR TURN" for the human, "THOR'S TURN" for a bot.</summary>
+        public static string TurnBanner(God god, bool isHuman) =>
+            isHuman ? TurnPrefix : $"{GodName(god).ToUpperInvariant()}'S TURN";
 
         public static string FastBotsButton(bool on) =>
             on ? "▶▶ FAST BOTS: ON" : "▶▶ FAST BOTS: OFF";
@@ -458,14 +408,8 @@ namespace GameJam.UI
         // The identity card: "ZEUS" over [sacred] "1 sacred" [cursed] "6 cursed"; the numbers are
         // separate labels so the HUD can place the drawn sacred / cursed icons before them.
 
-        /// <summary>"ZEUS" solo, "ZEUS · P2" in hot-seat: who the person holding the mouse plays.</summary>
-        public static string IdentityName(God god, string seatTag)
-        {
-            string name = GodName(god).ToUpperInvariant();
-            return string.IsNullOrEmpty(seatTag) || seatTag == YouTag
-                ? name
-                : $"{name} · {seatTag}";
-        }
+        /// <summary>"ZEUS": the god the human plays.</summary>
+        public static string IdentityName(God god) => GodName(god).ToUpperInvariant();
 
         /// <summary>"1 sacred": the human's lucky number, shown after the sacred icon.</summary>
         public static string IdentitySacred(God god) => $"{Pantheon.SacredFace(god)} sacred";
@@ -506,17 +450,8 @@ namespace GameJam.UI
 
         // The turn box (top right): one indicator for every turn.
 
-        /// <summary>
-        /// "YOUR TURN" solo, "P2 · ZEUS'S TURN" for a person in hot-seat, "THOR'S TURN" for a bot.
-        /// <paramref name="seatTag"/> is the person's "P1".."P4" (null for a bot).
-        /// </summary>
-        public static string TurnBox(God god, bool isHuman, bool hotSeat, string seatTag)
-        {
-            if (isHuman && !hotSeat)
-                return "YOUR TURN";
-            string turn = $"{GodName(god).ToUpperInvariant()}'S TURN";
-            return isHuman && !string.IsNullOrEmpty(seatTag) ? $"{seatTag} · {turn}" : turn;
-        }
+        /// <summary>"YOUR TURN" for the human, "THOR'S TURN" for a bot.</summary>
+        public static string TurnBox(God god, bool isHuman) => TurnBanner(god, isHuman);
 
         // The short line under the turn box title: what the acting god is doing right now.
         public const string StatusThinking = "Thinking…";
@@ -682,38 +617,14 @@ namespace GameJam.UI
                 : $"{Pantheon.CursedFace(god)} cursed: −{-delta} Favor {meter}";
         }
 
-        /// <summary>
-        /// "Day of Zeus: every enemy with 2+ loses 1 to Zeus": the line under the Destiny effect, so
-        /// the number on the die explains the board change.
-        /// </summary>
-        public static string DayLine(God god) => $"Day of {GodName(god)}: {DayEffect(god)}";
+        /// <summary>"Day of Zeus": the line under the Destiny name, in the god's color.</summary>
+        public static string DayLine(God god) => $"Day of {GodName(god)}";
 
-        /// <summary>
-        /// The HUD badge for the Days that last the whole round: "Ragnarök: Thor wins ties, his wins
-        /// cost 2", "Night of crows: combat losses join Morrígan (max 3)".
-        /// </summary>
-        public static string DayBadge(God god) =>
-            god == God.Morrigan
-                ? $"{DayName(god)}: combat losses join {GodName(god)} (max {GodPowers.NightOfCrowsMaxPerRound})"
-                : $"{DayName(god)}: {DayEffect(god)}";
+        /// <summary>"RAGNARÖK": the HUD badge for the Days that last the whole round (details in the info panel).</summary>
+        public static string DayBadge(God god) => DayName(god).ToUpperInvariant();
 
-        /// <summary>
-        /// "Day of Zeus · Storm: 3 territories -1, +3 join Zeus": the HUD news for an instant Day,
-        /// after the die, so it is still explained when the Destiny Die was skipped.
-        /// </summary>
-        public static string DayResultLine(God god, int territories)
-        {
-            string many = $"{territories} {Plural(territories, "territory", "territories")}";
-            string result;
-            if (territories == 0)
-                result = "nothing to strike";
-            else if (god == God.Zeus)
-                result =
-                    $"{many} {Minus}{GodPowers.StormLoss}, +{territories * GodPowers.StormLoss} join Zeus";
-            else
-                result = $"{many} +{GodPowers.SunAtNoonBonus}";
-            return $"Day of {GodName(god)} · {DayName(god)}: {result}";
-        }
+        /// <summary>"STORM": the HUD news for an instant Day (details in the info panel).</summary>
+        public static string DayResultLine(God god) => DayName(god).ToUpperInvariant();
 
         private static string DayEffect(God god) =>
             god switch
@@ -755,14 +666,9 @@ namespace GameJam.UI
         /// <summary>The popup's title when a person's sacred die opens the road.</summary>
         public const string RoadPopupTitle = "SACRED ROAD";
 
-        /// <summary>
-        /// The popup's sentence. The person playing solo is addressed directly; in hot-seat it names
-        /// the god, because "your" would be wrong for everyone but the person holding the mouse.
-        /// </summary>
-        public static string RoadPopupText(God god, bool you) =>
-            you
-                ? $"March an army up to {GodPowers.SacredRoadMaxSteps} territories. Pick a ringed one, or end your turn."
-                : $"{GodName(god)}: march an army up to {GodPowers.SacredRoadMaxSteps} territories. Pick a ringed one, or end the turn.";
+        /// <summary>The popup's sentence, addressed to the human.</summary>
+        public static string RoadPopupText() =>
+            $"March an army up to {GodPowers.SacredRoadMaxSteps} territories. Pick a ringed one, or end your turn.";
 
         /// <summary>
         /// The prompt when the Road mode starts (powers on): the armies that can march wear a ring and
@@ -820,25 +726,6 @@ namespace GameJam.UI
             $"+{troops} {Plural(troops, "joins", "join")} {GodName(God.Morrigan)} ({DayName(God.Morrigan)})";
 
         public static string EndTitle(bool humanWon) => humanWon ? WinTitle : LoseTitle;
-
-        /// <summary>"THOR WINS": the hot-seat end title, which speaks to nobody in particular.</summary>
-        public static string WinsTitle(God winner) => $"{GodName(winner).ToUpperInvariant()} WINS";
-
-        /// <summary>Hot-seat end title when every person is out before any nation has won.</summary>
-        public const string AllPlayersOutTitle = "ALL PLAYERS OUT";
-
-        /// <summary>The reason under <see cref="AllPlayersOutTitle"/>: nobody won, every person is out.</summary>
-        public const string AllPlayersOutLine = "Every player was eliminated";
-
-        /// <summary>"combats Thor won": the hot-seat end stat, counted for the winner.</summary>
-        public static string CombatsWonByStat(God god) => $"combats {GodName(god)} won";
-
-        /// <summary>The hot-seat end stat when no nation has won yet: every person's combats.</summary>
-        public const string CombatsWonByPlayersStat = "combats players won";
-
-        /// <summary>Hot-seat news when one person is out and the others play on.</summary>
-        public static string PlayerOutLine(God god) =>
-            $"{GodName(god)} was eliminated · the match goes on";
 
         /// <summary>
         /// "Held 3 temples at the start of the turn": why the winner won. The end card already names
@@ -919,34 +806,17 @@ namespace GameJam.UI
                 _ => "NEUTRAL",
             };
 
-        private static string DestinyEffect(int face, bool dayReplacesFavor)
+        // Good fortune and bad omen by name; a god's face is that god's Day (Classic has no Days: "ZEUS FAVORED").
+        private static string DestinyName(int face, bool powers)
         {
             if (face == Destiny.GoodFortuneFace)
-                return $"good fortune, everyone +{Destiny.GoodFortuneBonus}";
+                return "GOOD FORTUNE";
             if (Destiny.IsBadOmen(face))
-                return "bad omen, each nation's largest army loses 1";
-
-            // Every other face is exactly one god's sacred number.
+                return "BAD OMEN";
             God favored = Pantheon.GodOfFace(face).Value;
-            string favor = dayReplacesFavor
-                ? $"{GodName(favored)}'s Day instead of +{Destiny.FavoredBonus}"
-                : $"{GodName(favored)} favored +{Destiny.FavoredBonus}";
-            return $"{favor}, {GodName(Pantheon.Rival(favored))} weakened {Minus}{Destiny.WeakenedPenalty}";
-        }
-
-        // Same facts as DestinyEffect, short enough for the HUD round line to stay on one line.
-        private static string ShortDestinyEffect(int face, bool dayReplacesFavor)
-        {
-            if (face == Destiny.GoodFortuneFace)
-                return $"good fortune, everyone +{Destiny.GoodFortuneBonus}";
-            if (Destiny.IsBadOmen(face))
-                return $"bad omen, biggest army {Minus}1";
-
-            God favored = Pantheon.GodOfFace(face).Value;
-            string favor = dayReplacesFavor
-                ? $"Day of {GodName(favored)}"
-                : $"{GodName(favored)} +{Destiny.FavoredBonus}";
-            return $"{favor}, {GodName(Pantheon.Rival(favored))} {Minus}{Destiny.WeakenedPenalty}";
+            return powers
+                ? DayName(favored).ToUpperInvariant()
+                : $"{GodName(favored).ToUpperInvariant()} FAVORED";
         }
     }
 }

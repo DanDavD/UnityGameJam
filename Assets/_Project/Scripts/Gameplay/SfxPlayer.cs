@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 namespace GameJam.Gameplay
@@ -33,13 +34,24 @@ namespace GameJam.Gameplay
         [SerializeField, Range(0f, 1f)]
         private float _subtleVolume = 0.4f;
 
+        [Tooltip("Seconds an interrupted roll takes to fade out instead of cutting off.")]
+        [SerializeField, Min(0.01f)]
+        private float _fadeSeconds = 0.1f;
+
         private AudioClip _rollClip;
+
+        // Carries the tail of an interrupted roll so the new roll can start on its own frame.
+        private AudioSource _tailSource;
+        private Coroutine _tailFade;
+        private Coroutine _stopFade;
 
         /// <summary>Mutes the sources rather than AudioListener.volume, so no global state outlives the scene.</summary>
         public void SetMuted(bool muted)
         {
             _rollSource.mute = muted;
             _effectsSource.mute = muted;
+            if (_tailSource != null)
+                _tailSource.mute = muted;
         }
 
         /// <summary>Plays a one-shot cue. Rolls go through <see cref="PlayRoll"/>.</summary>
@@ -65,6 +77,12 @@ namespace GameJam.Gameplay
             _rollSource.spatialBlend = 0f;
             // Highest priority, so the mixer never steals the voice when effects pile up.
             _rollSource.priority = 0;
+            _tailSource = gameObject.AddComponent<AudioSource>();
+            _tailSource.playOnAwake = false;
+            _tailSource.spatialBlend = 0f;
+            _tailSource.priority = 0;
+            _tailSource.clip = _rollClip;
+            _tailSource.outputAudioMixerGroup = _rollSource.outputAudioMixerGroup;
             // Normally loaded with the scene (Preload Audio Data); this is the net for a build that
             // did not, so the first roll still starts on its frame instead of after a load.
             if (_rollClip.loadState == AudioDataLoadState.Unloaded)
@@ -92,13 +110,51 @@ namespace GameJam.Gameplay
                 return fallbackSeconds;
 
             _rollSource.volume = Mathf.Clamp(_cues.DiceRollVolume, MinRollVolume, 1f);
-            // Stop first so a roll that is still sounding restarts cleanly from sample 0.
+            // A roll still sounding hands its tail to the fade source, then this one restarts from
+            // sample 0 on the same frame: the old sound fades out instead of cutting off.
+            if (_stopFade != null)
+            {
+                StopCoroutine(_stopFade);
+                _stopFade = null;
+            }
+            if (_rollSource.isPlaying)
+                HandOverTail();
             _rollSource.Stop();
             _rollSource.Play();
             return _rollClip.length;
         }
 
         /// <summary>Silences a roll whose dice will never land (a skipped Destiny Die, the match ending).</summary>
-        public void StopRoll() => _rollSource.Stop();
+        public void StopRoll()
+        {
+            if (!_rollSource.isPlaying || _stopFade != null)
+                return;
+            _stopFade = StartCoroutine(FadeOut(_rollSource, () => _stopFade = null));
+        }
+
+        private void HandOverTail()
+        {
+            if (_tailFade != null)
+                StopCoroutine(_tailFade);
+            _tailSource.Stop();
+            _tailSource.volume = _rollSource.volume;
+            _tailSource.Play();
+            _tailSource.time = Mathf.Min(_rollSource.time, _rollClip.length - 0.01f);
+            _tailFade = StartCoroutine(FadeOut(_tailSource, () => _tailFade = null));
+        }
+
+        // Real time, so a fade still finishes if the game's time scale is ever changed.
+        private IEnumerator FadeOut(AudioSource source, System.Action done)
+        {
+            float start = source.volume;
+            for (float t = 0f; t < _fadeSeconds; t += Time.unscaledDeltaTime)
+            {
+                source.volume = start * (1f - t / _fadeSeconds);
+                yield return null;
+            }
+            source.Stop();
+            source.volume = start;
+            done();
+        }
     }
 }

@@ -7,7 +7,7 @@ namespace GameJam.UI
 {
     /// <summary>
     /// The match HUD: the human's god chip and numbers, the round and Destiny line with its info panel
-    /// (Destiny per god, who opens, the Day, the goal), action prompt, reinforcement counter,
+    /// (Destiny per god, the Day, the goal), action prompt, reinforcement counter,
     /// onboarding hint, action buttons, the sound and fast-bots toggles and the end screen. With the
     /// god powers on it also shows the human's Wrath and Favor, the Wrath button, the badge of a
     /// round-long Day and a news line that says what a power just did.
@@ -83,13 +83,16 @@ namespace GameJam.UI
         private Label _identityCursedLabel;
         private VisualElement _roundBar;
         private Label _roundLabel;
+        private VisualElement _roundGodIcon;
+        private VisualElement _roundOmenIcon;
+        private VisualElement _infoGodIcon;
+        private VisualElement _infoOmenIcon;
         private Label _roundCounter;
         private VisualElement _roundInfo;
         private Label _roundInfoTitle;
 
         // Indexed like Match.BaseTurnOrder, which is also the row order in the UXML.
         private readonly Label[] _roundInfoGods = new Label[Match.BaseTurnOrder.Count];
-        private Label _roundInfoOpener;
         private Label _roundInfoDayHeading;
         private Label _roundInfoDay;
         private VisualElement _reinforceCounter;
@@ -181,13 +184,16 @@ namespace GameJam.UI
             _identityCursedLabel = root.Q<Label>("identity-cursed-label");
             _roundBar = root.Q<VisualElement>("round-bar");
             _roundLabel = root.Q<Label>("round-label");
+            _roundGodIcon = root.Q<VisualElement>("round-god-icon");
+            _roundOmenIcon = root.Q<VisualElement>("round-omen-icon");
+            _infoGodIcon = root.Q<VisualElement>("info-god-icon");
+            _infoOmenIcon = root.Q<VisualElement>("info-omen-icon");
             _roundCounter = root.Q<Label>("round-counter");
             _roundInfo = root.Q<VisualElement>("round-info");
             _roundInfoTitle = root.Q<Label>("round-info-title");
             for (int i = 0; i < Match.BaseTurnOrder.Count; i++)
                 _roundInfoGods[i] = root.Q<VisualElement>(RoundInfoGodName(Match.BaseTurnOrder[i]))
                     .Q<Label>(className: RoundInfoGodTextClass);
-            _roundInfoOpener = root.Q<Label>("round-info-opener");
             _roundInfoDayHeading = root.Q<Label>("round-info-day-heading");
             _roundInfoDay = root.Q<Label>("round-info-day");
             _reinforceCounter = root.Q<VisualElement>("reinforce-counter");
@@ -251,7 +257,6 @@ namespace GameJam.UI
             _mainMenuButton = root.Q<Button>("main-menu-button");
 
             // Player-facing text lives in MatchText; the UXML text is only the UI Builder preview.
-            root.Q<Label>("round-info-opener-heading").text = MatchText.OpenerHeading;
             root.Q<Label>("round-info-goal-heading").text = MatchText.GoalHeading;
             root.Q<Label>("round-info-goal").text = MatchText.RoundInfoGoal;
             root.Q<Label>("round-info-close").text = MatchText.InfoCloseHint;
@@ -291,7 +296,7 @@ namespace GameJam.UI
             // The sound toggle already works on the main menu; fast bots only means something in a match.
             SetVisible(_toggles, true);
             SetVisible(_fastBotsButton, false);
-            SetRound(string.Empty, string.Empty);
+            SetRound(string.Empty, string.Empty, Destiny.GoodFortuneFace);
             SetPrompt(string.Empty);
             HideHint();
             ShowEndTurn(false);
@@ -358,21 +363,16 @@ namespace GameJam.UI
 
         /// <summary>
         /// The human's god: its chip (color + icon) and the line with its sacred / cursed numbers.
-        /// In hot-seat it is called again on every person's turn, so the card follows the mouse.
         /// </summary>
-        /// <param name="seatTag">"YOU" solo, "P1".."P4" in hot-seat (the nations panel tag).</param>
-        public void SetIdentity(God god, string seatTag)
+        public void SetIdentity(God god)
         {
             GodUss.Apply(_identityChip, god);
-            _identityLabel.text = MatchText.IdentityName(god, seatTag);
+            _identityLabel.text = MatchText.IdentityName(god);
             _identitySacredLabel.text = MatchText.IdentitySacred(god);
             _identityCursedLabel.text = MatchText.IdentityCursed(god);
             SetVisible(_identityCard, true);
             SetVisible(_fastBotsButton, true);
         }
-
-        /// <summary>Hides the identity card until the next <see cref="SetIdentity"/> (hot-seat: its person is out).</summary>
-        public void HideIdentity() => SetVisible(_identityCard, false);
 
         /// <summary>Whether the identity card is on screen (a star can fly to its Favor stars).</summary>
         public bool IsIdentityShown => _identityCard.style.display == DisplayStyle.Flex;
@@ -384,10 +384,11 @@ namespace GameJam.UI
         /// The round bar: the Destiny line ("Destiny 2: Day of Ra, Morrígan −2") over the round
         /// counter ("ROUND 1/15"). An empty Destiny line hides the bar.
         /// </summary>
-        public void SetRound(string destinyLine, string roundCounter)
+        public void SetRound(string destinyLine, string roundCounter, int destinyFace)
         {
             bool shown = !string.IsNullOrEmpty(destinyLine);
             _roundLabel.text = destinyLine;
+            GodUss.ApplyDestinyIcon(_roundGodIcon, _roundOmenIcon, destinyFace);
             _roundCounter.text = roundCounter;
             SetVisible(_roundBar, shown);
             if (!shown)
@@ -396,20 +397,20 @@ namespace GameJam.UI
 
         /// <summary>
         /// Fills the round info panel: the Destiny face, one line per god (indexed like
-        /// Match.BaseTurnOrder), who opens and why, and the Day (null heading hides that block).
+        /// Match.BaseTurnOrder) and the Day (null heading hides that block).
         /// </summary>
         public void SetRoundInfo(
+            int destinyFace,
             string title,
             string[] godLines,
-            string opener,
             string dayHeading,
             string day
         )
         {
             _roundInfoTitle.text = title;
+            GodUss.ApplyDestinyIcon(_infoGodIcon, _infoOmenIcon, destinyFace);
             for (int i = 0; i < _roundInfoGods.Length; i++)
                 _roundInfoGods[i].text = godLines[i];
-            _roundInfoOpener.text = opener;
             bool hasDay = dayHeading != null;
             _roundInfoDayHeading.text = dayHeading ?? string.Empty;
             _roundInfoDay.text = day ?? string.Empty;
@@ -483,8 +484,7 @@ namespace GameJam.UI
 
         /// <summary>
         /// The label of every following prompt (MatchText.TurnPrefix) and the god whose chip and color
-        /// edge the bar wears. A null prefix (a bot's turn, after the match) hides the bar, so hot-seat
-        /// prompts never say "YOUR TURN" to the wrong person.
+        /// edge the bar wears. A null prefix (a bot's turn, after the match) hides the bar.
         /// </summary>
         public void SetTurnPrefix(string prefix, God? god = null)
         {
@@ -624,7 +624,7 @@ namespace GameJam.UI
 
         /// <summary>
         /// The turn box (top right): whose turn it is, in that god's chip and color. A new turn slides
-        /// it in. <paramref name="title"/> is "YOUR TURN" / "THOR'S TURN" / "P2 · ZEUS'S TURN".
+        /// it in. <paramref name="title"/> is "YOUR TURN" / "THOR'S TURN".
         /// </summary>
         public void ShowTurn(God god, string title)
         {
@@ -729,7 +729,7 @@ namespace GameJam.UI
         }
 
         /// <summary>
-        /// Title is the verdict (YOU WIN / YOU LOSE solo, THOR WINS in hot-seat); detail says why.
+        /// Title is the verdict (YOU WIN / YOU LOSE); detail says why.
         /// The card takes the winner's color, icon and <paramref name="winnerName"/>. With no winner
         /// yet (every person eliminated) it stays neutral and the winner's temples stat is hidden.
         /// </summary>

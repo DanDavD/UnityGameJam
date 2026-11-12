@@ -118,6 +118,10 @@
     --road-popup-top: 108px;
     /* The round "i" badge that says "click for the full explanation" (round line, nation rows) */
     --info-badge-size: 28px;
+    /* Space a row/bar reserves on its right for the absolutely anchored "i" badge (badge + 8px) */
+    --info-badge-reserve: 36px;
+    /* Same for the round line, whose badge sits 12px from the card edge (badge + 2 x 12px) */
+    --info-badge-gutter: 52px;
     /* Max width of the round info panel under the round line */
     --info-panel-width: 720px;
     /* A nation's powers card, a flyout beside its row in the nations panel */
