@@ -6,8 +6,7 @@ namespace GameJam.UI
 {
     /// <summary>
     /// The left column: one row per god in base cycle order with its territories, troops and temples
-    /// (●●○○, the dot that wins ringed as the goal), a tag on each person's nation (YOU solo, P1..P4
-    /// in hot-seat), the god whose turn it is highlighted and eliminated gods greyed out.
+    /// (●●○○, the dot that wins ringed as the goal), a tag on each person's nation (YOU), the god whose turn it is highlighted and eliminated gods greyed out.
     /// With the god powers on, each row also has its Favor stars (★★☆), which bump when they change
     /// and are only redrawn on a Favor change (so a star flying to them can fill them as it lands).
     /// A pure view: <see cref="Refresh"/> redraws every row from the match state it is given.
@@ -138,7 +137,7 @@ namespace GameJam.UI
         public void CloseInfo() => SetOpenCard(NoCard);
 
         /// <summary>
-        /// Tags the nations people play ("YOU", or "P1".."P4" in hot-seat) and shows the panel.
+        /// Tags the nations people play ("YOU") and shows the panel.
         /// </summary>
         /// <param name="tags">Per god in Match.BaseTurnOrder; null for a bot (no tag).</param>
         public void SetPlayerTags(string[] tags)

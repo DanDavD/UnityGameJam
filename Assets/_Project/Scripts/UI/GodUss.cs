@@ -34,5 +34,21 @@ namespace GameJam.UI
             if (god.HasValue)
                 element.AddToClassList(ClassOf(god.Value));
         }
+
+        /// <summary>
+        /// Shows the icon that leads a Destiny name: the favored god's chip on a god's face, the
+        /// sacred mark on good fortune, the cursed mark on the bad omen.
+        /// </summary>
+        public static void ApplyDestinyIcon(VisualElement godChip, VisualElement omenIcon, int face)
+        {
+            God? god = Pantheon.GodOfFace(face);
+            Apply(godChip, god);
+            godChip.style.display = god.HasValue ? DisplayStyle.Flex : DisplayStyle.None;
+            bool good = face == Destiny.GoodFortuneFace;
+            bool omen = Destiny.IsBadOmen(face);
+            omenIcon.EnableInClassList("omen-icon--sacred", good);
+            omenIcon.EnableInClassList("omen-icon--cursed", omen);
+            omenIcon.style.display = good || omen ? DisplayStyle.Flex : DisplayStyle.None;
+        }
     }
 }

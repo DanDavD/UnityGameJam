@@ -50,3 +50,67 @@ MonoBehaviour:
     _clips:
     - {fileID: 8300000, guid: ebe776532b52500419f8932e807b46f6, type: 3}
     _volume: 0.5
+  _dayZeus:
+    _clips:
+    - {fileID: 8300000, guid: ed92e0e94aa97499687b2eb578b345e0, type: 3}
+    _volume: 0.8
+  _dayRa:
+    _clips:
+    - {fileID: 8300000, guid: 77509097383864205804570493bd0348, type: 3}
+    _volume: 0.8
+  _dayThor:
+    _clips:
+    - {fileID: 8300000, guid: d45ba9c9921774393a1dac096a481bd2, type: 3}
+    _volume: 0.8
+  _dayMorrigan:
+    _clips:
+    - {fileID: 8300000, guid: 2effe02d6bdde436291224558e306e7f, type: 3}
+    _volume: 0.8
+  _badOmen:
+    _clips:
+    - {fileID: 8300000, guid: e28070d3c45d24d57a27530385ad286d, type: 3}
+    _volume: 0.8
+  _goodFortune:
+    _clips:
+    - {fileID: 8300000, guid: 91b0e95aca3304d01996260d4a186503, type: 3}
+    _volume: 0.8
+  _wrathZeus:
+    _clips:
+    - {fileID: 8300000, guid: 23c587744867b49b28453a7299f623bf, type: 3}
+    _volume: 0.8
+  _wrathThor:
+    _clips:
+    - {fileID: 8300000, guid: 83816bb251db147a281c2d5d68250ce0, type: 3}
+    _volume: 0.8
+  _wrathRa:
+    _clips:
+    - {fileID: 8300000, guid: 676ee4aca08964ca8932addccf27d1f4, type: 3}
+    _volume: 0.8
+  _wrathMorrigan:
+    _clips:
+    - {fileID: 8300000, guid: 36e3bc2d6922a46f0a3dca5a7e6a4b8e, type: 3}
+    _volume: 0.8
+  _cardHover:
+    _clips:
+    - {fileID: 8300000, guid: a9f894df572134f9cb4d0f32de94210d, type: 3}
+    _volume: 0.35
+  _botResult:
+    _clips:
+    - {fileID: 8300000, guid: f41faa7e81365446f86d833c5f2f23fa, type: 3}
+    _volume: 0.6
+  _softGood:
+    _clips:
+    - {fileID: 8300000, guid: 898738d5245f24a17a49a66085d81906, type: 3}
+    _volume: 0.6
+  _softBad:
+    _clips:
+    - {fileID: 8300000, guid: d44a53f5ab7964ceb86d85f2313269a7, type: 3}
+    _volume: 0.6
+  _neutralWin:
+    _clips:
+    - {fileID: 8300000, guid: b9863479a39144720825ecb018119790, type: 3}
+    _volume: 0.6
+  _neutralLose:
+    _clips:
+    - {fileID: 8300000, guid: a0c70c9effbc348cea1813e85f988c9c, type: 3}
+    _volume: 0.6
