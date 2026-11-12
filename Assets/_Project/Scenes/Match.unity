@@ -774,6 +774,8 @@ MonoBehaviour:
   _rollSource: {fileID: 1116311308}
   _effectsSource: {fileID: 1116311307}
   _subtleVolume: 0.4
+  _fadeSeconds: 0.1
+  _musicFadeSeconds: 1.5
 --- !u!82 &1116311307
 AudioSource:
   m_ObjectHideFlags: 0

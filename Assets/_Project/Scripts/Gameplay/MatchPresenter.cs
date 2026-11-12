@@ -191,6 +191,8 @@ namespace GameJam.Gameplay
             // One info card open at a time, across the round line and the nations panel.
             _hud.RoundInfoOpened += _nations.CloseInfo;
             _nations.InfoOpened += _hud.CloseRoundInfo;
+            _hud.SoundPanelOpened += _nations.CloseInfo;
+            _nations.InfoOpened += _hud.CloseSoundPanel;
         }
 
         private void OnDisable()
@@ -200,16 +202,35 @@ namespace GameJam.Gameplay
             _roadPlaying = false;
             _hud.RoundInfoOpened -= _nations.CloseInfo;
             _nations.InfoOpened -= _hud.CloseRoundInfo;
+            _hud.SoundPanelOpened -= _nations.CloseInfo;
+            _nations.InfoOpened -= _hud.CloseSoundPanel;
+        }
+
+        // A press anywhere but the sound panel or its button closes the panel. On press, before the
+        // SOUND button's click (on release), so that button still toggles instead of close-then-reopen.
+        private void CloseSoundPanelOnOutsideClick()
+        {
+            Mouse mouse = Mouse.current;
+            if (
+                mouse == null
+                || !mouse.leftButton.wasPressedThisFrame
+                || !_hud.IsSoundPanelOpen
+                || _hud.IsPointerOverSoundControls(mouse.position.ReadValue())
+            )
+                return;
+            _hud.CloseSoundPanel();
         }
 
         // Esc closes any open info card (it also cancels an aimed Wrath in MatchController: both mean
         // "never mind"). Polled here because the UI assembly has no Input System reference.
         private void Update()
         {
+            CloseSoundPanelOnOutsideClick();
             Keyboard keyboard = Keyboard.current;
             if (keyboard == null || !keyboard.escapeKey.wasPressedThisFrame)
                 return;
             _hud.CloseRoundInfo();
+            _hud.CloseSoundPanel();
             _nations.CloseInfo();
         }
 
