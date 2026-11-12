@@ -287,7 +287,7 @@
         <!-- Main menu over the board. Contains multiple screens: Home, God Select, Rules, Pantheon, Theme. -->
         <ui:VisualElement name="menu" class="menu">
             <!-- 1. Home / Title screen -->
-            <ui:VisualElement name="menu-home-screen" class="card menu__card menu__screen">
+            <ui:VisualElement name="menu-home-screen" class="card menu__card menu__screen--home">
                 <ui:Label name="menu-title" class="menu__title" picking-mode="Ignore" text="GodBoard" />
                 <ui:Label name="menu-tagline" class="menu__tagline" picking-mode="Ignore" text="Your lucky number is your rival's curse." />
                 <ui:Label class="menu__badge" picking-mode="Ignore" text="UNITY GAME JAM 2026 · THEME: LUCKY NUMBER 7" />
@@ -305,10 +305,11 @@
             </ui:VisualElement>
 
             <!-- 2. God selection screen -->
-            <ui:VisualElement name="menu-select-screen" class="card menu__card menu__screen" style="display: none;">
+            <ui:VisualElement name="menu-select-screen" class="card menu__card menu__screen--select" style="display: none;">
                 <ui:VisualElement class="menu__header-bar" picking-mode="Ignore">
                     <ui:Button name="menu-select-back" text="← MAIN MENU" class="button button--secondary menu__back-btn" />
                     <ui:Label class="menu__screen-title" picking-mode="Ignore" text="CHOOSE YOUR DEITY" />
+                    <ui:VisualElement class="menu__header-spacer" picking-mode="Ignore" />
                 </ui:VisualElement>
                 <!-- Pantheon powers or Classic: the selected one is the primary button. Text set by MenuView. -->
                 <ui:VisualElement class="menu__modes" picking-mode="Ignore">
@@ -345,10 +346,11 @@
             </ui:VisualElement>
 
             <!-- 3. Rules screen -->
-            <ui:VisualElement name="menu-rules-screen" class="card menu__card menu__screen menu__screen--content" style="display: none;">
+            <ui:VisualElement name="menu-rules-screen" class="card menu__card menu__screen--content" style="display: none;">
                 <ui:VisualElement class="menu__header-bar" picking-mode="Ignore">
                     <ui:Button name="menu-rules-back" text="← MAIN MENU" class="button button--secondary menu__back-btn" />
                     <ui:Label class="menu__screen-title" picking-mode="Ignore" text="HOW TO PLAY" />
+                    <ui:VisualElement class="menu__header-spacer" picking-mode="Ignore" />
                 </ui:VisualElement>
                 <ui:VisualElement class="menu__content-grid" picking-mode="Ignore">
                     <ui:VisualElement class="menu__info-box" picking-mode="Ignore">
@@ -371,10 +373,11 @@
             </ui:VisualElement>
 
             <!-- 4. Pantheon / Deities screen -->
-            <ui:VisualElement name="menu-pantheon-screen" class="card menu__card menu__screen menu__screen--content" style="display: none;">
+            <ui:VisualElement name="menu-pantheon-screen" class="card menu__card menu__screen--content" style="display: none;">
                 <ui:VisualElement class="menu__header-bar" picking-mode="Ignore">
                     <ui:Button name="menu-pantheon-back" text="← MAIN MENU" class="button button--secondary menu__back-btn" />
                     <ui:Label class="menu__screen-title" picking-mode="Ignore" text="THE FOUR DEITIES" />
+                    <ui:VisualElement class="menu__header-spacer" picking-mode="Ignore" />
                 </ui:VisualElement>
                 <ui:VisualElement class="menu__deities-grid" picking-mode="Ignore">
                     <ui:VisualElement class="menu__deity-box god--zeus" picking-mode="Ignore">
@@ -432,10 +435,11 @@
             </ui:VisualElement>
 
             <!-- 5. Theme screen: Sacred & Cursed / Lucky Number 7 -->
-            <ui:VisualElement name="menu-theme-screen" class="card menu__card menu__screen menu__screen--content" style="display: none;">
+            <ui:VisualElement name="menu-theme-screen" class="card menu__card menu__screen--content" style="display: none;">
                 <ui:VisualElement class="menu__header-bar" picking-mode="Ignore">
                     <ui:Button name="menu-theme-back" text="← MAIN MENU" class="button button--secondary menu__back-btn" />
                     <ui:Label class="menu__screen-title" picking-mode="Ignore" text="SACRED &amp; CURSED · THE RULE OF 7" />
+                    <ui:VisualElement class="menu__header-spacer" picking-mode="Ignore" />
                 </ui:VisualElement>
                 <ui:VisualElement class="menu__content-grid" picking-mode="Ignore">
                     <ui:VisualElement class="menu__info-box" picking-mode="Ignore">

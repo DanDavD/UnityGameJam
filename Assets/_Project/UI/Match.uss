@@ -1301,18 +1301,30 @@
 
 .menu__card {
     align-items: center;
-    padding: var(--space-12) var(--space-8) var(--space-8) var(--space-8);
 }
 
 .menu__screen {
-    width: 820px;
-    max-width: 90%;
     align-items: center;
 }
 
-.menu__screen--content {
-    width: 860px;
+.menu__screen--home {
+    width: 760px;
     max-width: 92%;
+    align-items: center;
+    padding: var(--space-12) var(--space-8) var(--space-8) var(--space-8);
+}
+
+.menu__screen--select {
+    width: 1536px;
+    max-width: 96%;
+    align-items: center;
+    padding: var(--space-6) var(--space-8) var(--space-8) var(--space-8);
+}
+
+.menu__screen--content {
+    width: 1100px;
+    max-width: 94%;
+    align-items: center;
     padding: var(--space-8) var(--space-8);
 }
 
@@ -1376,8 +1388,14 @@
 }
 
 .menu__back-btn {
+    width: 150px;
     padding: var(--space-2) var(--space-4);
     font-size: var(--font-size-caption);
+    -unity-text-align: middle-center;
+}
+
+.menu__header-spacer {
+    width: 150px;
 }
 
 .menu__screen-title {
