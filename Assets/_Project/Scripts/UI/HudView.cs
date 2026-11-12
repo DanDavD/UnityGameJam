@@ -134,6 +134,7 @@ namespace GameJam.UI
         private IVisualElementScheduledItem _turnBoxEnter;
         private Label _hintLabel;
         private Button _endTurnButton;
+        private Button _roadSkipButton;
         private VisualElement _toggles;
         private Button _soundButton;
         private VisualElement _soundPanel;
@@ -160,6 +161,7 @@ namespace GameJam.UI
         private IVisualElementScheduledItem _newsTimeout;
 
         public event Action EndTurnClicked;
+        public event Action RoadSkipClicked;
         public event Action WrathClicked;
 
         /// <summary>The Wrath was clicked while locked or used: the controller says why.</summary>
@@ -255,6 +257,13 @@ namespace GameJam.UI
             _turnBoxStatus = root.Q<Label>("turn-box-status");
             _hintLabel = root.Q<Label>("hint-label");
             _endTurnButton = root.Q<Button>("end-turn-button");
+            _roadSkipButton = root.Q<Button>("road-skip-button");
+            if (_roadSkipButton != null)
+            {
+                _roadSkipButton.text = MatchText.RoadSkipButtonLabel;
+                _roadSkipButton.clicked += HandleRoadSkipClicked;
+                SetVisible(_roadSkipButton, false);
+            }
             _toggles = root.Q<VisualElement>("hud-toggles");
             _soundButton = root.Q<Button>("sound-button");
             _soundPanel = root.Q<VisualElement>("sound-panel");
@@ -330,6 +339,7 @@ namespace GameJam.UI
             SetPrompt(string.Empty);
             HideHint();
             ShowEndTurn(false);
+            ShowRoadSkip(false);
             HideReinforcements();
             ShowWrath(false);
             ShowFavor(false);
@@ -342,6 +352,8 @@ namespace GameJam.UI
         private void OnDisable()
         {
             _endTurnButton.clicked -= HandleEndTurnClicked;
+            if (_roadSkipButton != null)
+                _roadSkipButton.clicked -= HandleRoadSkipClicked;
             _wrathButton.clicked -= HandleWrathClicked;
             _fastBotsButton.clicked -= HandleFastBotsClicked;
             _soundButton.clicked -= HandleSoundClicked;
@@ -563,6 +575,12 @@ namespace GameJam.UI
         public void CloseSoundPanel() => SetSoundPanelOpen(false);
 
         public void ShowEndTurn(bool visible) => SetVisible(_endTurnButton, visible);
+
+        public void ShowRoadSkip(bool visible)
+        {
+            if (_roadSkipButton != null)
+                SetVisible(_roadSkipButton, visible);
+        }
 
         /// <summary>Shows the Wrath line on the identity card; hidden in Classic.</summary>
         public void ShowFavor(bool visible) => SetVisible(_identityWrath, visible);
@@ -838,6 +856,8 @@ namespace GameJam.UI
             element.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
 
         private void HandleEndTurnClicked() => EndTurnClicked?.Invoke();
+
+        private void HandleRoadSkipClicked() => RoadSkipClicked?.Invoke();
 
         private void HandleWrathClicked()
         {

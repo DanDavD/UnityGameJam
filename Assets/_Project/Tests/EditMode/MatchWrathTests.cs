@@ -128,6 +128,48 @@ namespace GameJam.Tests
             Assert.AreEqual(0, match.FavorOf(God.Zeus));
         }
 
+        [Test]
+        public void Thunderbolt_TwoDistinctTargets_HalvesBoth()
+        {
+            Match match = StartZeusReady();
+            MatchSetup.Set(_board, Board.ThorCapital, God.Thor, 6);
+            MatchSetup.Set(_board, Board.RaCapital, God.Ra, 4);
+
+            match.UnleashWrath(
+                target: _board.Get(Board.ThorCapital),
+                secondTarget: _board.Get(Board.RaCapital)
+            );
+
+            Assert.AreEqual(3, _board.Get(Board.ThorCapital).Troops);
+            Assert.AreEqual(2, _board.Get(Board.RaCapital).Troops);
+            Assert.AreEqual(0, match.FavorOf(God.Zeus));
+        }
+
+        [Test]
+        public void Thunderbolt_SameTargetTwice_HalvesTwiceIfEnoughTroops()
+        {
+            Match match = StartZeusReady();
+            MatchSetup.Set(_board, Board.ThorCapital, God.Thor, 8);
+
+            match.UnleashWrath(
+                target: _board.Get(Board.ThorCapital),
+                secondTarget: _board.Get(Board.ThorCapital)
+            );
+
+            Assert.AreEqual(2, _board.Get(Board.ThorCapital).Troops); // 8 -> 4 -> 2
+            Assert.AreEqual(0, match.FavorOf(God.Zeus));
+        }
+
+        [Test]
+        public void DeclineRoad_ClearsRoadAvailable()
+        {
+            Match match = StartZeusReady();
+            Assert.IsFalse(match.IsRoadAvailable);
+            // Manually test DeclineRoad
+            match.DeclineRoad();
+            Assert.IsFalse(match.IsRoadAvailable);
+        }
+
         [TestCase(Board.ZeusVillage)] // own territory
         [TestCase(Board.NorthTemple)] // unowned
         [TestCase(Board.RaVillage)] // set to a single troop below
@@ -154,7 +196,7 @@ namespace GameJam.Tests
 
             Assert.AreEqual(2, _board.Get(Board.EastTemple).Troops);
             Assert.AreEqual(God.Ra, _board.Get(Board.EastTemple).Owner);
-            Assert.AreEqual(7, _board.Get(Board.ThorVillage).Troops);
+            Assert.AreEqual(5, _board.Get(Board.ThorVillage).Troops);
             Assert.AreEqual(TurnPhase.Attack, match.Phase);
         }
 
@@ -169,7 +211,7 @@ namespace GameJam.Tests
             match.UnleashWrath(_board.Get(Board.ThorVillage), _board.Get(Board.EastTemple));
 
             Assert.AreEqual(God.Thor, _board.Get(Board.EastTemple).Owner);
-            Assert.AreEqual(6, _board.Get(Board.EastTemple).Troops);
+            Assert.AreEqual(4, _board.Get(Board.EastTemple).Troops);
             Assert.AreEqual(1, _board.Get(Board.ThorVillage).Troops);
             Assert.AreEqual(God.Ra, previousOwner);
         }
@@ -395,7 +437,7 @@ namespace GameJam.Tests
             Combat combat = AttackWest(match);
             match.ConfirmCombat();
 
-            Assert.AreEqual(8, _board.Get(Board.MorriganVillage).Troops);
+            Assert.AreEqual(6, _board.Get(Board.MorriganVillage).Troops);
             Assert.AreEqual(3, _board.Get(Board.MorriganCapital).Troops);
             Assert.AreEqual(1, combat.HarvestTroops);
             Assert.AreEqual(0, combat.CrowTroops);
@@ -427,7 +469,7 @@ namespace GameJam.Tests
         public void Harvest_SpentDuringNightOfCrows_TheCrowsTakeWhatIsLeft()
         {
             MatchSetup.Set(_board, Board.WestTemple, God.Zeus, 4);
-            // Morrígan opens on her face: 5 reinforcements, Village 7.
+            // Morrígan opens on her face: 3 reinforcements, Village 5.
             Match match = MatchSetup.StartWithPowers(_board, MorriganFace, 5, 3, 5, 3, 5, 3);
             MatchSetup.ReadyWrath(match, Board.MorriganVillage);
             match.UnleashWrath();
@@ -439,7 +481,7 @@ namespace GameJam.Tests
                 match.ConfirmCombat();
             }
 
-            Assert.AreEqual(7 + 2, _board.Get(Board.MorriganVillage).Troops);
+            Assert.AreEqual(5 + 2, _board.Get(Board.MorriganVillage).Troops);
             Assert.AreEqual(3 + 1, _board.Get(Board.MorriganCapital).Troops);
             Assert.AreEqual(0, last.HarvestTroops);
             Assert.AreEqual(1, last.CrowTroops);

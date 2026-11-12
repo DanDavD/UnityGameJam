@@ -20,6 +20,22 @@ namespace GameJam.UI
 
         private UIDocument _document;
         private VisualElement _menu;
+        private VisualElement _homeScreen;
+        private VisualElement _selectScreen;
+        private VisualElement _rulesScreen;
+        private VisualElement _pantheonScreen;
+        private VisualElement _themeScreen;
+
+        private Button _btnPlay;
+        private Button _btnRules;
+        private Button _btnPantheon;
+        private Button _btnTheme;
+
+        private Button _btnSelectBack;
+        private Button _btnRulesBack;
+        private Button _btnPantheonBack;
+        private Button _btnThemeBack;
+
         private Button _powersButton;
         private Button _classicButton;
         private Label _modeLine;
@@ -46,6 +62,41 @@ namespace GameJam.UI
         {
             VisualElement root = _document.rootVisualElement;
             _menu = root.Q<VisualElement>("menu");
+            _homeScreen = root.Q<VisualElement>("menu-home-screen");
+            _selectScreen = root.Q<VisualElement>("menu-select-screen");
+            _rulesScreen = root.Q<VisualElement>("menu-rules-screen");
+            _pantheonScreen = root.Q<VisualElement>("menu-pantheon-screen");
+            _themeScreen = root.Q<VisualElement>("menu-theme-screen");
+
+            _btnPlay = root.Q<Button>("menu-btn-play");
+            _btnRules = root.Q<Button>("menu-btn-rules");
+            _btnPantheon = root.Q<Button>("menu-btn-pantheon");
+            _btnTheme = root.Q<Button>("menu-btn-theme");
+
+            _btnSelectBack = root.Q<Button>("menu-select-back");
+            _btnRulesBack = root.Q<Button>("menu-rules-back");
+            _btnPantheonBack = root.Q<Button>("menu-pantheon-back");
+            _btnThemeBack = root.Q<Button>("menu-theme-back");
+
+            if (_btnPlay != null) _btnPlay.clicked += HandlePlayClicked;
+            if (_btnRules != null) _btnRules.clicked += HandleRulesClicked;
+            if (_btnPantheon != null) _btnPantheon.clicked += HandlePantheonClicked;
+            if (_btnTheme != null) _btnTheme.clicked += HandleThemeClicked;
+
+            if (_btnSelectBack != null) _btnSelectBack.clicked += HandleBackClicked;
+            if (_btnRulesBack != null) _btnRulesBack.clicked += HandleBackClicked;
+            if (_btnPantheonBack != null) _btnPantheonBack.clicked += HandleBackClicked;
+            if (_btnThemeBack != null) _btnThemeBack.clicked += HandleBackClicked;
+
+            RegisterHover(_btnPlay);
+            RegisterHover(_btnRules);
+            RegisterHover(_btnPantheon);
+            RegisterHover(_btnTheme);
+            RegisterHover(_btnSelectBack);
+            RegisterHover(_btnRulesBack);
+            RegisterHover(_btnPantheonBack);
+            RegisterHover(_btnThemeBack);
+
             root.Q<Label>("menu-title").text = MatchText.GameTitle;
             root.Q<Label>("menu-tagline").text = MatchText.Tagline;
             root.Q<Label>("menu-prompt").text = MatchText.ChooseGodPrompt;
@@ -79,6 +130,25 @@ namespace GameJam.UI
 
         private void OnDisable()
         {
+            if (_btnPlay != null) _btnPlay.clicked -= HandlePlayClicked;
+            if (_btnRules != null) _btnRules.clicked -= HandleRulesClicked;
+            if (_btnPantheon != null) _btnPantheon.clicked -= HandlePantheonClicked;
+            if (_btnTheme != null) _btnTheme.clicked -= HandleThemeClicked;
+
+            if (_btnSelectBack != null) _btnSelectBack.clicked -= HandleBackClicked;
+            if (_btnRulesBack != null) _btnRulesBack.clicked -= HandleBackClicked;
+            if (_btnPantheonBack != null) _btnPantheonBack.clicked -= HandleBackClicked;
+            if (_btnThemeBack != null) _btnThemeBack.clicked -= HandleBackClicked;
+
+            UnregisterHover(_btnPlay);
+            UnregisterHover(_btnRules);
+            UnregisterHover(_btnPantheon);
+            UnregisterHover(_btnTheme);
+            UnregisterHover(_btnSelectBack);
+            UnregisterHover(_btnRulesBack);
+            UnregisterHover(_btnPantheonBack);
+            UnregisterHover(_btnThemeBack);
+
             foreach (VisualElement card in _cards)
             {
                 card?.UnregisterCallback<ClickEvent>(HandleCardClicked);
@@ -88,6 +158,35 @@ namespace GameJam.UI
             _classicButton.clicked -= HandleClassicClicked;
             _powersButton.UnregisterCallback<PointerEnterEvent>(HandleCardEntered);
             _classicButton.UnregisterCallback<PointerEnterEvent>(HandleCardEntered);
+        }
+
+        private void RegisterHover(Button btn)
+        {
+            btn?.RegisterCallback<PointerEnterEvent>(HandleCardEntered);
+        }
+
+        private void UnregisterHover(Button btn)
+        {
+            btn?.UnregisterCallback<PointerEnterEvent>(HandleCardEntered);
+        }
+
+        private void HandlePlayClicked() => SwitchScreen(_selectScreen);
+        private void HandleRulesClicked() => SwitchScreen(_rulesScreen);
+        private void HandlePantheonClicked() => SwitchScreen(_pantheonScreen);
+        private void HandleThemeClicked() => SwitchScreen(_themeScreen);
+        private void HandleBackClicked() => SwitchScreen(_homeScreen);
+
+        private void SwitchScreen(VisualElement screen)
+        {
+            CardHovered?.Invoke();
+            if (_homeScreen != null) _homeScreen.style.display = DisplayStyle.None;
+            if (_selectScreen != null) _selectScreen.style.display = DisplayStyle.None;
+            if (_rulesScreen != null) _rulesScreen.style.display = DisplayStyle.None;
+            if (_pantheonScreen != null) _pantheonScreen.style.display = DisplayStyle.None;
+            if (_themeScreen != null) _themeScreen.style.display = DisplayStyle.None;
+
+            if (screen != null)
+                screen.style.display = DisplayStyle.Flex;
         }
 
         /// <summary>Marks the selected mode (primary button), its line, and the cards' powers lines.</summary>
@@ -108,7 +207,11 @@ namespace GameJam.UI
             button.EnableInClassList(SecondaryClass, !selected);
         }
 
-        public void Show() => _menu.style.display = DisplayStyle.Flex;
+        public void Show()
+        {
+            _menu.style.display = DisplayStyle.Flex;
+            SwitchScreen(_homeScreen);
+        }
 
         public void Hide() => _menu.style.display = DisplayStyle.None;
 

@@ -227,7 +227,7 @@ namespace GameJam.Core
         /// attack rules, enemy target only. Ra: needs at least one Eye of Ra candidate. Morrígan: no
         /// target. Arguments a god does not use are ignored.
         /// </summary>
-        public bool CanUnleashWrath(Territory source = null, Territory target = null)
+        public bool CanUnleashWrath(Territory source = null, Territory target = null, Territory secondTarget = null)
         {
             if (!IsWrathReady)
                 return false;
@@ -235,8 +235,24 @@ namespace GameJam.Core
             switch (CurrentGod)
             {
                 case God.Zeus:
-                    return IsEnemyOnBoard(target)
-                        && target.Troops >= GodPowers.ThunderboltMinTroops;
+                    if (!IsEnemyOnBoard(target) || target.Troops < GodPowers.ThunderboltMinTroops)
+                        return false;
+                    if (secondTarget != null)
+                    {
+                        if (!IsEnemyOnBoard(secondTarget))
+                            return false;
+                        if (secondTarget == target)
+                        {
+                            int remaining = target.Troops - GodPowers.ThunderboltLoss(target.Troops);
+                            if (remaining < GodPowers.ThunderboltMinTroops)
+                                return false;
+                        }
+                        else if (secondTarget.Troops < GodPowers.ThunderboltMinTroops)
+                        {
+                            return false;
+                        }
+                    }
+                    return true;
                 case God.Thor:
                     return CanAttack(source, target) && target.Owner != null;
                 case God.Ra:
@@ -421,10 +437,10 @@ namespace GameJam.Core
         /// Spends the current god's full Favor on its Wrath (see <see cref="CanUnleashWrath"/> for
         /// the arguments). The phase stays Attack unless the Wrath ends the match.
         /// </summary>
-        public void UnleashWrath(Territory source = null, Territory target = null)
+        public void UnleashWrath(Territory source = null, Territory target = null, Territory secondTarget = null)
         {
             RequirePhase(TurnPhase.Attack, "unleash a Wrath");
-            if (!CanUnleashWrath(source, target))
+            if (!CanUnleashWrath(source, target, secondTarget))
                 throw new InvalidOperationException(
                     $"{CurrentGod} cannot unleash its Wrath: it needs {GodPowers.MaxFavor} Favor, "
                         + "once per turn, and a legal target."
@@ -437,7 +453,7 @@ namespace GameJam.Core
             switch (god)
             {
                 case God.Zeus:
-                    Thunderbolt(target);
+                    Thunderbolt(target, secondTarget);
                     break;
                 case God.Thor:
                     Mjolnir(source, target);
@@ -449,6 +465,15 @@ namespace GameJam.Core
                     Harvest();
                     break;
             }
+        }
+
+        /// <summary>
+        /// Declines the open Sacred Road without marching. The Road is spent for this turn.
+        /// </summary>
+        public void DeclineRoad()
+        {
+            RequirePhase(TurnPhase.Attack, "decline the Sacred Road");
+            _roadAvailable = false;
         }
 
         /// <summary>
@@ -796,12 +821,27 @@ namespace GameJam.Core
             FavorChanged?.Invoke(god, clamped);
         }
 
-        // Zeus: half the target's troops, rounded up; never a capture.
-        private void Thunderbolt(Territory target)
+        // Zeus: half the target's troops, rounded up; strikes up to two targets; never a capture.
+        private void Thunderbolt(Territory target, Territory secondTarget)
         {
-            WrathUnleashed?.Invoke(God.Zeus, new[] { target });
-            target.Troops -= GodPowers.ThunderboltLoss(target.Troops);
-            TerritoryChanged?.Invoke(target);
+            var targets = new List<Territory>();
+            if (target != null)
+                targets.Add(target);
+            if (secondTarget != null)
+                targets.Add(secondTarget);
+
+            WrathUnleashed?.Invoke(God.Zeus, targets);
+
+            if (target != null)
+            {
+                target.Troops -= GodPowers.ThunderboltLoss(target.Troops);
+                TerritoryChanged?.Invoke(target);
+            }
+            if (secondTarget != null)
+            {
+                secondTarget.Troops -= GodPowers.ThunderboltLoss(secondTarget.Troops);
+                TerritoryChanged?.Invoke(secondTarget);
+            }
         }
 
         // Thor: an attack with no roll that takes a fixed blow; a defender left empty is captured

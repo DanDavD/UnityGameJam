@@ -1304,6 +1304,180 @@
     padding: var(--space-12) var(--space-8) var(--space-8) var(--space-8);
 }
 
+.menu__screen {
+    width: 820px;
+    max-width: 90%;
+    align-items: center;
+}
+
+.menu__screen--content {
+    width: 860px;
+    max-width: 92%;
+    padding: var(--space-8) var(--space-8);
+}
+
+.menu__badge {
+    font-size: var(--font-size-caption);
+    -unity-font-definition: var(--font-strong);
+    color: var(--gold);
+    letter-spacing: 2px;
+    margin-top: var(--space-4);
+    margin-bottom: var(--space-6);
+    padding: var(--space-1) var(--space-4);
+    background-color: rgba(200, 160, 70, 0.12);
+    border-width: 1px;
+    border-color: rgba(200, 160, 70, 0.3);
+    border-radius: var(--radius-sm);
+}
+
+.menu__nav-group {
+    width: 380px;
+    margin-top: var(--space-4);
+    margin-bottom: var(--space-6);
+}
+
+.menu__nav-btn {
+    width: 100%;
+    margin-top: var(--space-2);
+    margin-bottom: var(--space-2);
+    padding: var(--space-3) var(--space-6);
+    font-size: var(--font-size-body);
+    -unity-font-definition: var(--font-strong);
+    justify-content: center;
+    align-items: center;
+    border-radius: var(--radius-md);
+}
+
+.menu__nav-btn--primary {
+    font-size: var(--font-size-h2);
+    padding: var(--space-4) var(--space-6);
+}
+
+.menu__home-footer {
+    margin-top: var(--space-4);
+    align-items: center;
+}
+
+.menu__home-footer-text {
+    font-size: var(--font-size-caption);
+    color: var(--ink-soft);
+    -unity-text-align: middle-center;
+}
+
+.menu__header-bar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: var(--space-6);
+    padding-bottom: var(--space-3);
+    border-bottom-width: 1px;
+    border-bottom-color: var(--border-soft);
+}
+
+.menu__back-btn {
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--font-size-caption);
+}
+
+.menu__screen-title {
+    font-size: var(--font-size-h2);
+    -unity-font-definition: var(--font-display);
+    -unity-font-style: bold;
+    color: var(--ink);
+    margin: 0;
+    padding: 0;
+}
+
+.menu__content-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.menu__info-box {
+    width: 48%;
+    background-color: var(--bg-card);
+    border-width: 1px;
+    border-color: var(--border-soft);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    margin-bottom: var(--space-4);
+}
+
+.menu__info-box-title {
+    font-size: var(--font-size-body);
+    -unity-font-definition: var(--font-strong);
+    color: var(--gold);
+    margin-bottom: var(--space-2);
+}
+
+.menu__info-box-text {
+    font-size: var(--font-size-caption);
+    color: var(--ink-soft);
+    white-space: normal;
+}
+
+.menu__deities-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.menu__deity-box {
+    width: 48%;
+    background-color: var(--bg-card);
+    border-width: 1px;
+    border-color: var(--border-soft);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    margin-bottom: var(--space-4);
+}
+
+.menu__deity-box.god--zeus { border-color: var(--nation-zeus); background-color: var(--nation-zeus-tint); }
+.menu__deity-box.god--ra { border-color: var(--nation-ra); background-color: var(--nation-ra-tint); }
+.menu__deity-box.god--thor { border-color: var(--nation-thor); background-color: var(--nation-thor-tint); }
+.menu__deity-box.god--morrigan { border-color: var(--nation-morrigan); background-color: var(--nation-morrigan-tint); }
+
+.menu__deity-header {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: var(--space-3);
+}
+
+.menu__deity-title-group {
+    margin-left: var(--space-3);
+}
+
+.menu__deity-name {
+    font-size: var(--font-size-body);
+    -unity-font-definition: var(--font-display);
+    -unity-font-style: bold;
+    color: var(--ink);
+}
+
+.menu__deity-subtitle {
+    font-size: var(--font-size-caption);
+    color: var(--gold);
+}
+
+.menu__deity-desc {
+    font-size: var(--font-size-caption);
+    color: var(--ink-soft);
+    white-space: normal;
+}
+
+.hud__road-skip {
+    min-height: var(--button-min-height);
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--font-size-caption);
+    -unity-font-definition: var(--font-strong);
+    color: var(--ink);
+    border-color: var(--gold);
+}
+
 .menu__title {
     font-size: var(--font-size-display);
     -unity-font-style: bold;

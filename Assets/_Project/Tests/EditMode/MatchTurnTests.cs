@@ -73,7 +73,7 @@ namespace GameJam.Tests
             Assert.AreEqual(1, received.FromTerritories);
             Assert.AreEqual(0, received.FromTemples);
             Assert.AreEqual(Destiny.FavoredBonus, received.FromDestiny);
-            Assert.AreEqual(5, received.Total);
+            Assert.AreEqual(3, received.Total);
             Assert.AreEqual(received.Total, match.ReinforcementsLeft);
         }
 
@@ -106,9 +106,9 @@ namespace GameJam.Tests
             Assert.AreEqual(1, match.DestinyFace);
             Assert.AreEqual(God.Zeus, match.CurrentGod);
             Assert.AreEqual(TurnPhase.Reinforce, match.Phase);
-            Assert.AreEqual(5, match.ReinforcementsLeft); // 2 + 2/2 + 0 temples + 2 favored
+            Assert.AreEqual(3, match.ReinforcementsLeft); // 2 + 2/2 + 0 temples + 0 favored
             CollectionAssert.AreEqual(
-                new[] { "round 1 face 1 Zeus", "turn Zeus 5 Reinforce" },
+                new[] { "round 1 face 1 Zeus", "turn Zeus 3 Reinforce" },
                 events
             );
         }
@@ -277,9 +277,9 @@ namespace GameJam.Tests
             for (int i = 0; i < 3; i++)
                 MatchSetup.PlayPassiveTurn(match);
 
-            Assert.AreEqual(5, reinforcements[God.Ra]); // favored by face 2
+            Assert.AreEqual(3, reinforcements[God.Ra]);
             Assert.AreEqual(3, reinforcements[God.Thor]);
-            Assert.AreEqual(1, reinforcements[God.Morrigan]); // weakened rival of Ra
+            Assert.AreEqual(3, reinforcements[God.Morrigan]);
             Assert.AreEqual(3, reinforcements[God.Zeus]);
         }
 

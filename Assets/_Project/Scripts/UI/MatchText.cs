@@ -170,16 +170,15 @@ namespace GameJam.UI
             }
 
             int modifier = match.DestinyModifierOf(god);
-            // Abs: the sign is written here, so a modifier never prints as "−−1" or "+−1".
             int size = Math.Abs(modifier);
             switch (Pantheon.Read(god, destinyFace))
             {
                 case RollOutcome.Sacred:
-                    return match.DayGod == god && modifier < Destiny.FavoredBonus
-                        ? $"{name}favored: {DayName(god)} instead of +{Destiny.FavoredBonus} reinforcements"
-                        : $"{name}favored: +{size} {ReinforcementWord(size)} ({destinyFace} is its sacred number)";
+                    return match.DayGod == god
+                        ? $"{name}favored · {DayName(god)} active ({destinyFace} is its sacred number)"
+                        : $"{name}favored ({destinyFace} is its sacred number)";
                 case RollOutcome.Cursed:
-                    return $"{name}weakened: {Minus}{size} {ReinforcementWord(size)} ({destinyFace} is its cursed number)";
+                    return $"{name}cursed rival ({destinyFace} is its cursed number)";
                 default:
                     return modifier > 0
                         ? $"{name}+{modifier} {ReinforcementWord(modifier)} (good fortune)"
@@ -602,7 +601,7 @@ namespace GameJam.UI
         private static string CardWrathEffect(God god) =>
             god switch
             {
-                God.Zeus => "halve an army",
+                God.Zeus => "2 bolts (each halves an army)",
                 God.Thor => $"−{GodPowers.MjolnirDamage}, no roll",
                 God.Ra => $"take a {GodPowers.EyeOfRaTargetTroops}-troop land",
                 _ => "your kills join you",
@@ -645,14 +644,14 @@ namespace GameJam.UI
             };
 
         /// <summary>The prompt while the human aims a Wrath; right-click, Esc or the button cancel.</summary>
-        public static string WrathTargetPrompt(God god, Territory source)
+        public static string WrathTargetPrompt(God god, Territory source, int strikeNumber = 1)
         {
             const string cancel = " · Esc cancels";
             if (GodPowers.WrathNeedsSource(god) && source == null)
                 return $"Pick your territory to strike from{cancel}";
             if (GodPowers.WrathNeedsSource(god))
                 return $"Pick a ringed enemy next to {source.Name} (−{GodPowers.MjolnirDamage}, no roll){cancel}";
-            return $"Pick a ringed enemy (it loses half){cancel}";
+            return $"THUNDERBOLT ({strikeNumber}/2) · Pick a ringed enemy (it loses half){cancel}";
         }
 
         public static string WrathNoSourceHint => "No enemy next to it to strike";
@@ -675,28 +674,26 @@ namespace GameJam.UI
 
         /// <summary>The popup's sentence, addressed to the human.</summary>
         public static string RoadPopupText() =>
-            $"March an army up to {GodPowers.SacredRoadMaxSteps} territories. Pick a ringed one, or end your turn.";
+            $"March an army up to {GodPowers.SacredRoadMaxSteps} territories, or click SKIP ROAD to continue attacking.";
 
-        /// <summary>
-        /// The prompt when the Road mode starts (powers on): the armies that can march wear a ring and
-        /// a ROAD tag, and the only other choice is END TURN, so the prompt says both.
-        /// </summary>
+        /// <summary>The prompt when the Road mode starts: click an origin or click SKIP ROAD.</summary>
         public const string RoadOriginsPrompt =
-            "Click a ringed army to march it, or press END TURN";
+            "Click a ringed army to march, or click SKIP ROAD to keep attacking";
+
+        public const string RoadSkipButtonLabel = "SKIP ROAD";
 
         /// <summary>The small label over every Sacred Road prompt (the prompt bar's first line).</summary>
         public const string RoadPromptLabel = "SACRED ROAD";
 
         /// <summary>The prompt once an origin is picked: its destinations are ringed with "+N".</summary>
         public const string RoadDestinationsPrompt =
-            "Now click a ringed destination · click the territory again to pick another";
+            "Now click a ringed destination · click origin again to drop";
 
-        // Why a click did nothing while a Road is pending. Each replaces the prompt and is itself the
-        // instruction, so the large line stays one short sentence.
+        // Why a click did nothing while a Road is pending.
         public const string RoadNoOriginHint =
-            "That army can't march (needs 2+ troops and a path of your own lands) · click a ringed one";
+            "That army can't march (needs 2+ troops and a path) · click a ringed one or SKIP ROAD";
         public const string RoadAttackWaitsHint =
-            "Attacks wait: click a ringed territory to march first, or press END TURN";
+            "Click a ringed territory to march, or click SKIP ROAD to continue attacking";
         public const string RoadNoDestinationHint =
             "Click a ringed destination, or the picked territory again to pick another";
 
@@ -711,6 +708,17 @@ namespace GameJam.UI
         /// <summary>"Zeus's Thunderbolt: Ra Capital -3": the HUD news for a Thunderbolt.</summary>
         public static string ThunderboltLine(Territory target, int loss) =>
             $"{GodName(God.Zeus)}'s {WrathName(God.Zeus)}: {target.Name} {Minus}{loss}";
+
+        /// <summary>"Zeus's Thunderbolt: Ra Capital -3, Thor Capital -2": the HUD news for a double Thunderbolt.</summary>
+        public static string ThunderboltLine(
+            Territory target1,
+            int loss1,
+            Territory target2,
+            int loss2
+        ) =>
+            target1 == target2
+                ? $"{GodName(God.Zeus)}'s {WrathName(God.Zeus)}: {target1.Name} {Minus}{loss1} & {Minus}{loss2}"
+                : $"{GodName(God.Zeus)}'s {WrathName(God.Zeus)}: {target1.Name} {Minus}{loss1}, {target2.Name} {Minus}{loss2}";
 
         /// <summary>"Thor's Mjölnir: Zeus Village -3, captured": the HUD news for Mjölnir.</summary>
         public static string MjolnirLine(Territory target, int loss, bool captures) =>

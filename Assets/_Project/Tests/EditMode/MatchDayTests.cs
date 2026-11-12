@@ -101,7 +101,7 @@ namespace GameJam.Tests
 
             Assert.AreEqual(2, northTroopsWhenTurnStarted);
             Assert.AreEqual(God.Zeus, match.CurrentGod);
-            Assert.AreEqual(5, match.ReinforcementsLeft); // 2 + 2/2 + favored 2: the Day adds to it
+            Assert.AreEqual(3, match.ReinforcementsLeft); // 2 + 2/2 + 0 favored: only Day power applies
         }
 
         [Test]
@@ -211,7 +211,7 @@ namespace GameJam.Tests
 
             Assert.AreEqual(1, _board.Get(Board.EastTemple).Troops);
             Assert.AreEqual(God.Ra, _board.Get(Board.EastTemple).Owner);
-            Assert.AreEqual(7, _board.Get(Board.ThorVillage).Troops);
+            Assert.AreEqual(5, _board.Get(Board.ThorVillage).Troops);
         }
 
         [Test]
@@ -224,7 +224,7 @@ namespace GameJam.Tests
             match.ConfirmCombat();
 
             Assert.AreEqual(God.Thor, _board.Get(Board.EastTemple).Owner);
-            Assert.AreEqual(6, _board.Get(Board.EastTemple).Troops);
+            Assert.AreEqual(4, _board.Get(Board.EastTemple).Troops);
             Assert.AreEqual(1, _board.Get(Board.ThorVillage).Troops);
         }
 
@@ -238,7 +238,7 @@ namespace GameJam.Tests
             Assert.AreEqual(1, match.PendingCombat.Result.LoserLosses);
             match.ConfirmCombat();
 
-            Assert.AreEqual(6, _board.Get(Board.ThorVillage).Troops);
+            Assert.AreEqual(4, _board.Get(Board.ThorVillage).Troops);
         }
 
         // Thor plays first, then Morrigan (3 reinforcements on her Village: 5) attacks Thor's South Temple.
@@ -316,7 +316,7 @@ namespace GameJam.Tests
 
             Territory capital = _board.Get(Board.MorriganCapital);
             Assert.AreEqual(1, _board.Get(Board.NorthTemple).Troops);
-            Assert.AreEqual(9, capital.Troops);
+            Assert.AreEqual(7, capital.Troops);
             Assert.AreEqual(1, resolved.CrowTroops);
             Assert.AreSame(capital, resolved.CrowTerritory);
         }
@@ -330,7 +330,7 @@ namespace GameJam.Tests
             match.ConfirmCombat();
 
             Assert.AreEqual(4, _board.Get(Board.ZeusVillage).Troops);
-            Assert.AreEqual(9, _board.Get(Board.MorriganCapital).Troops);
+            Assert.AreEqual(7, _board.Get(Board.MorriganCapital).Troops);
         }
 
         [Test]
@@ -354,11 +354,11 @@ namespace GameJam.Tests
             Match match = StartZeusAttackDuringNightOfCrows(Board.NorthTemple, 3, 4, 1);
 
             match.MakeOffering();
-            Assert.AreEqual(8, _board.Get(Board.MorriganCapital).Troops);
+            Assert.AreEqual(6, _board.Get(Board.MorriganCapital).Troops);
             match.ConfirmCombat();
 
             // Only Ra's combat loss reached the crows.
-            Assert.AreEqual(9, _board.Get(Board.MorriganCapital).Troops);
+            Assert.AreEqual(7, _board.Get(Board.MorriganCapital).Troops);
         }
 
         [Test]
@@ -385,7 +385,7 @@ namespace GameJam.Tests
                 match.ConfirmCombat();
             }
             Assert.AreEqual(
-                8 + GodPowers.NightOfCrowsMaxPerRound,
+                6 + GodPowers.NightOfCrowsMaxPerRound,
                 _board.Get(Board.MorriganCapital).Troops
             );
 
@@ -394,7 +394,7 @@ namespace GameJam.Tests
             match.ConfirmCombat();
 
             Assert.AreEqual(1, north.Troops);
-            Assert.AreEqual(11, _board.Get(Board.MorriganCapital).Troops);
+            Assert.AreEqual(9, _board.Get(Board.MorriganCapital).Troops);
             Assert.AreEqual(0, fourth.CrowTroops);
             Assert.IsNull(fourth.CrowTerritory);
         }
@@ -402,7 +402,7 @@ namespace GameJam.Tests
         [Test]
         public void NightOfCrows_LandingOnTheAttackingTerritoryOfACapture_IsReportedOnce()
         {
-            // Without her Capital, the crows go to Morrígan's largest army: the attacking Village (6).
+            // Without her Capital, the crows go to Morrígan's largest army: the attacking Village (4).
             MatchSetup.Set(_board, Board.MorriganCapital, God.Thor, 1);
             MatchSetup.Set(_board, Board.WestTemple, God.Zeus, 1);
             Match match = Create(MorriganFace, 5, 3);
@@ -423,7 +423,7 @@ namespace GameJam.Tests
             Assert.AreSame(village, combat.CrowTerritory);
             Assert.AreEqual(1, combat.CrowTroops);
             Assert.AreEqual(1, villageReports);
-            Assert.AreEqual(6, _board.Get(Board.WestTemple).Troops); // 6 + 1 crow, all but one move
+            Assert.AreEqual(4, _board.Get(Board.WestTemple).Troops); // 4 + 1 crow, all but one move
             Assert.AreEqual(1, village.Troops);
         }
 
