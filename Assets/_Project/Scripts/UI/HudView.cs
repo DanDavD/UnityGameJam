@@ -31,6 +31,7 @@ namespace GameJam.UI
         private const string NewsSacredClass = "hud__news--sacred";
         private const string NewsCursedClass = "hud__news--cursed";
         private const string InfoOpenClass = "info-toggle--open";
+        private const string SoundOpenClass = "hud__toggle--open";
         private const string CountPopClass = "reinforce-counter__count--pop";
         private const string RoundInfoGodTextClass = "round-info__god-text";
         private const string WrathPulseClass = "wrath--pulse";
@@ -134,7 +135,12 @@ namespace GameJam.UI
         private Label _hintLabel;
         private Button _endTurnButton;
         private VisualElement _toggles;
-        private Button _muteButton;
+        private Button _soundButton;
+        private VisualElement _soundPanel;
+        private Slider _musicSlider;
+        private Slider _effectsSlider;
+        private Label _musicValue;
+        private Label _effectsValue;
         private Button _fastBotsButton;
         private VisualElement _endBanner;
         private VisualElement _endCard;
@@ -159,7 +165,18 @@ namespace GameJam.UI
         /// <summary>The Wrath was clicked while locked or used: the controller says why.</summary>
         public event Action WrathBlocked;
         public event Action FastBotsClicked;
-        public event Action MuteClicked;
+
+        /// <summary>The music slider moved: the new volume, 0..1.</summary>
+        public event Action<float> MusicVolumeChanged;
+
+        /// <summary>The effects slider moved: the new volume, 0..1.</summary>
+        public event Action<float> EffectsVolumeChanged;
+
+        /// <summary>The sound panel opened, so any other info card can close (one at a time).</summary>
+        public event Action SoundPanelOpened;
+
+        /// <summary>The SOUND button toggled the panel or an effects drag ended: the controller plays a click.</summary>
+        public event Action SoundUiClicked;
         public event Action PlayAgainClicked;
         public event Action MainMenuClicked;
 
@@ -239,7 +256,12 @@ namespace GameJam.UI
             _hintLabel = root.Q<Label>("hint-label");
             _endTurnButton = root.Q<Button>("end-turn-button");
             _toggles = root.Q<VisualElement>("hud-toggles");
-            _muteButton = root.Q<Button>("mute-button");
+            _soundButton = root.Q<Button>("sound-button");
+            _soundPanel = root.Q<VisualElement>("sound-panel");
+            _musicSlider = root.Q<Slider>("music-slider");
+            _effectsSlider = root.Q<Slider>("effects-slider");
+            _musicValue = root.Q<Label>("music-value");
+            _effectsValue = root.Q<Label>("effects-value");
             _fastBotsButton = root.Q<Button>("fast-bots-button");
             _endBanner = root.Q<VisualElement>("end-banner");
             _endCard = root.Q<VisualElement>("end-card");
@@ -260,6 +282,11 @@ namespace GameJam.UI
             root.Q<Label>("round-info-goal-heading").text = MatchText.GoalHeading;
             root.Q<Label>("round-info-goal").text = MatchText.RoundInfoGoal;
             root.Q<Label>("round-info-close").text = MatchText.InfoCloseHint;
+            _soundButton.text = MatchText.SoundButton;
+            root.Q<Label>("sound-heading").text = MatchText.SoundHeading;
+            root.Q<Label>("music-label").text = MatchText.MusicLabel;
+            root.Q<Label>("effects-label").text = MatchText.EffectsLabel;
+            root.Q<Label>("sound-close").text = MatchText.SoundCloseHint;
             _endTurnButton.text = MatchText.EndTurnButton;
             _playAgainButton.text = MatchText.PlayAgainButton;
             _mainMenuButton.text = MatchText.MainMenuButton;
@@ -267,7 +294,10 @@ namespace GameJam.UI
             _endTurnButton.clicked += HandleEndTurnClicked;
             _wrathButton.clicked += HandleWrathClicked;
             _fastBotsButton.clicked += HandleFastBotsClicked;
-            _muteButton.clicked += HandleMuteClicked;
+            _soundButton.clicked += HandleSoundClicked;
+            _musicSlider.RegisterValueChangedCallback(HandleMusicSliderChanged);
+            _effectsSlider.RegisterValueChangedCallback(HandleEffectsSliderChanged);
+            _effectsSlider.RegisterCallback<PointerCaptureOutEvent>(HandleEffectsDragEnded);
             _playAgainButton.clicked += HandlePlayAgainClicked;
             _mainMenuButton.clicked += HandleMainMenuClicked;
             // The whole round line toggles its panel; a click on the open panel closes it.
@@ -306,6 +336,7 @@ namespace GameJam.UI
             SetDayBadge(null, null);
             HideNews();
             SetVisible(_endBanner, false);
+            SetSoundPanelOpen(false);
         }
 
         private void OnDisable()
@@ -313,7 +344,10 @@ namespace GameJam.UI
             _endTurnButton.clicked -= HandleEndTurnClicked;
             _wrathButton.clicked -= HandleWrathClicked;
             _fastBotsButton.clicked -= HandleFastBotsClicked;
-            _muteButton.clicked -= HandleMuteClicked;
+            _soundButton.clicked -= HandleSoundClicked;
+            _musicSlider.UnregisterValueChangedCallback(HandleMusicSliderChanged);
+            _effectsSlider.UnregisterValueChangedCallback(HandleEffectsSliderChanged);
+            _effectsSlider.UnregisterCallback<PointerCaptureOutEvent>(HandleEffectsDragEnded);
             _playAgainButton.clicked -= HandlePlayAgainClicked;
             _mainMenuButton.clicked -= HandleMainMenuClicked;
             _roundBar.UnregisterCallback<ClickEvent>(HandleRoundBarClicked);
@@ -515,7 +549,18 @@ namespace GameJam.UI
 
         public void SetFastBots(bool on) => _fastBotsButton.text = MatchText.FastBotsButton(on);
 
-        public void SetMuted(bool muted) => _muteButton.text = MatchText.MuteButton(muted);
+        /// <summary>Shows the stored volumes (0..1) on the sliders without raising the change events.</summary>
+        public void SetVolumes(float music, float effects)
+        {
+            _musicSlider.SetValueWithoutNotify(ToPercent(music));
+            _effectsSlider.SetValueWithoutNotify(ToPercent(effects));
+            _musicValue.text = MatchText.VolumePercent(ToPercent(music));
+            _effectsValue.text = MatchText.VolumePercent(ToPercent(effects));
+        }
+
+        public bool IsSoundPanelOpen => _soundPanel.style.display == DisplayStyle.Flex;
+
+        public void CloseSoundPanel() => SetSoundPanelOpen(false);
 
         public void ShowEndTurn(bool visible) => SetVisible(_endTurnButton, visible);
 
@@ -804,7 +849,60 @@ namespace GameJam.UI
 
         private void HandleFastBotsClicked() => FastBotsClicked?.Invoke();
 
-        private void HandleMuteClicked() => MuteClicked?.Invoke();
+        private void HandleSoundClicked()
+        {
+            SetSoundPanelOpen(!IsSoundPanelOpen);
+            SoundUiClicked?.Invoke();
+        }
+
+        // The drag sample: one click at the new effects level when the knob is let go.
+        private void HandleEffectsDragEnded(PointerCaptureOutEvent evt) => SoundUiClicked?.Invoke();
+
+        /// <summary>True when a screen position (Input System, origin bottom-left) is over the sound panel or its button.</summary>
+        public bool IsPointerOverSoundControls(Vector2 screenPosition)
+        {
+            IPanel panel = _document.rootVisualElement.panel;
+            if (panel == null)
+                return false;
+            var flipped = new Vector2(screenPosition.x, Screen.height - screenPosition.y);
+            VisualElement picked = panel.Pick(RuntimePanelUtils.ScreenToPanel(panel, flipped));
+            // Contains() is false for the element itself, so the panel and button are checked too.
+            return picked != null
+                && (
+                    picked == _soundPanel
+                    || picked == _soundButton
+                    || _soundPanel.Contains(picked)
+                    || _soundButton.Contains(picked)
+                );
+        }
+
+        // Unlike the round info, a click inside this panel never closes it: the sliders need dragging.
+        private void SetSoundPanelOpen(bool open)
+        {
+            bool wasOpen = IsSoundPanelOpen;
+            SetVisible(_soundPanel, open);
+            _soundButton.EnableInClassList(SoundOpenClass, open);
+            if (!open || wasOpen)
+                return;
+            CloseRoundInfo();
+            SoundPanelOpened?.Invoke();
+        }
+
+        private void HandleMusicSliderChanged(ChangeEvent<float> evt)
+        {
+            int percent = Mathf.RoundToInt(evt.newValue);
+            _musicValue.text = MatchText.VolumePercent(percent);
+            MusicVolumeChanged?.Invoke(percent / 100f);
+        }
+
+        private void HandleEffectsSliderChanged(ChangeEvent<float> evt)
+        {
+            int percent = Mathf.RoundToInt(evt.newValue);
+            _effectsValue.text = MatchText.VolumePercent(percent);
+            EffectsVolumeChanged?.Invoke(percent / 100f);
+        }
+
+        private static int ToPercent(float volume) => Mathf.RoundToInt(Mathf.Clamp01(volume) * 100f);
 
         private void HandlePlayAgainClicked() => PlayAgainClicked?.Invoke();
 
@@ -820,7 +918,10 @@ namespace GameJam.UI
             SetVisible(_roundInfo, open);
             _roundBar.EnableInClassList(InfoOpenClass, open);
             if (open && !wasOpen)
+            {
+                CloseSoundPanel();
                 RoundInfoOpened?.Invoke();
+            }
         }
 
         private static string RoundInfoGodName(God god) =>

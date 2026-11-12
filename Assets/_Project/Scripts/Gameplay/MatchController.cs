@@ -172,7 +172,9 @@ namespace GameJam.Gameplay
             _hud.WrathClicked += HandleWrathClicked;
             _hud.WrathBlocked += HandleWrathBlocked;
             _hud.FastBotsClicked += HandleFastBotsClicked;
-            _hud.MuteClicked += HandleMuteClicked;
+            _hud.MusicVolumeChanged += HandleMusicVolumeChanged;
+            _hud.SoundUiClicked += HandleSoundUiClicked;
+            _hud.EffectsVolumeChanged += HandleEffectsVolumeChanged;
             _hud.PlayAgainClicked += HandlePlayAgainClicked;
             _hud.MainMenuClicked += HandleMainMenuClicked;
         }
@@ -190,7 +192,9 @@ namespace GameJam.Gameplay
             _hud.WrathClicked -= HandleWrathClicked;
             _hud.WrathBlocked -= HandleWrathBlocked;
             _hud.FastBotsClicked -= HandleFastBotsClicked;
-            _hud.MuteClicked -= HandleMuteClicked;
+            _hud.MusicVolumeChanged -= HandleMusicVolumeChanged;
+            _hud.SoundUiClicked -= HandleSoundUiClicked;
+            _hud.EffectsVolumeChanged -= HandleEffectsVolumeChanged;
             _hud.PlayAgainClicked -= HandlePlayAgainClicked;
             _hud.MainMenuClicked -= HandleMainMenuClicked;
         }
@@ -212,8 +216,8 @@ namespace GameJam.Gameplay
         private void Start()
         {
             _hud.SetFastBots(MatchSession.FastBots);
-            _hud.SetMuted(MatchSession.Muted);
-            _sfx.SetMuted(MatchSession.Muted);
+            _hud.SetVolumes(MatchSession.MusicVolume, MatchSession.EffectsVolume);
+            _sfx.SetVolumes(MatchSession.MusicVolume, MatchSession.EffectsVolume);
             _menu.SetPowers(MatchSession.PowersEnabled);
             StartCoroutine(Run());
         }
@@ -1147,14 +1151,21 @@ namespace GameJam.Gameplay
             _sfx.Play(SfxCue.Click);
         }
 
-        // The click plays after the change, so unmuting is confirmed by a sound and muting is silent.
-        private void HandleMuteClicked()
+        private void HandleMusicVolumeChanged(float volume)
         {
-            MatchSession.Muted = !MatchSession.Muted;
-            _hud.SetMuted(MatchSession.Muted);
-            _sfx.SetMuted(MatchSession.Muted);
-            _sfx.Play(SfxCue.Click);
+            MatchSession.MusicVolume = volume;
+            _sfx.SetVolumes(MatchSession.MusicVolume, MatchSession.EffectsVolume);
         }
+
+        private void HandleEffectsVolumeChanged(float volume)
+        {
+            MatchSession.EffectsVolume = volume;
+            _sfx.SetVolumes(MatchSession.MusicVolume, MatchSession.EffectsVolume);
+        }
+
+        // Opening or closing the sound panel, or letting go of the effects slider (so the player
+        // hears the new effects level), answers with the usual click.
+        private void HandleSoundUiClicked() => _sfx.Play(SfxCue.Click);
 
         // Restarting is a scene reload: Match, board and views are rebuilt from scratch, so no
         // state can leak between matches. Only the human's god crosses over, through MatchSession.

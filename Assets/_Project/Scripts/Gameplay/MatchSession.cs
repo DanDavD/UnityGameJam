@@ -6,7 +6,7 @@ namespace GameJam.Gameplay
     /// <summary>
     /// The player choices that must survive the scene reload that restarts a match:
     /// the human's god when "Play again" replays, whether the god powers are
-    /// on, whether bots play fast and whether sound is muted.
+    /// on, whether bots play fast and the music and effects volumes.
     /// Reloading the scene rebuilds the Match, board and HUD from scratch, so these are the only
     /// state carried over; a static class is enough and needs no persistent GameObject.
     /// </summary>
@@ -23,7 +23,11 @@ namespace GameJam.Gameplay
 
         public static bool FastBots { get; set; }
 
-        public static bool Muted { get; set; }
+        /// <summary>The sound panel's music volume, 0 (silent) to 1.</summary>
+        public static float MusicVolume { get; set; } = 1f;
+
+        /// <summary>The sound panel's effects volume (every cue but the music), 0 (silent) to 1.</summary>
+        public static float EffectsVolume { get; set; } = 1f;
 
         // Domain reload is disabled in Enter Play Mode Options, so statics must be reset by hand.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -32,7 +36,8 @@ namespace GameJam.Gameplay
             ReplayGod = null;
             PowersEnabled = true;
             FastBots = false;
-            Muted = false;
+            MusicVolume = 1f;
+            EffectsVolume = 1f;
         }
     }
 }

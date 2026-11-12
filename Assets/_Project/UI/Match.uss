@@ -790,6 +790,93 @@
     margin: 0 0 0 var(--space-2);
 }
 
+/* The open sound panel marks its button like an open info toggle: filled wood. */
+.button.hud__toggle--open,
+.button.hud__toggle--open:hover {
+    background-color: var(--wood);
+    border-color: var(--wood);
+    color: var(--paper);
+}
+
+/* Sound panel (child selectors outrank the .info-panel__* rules declared further down): an info card hanging under the toggles, right-aligned so it never leaves the screen. */
+.sound-panel {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 360px;
+    margin-top: var(--space-2);
+    padding: var(--space-4) var(--space-6);
+    border-radius: var(--radius-md);
+}
+
+.sound-panel .sound-panel__heading {
+    margin-top: 0;
+}
+
+.sound-panel__row {
+    flex-direction: row;
+    align-items: center;
+    margin-top: var(--space-3);
+}
+
+.sound-panel .sound-panel__label {
+    width: 72px;
+    margin: 0;
+    color: var(--ink);
+}
+
+/* Tall enough that the whole row height is the hit area. */
+.sound-panel__slider {
+    flex-grow: 1;
+    min-height: 30px;
+    margin: 0 var(--space-3);
+}
+
+.sound-panel .sound-panel__value {
+    min-width: 56px;
+    margin: 0;
+    white-space: nowrap;
+    -unity-text-align: middle-right;
+}
+
+/* Slider parts restyled with the parchment tokens: a soft ink groove, a wood fill up to the knob
+   and a paper knob framed in wood. */
+.sound-panel__slider .unity-base-slider__tracker {
+    height: 8px;
+    margin-top: -4px;
+    background-color: var(--ink-soft);
+    border-width: 0;
+    border-radius: var(--radius-sm);
+}
+
+.sound-panel__slider .unity-base-slider__fill {
+    background-color: var(--wood);
+    border-radius: var(--radius-sm);
+}
+
+.sound-panel__slider .unity-base-slider__dragger {
+    width: 22px;
+    height: 22px;
+    margin-top: -11px;
+    background-color: var(--paper);
+    border-width: var(--border-width);
+    border-color: var(--wood);
+    border-radius: 11px;
+}
+
+.sound-panel__slider:hover .unity-base-slider__dragger {
+    border-color: var(--wood-dark);
+    background-color: var(--paper-shade);
+}
+
+.sound-panel__slider:active .unity-base-slider__dragger {
+    background-color: var(--wood);
+}
+
+.sound-panel__slider .unity-base-slider__dragger-border {
+    display: none;
+}
+
 /* Nations panel: one row per god */
 .nations-panel {
     width: var(--nations-panel-width);

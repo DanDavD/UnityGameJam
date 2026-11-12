@@ -58,16 +58,32 @@ namespace GameJam.Gameplay
         private AudioSource _musicSource;
         private Coroutine _musicFade;
 
-        /// <summary>Mutes the sources rather than AudioListener.volume, so no global state outlives the scene.</summary>
-        public void SetMuted(bool muted)
+        // The player's volumes (0..1) from the sound panel; they scale the cue volumes, never replace them.
+        private float _musicVolume = 1f;
+        private float _effectsVolume = 1f;
+
+        /// <summary>
+        /// Applies the player's music and effects volumes (0..1) at once, even mid-sound. Scales the
+        /// sources rather than AudioListener.volume, so no global state outlives the scene.
+        /// </summary>
+        public void SetVolumes(float music, float effects)
         {
-            _rollSource.mute = muted;
-            _effectsSource.mute = muted;
-            if (_tailSource != null)
-                _tailSource.mute = muted;
-            if (_musicSource != null)
-                _musicSource.mute = muted;
+            _musicVolume = Mathf.Clamp01(music);
+            _effectsVolume = Mathf.Clamp01(effects);
+            // A fading source restores its start volume when done; it is set again on the next play.
+            if (_musicSource != null && _musicFade == null)
+                _musicSource.volume = MusicSourceVolume;
+            if (_stopFade == null)
+                _rollSource.volume = RollSourceVolume;
         }
+
+        private float MusicSourceVolume => _cues.MusicVolume * _musicVolume;
+
+        // The floor keeps a roll audible against a stray Inspector value, but 0 on the slider is silence.
+        private float RollSourceVolume =>
+            _effectsVolume <= 0f
+                ? 0f
+                : Mathf.Clamp(_cues.DiceRollVolume, MinRollVolume, 1f) * _effectsVolume;
 
         /// <summary>Plays a one-shot cue. Rolls go through <see cref="PlayRoll"/>.</summary>
         public void Play(SfxCue cue) => Play(cue, 1f);
@@ -124,7 +140,7 @@ namespace GameJam.Gameplay
             _musicSource.playOnAwake = false;
             _musicSource.loop = true;
             _musicSource.spatialBlend = 0f;
-            _musicSource.volume = _cues.MusicVolume;
+            _musicSource.volume = MusicSourceVolume;
             // Lower number = more important. Below the rolls (0) so a busy moment never steals a
             // roll's voice for the music, above the default (128) so effects never cut the theme.
             _musicSource.priority = MusicPriority;
@@ -155,7 +171,7 @@ namespace GameJam.Gameplay
             AudioClip clip = sound.PickClip();
             if (clip == null)
                 return;
-            _effectsSource.PlayOneShot(clip, sound.Volume * volumeScale);
+            _effectsSource.PlayOneShot(clip, sound.Volume * volumeScale * _effectsVolume);
         }
 
         /// <summary>
@@ -169,7 +185,7 @@ namespace GameJam.Gameplay
             if (_rollClip == null)
                 return fallbackSeconds;
 
-            _rollSource.volume = Mathf.Clamp(_cues.DiceRollVolume, MinRollVolume, 1f);
+            _rollSource.volume = RollSourceVolume;
             // A roll still sounding hands its tail to the fade source, then this one restarts from
             // sample 0 on the same frame: the old sound fades out instead of cutting off.
             if (_stopFade != null)
@@ -223,7 +239,12 @@ namespace GameJam.Gameplay
                 yield return null;
             }
             source.Stop();
-            source.volume = start;
+            // Back to the intended volume now, not the one at the fade's start, so a slider moved
+            // during the fade is kept. The tail is set again on every hand-over.
+            source.volume =
+                source == _musicSource ? MusicSourceVolume
+                : source == _rollSource ? RollSourceVolume
+                : start;
             done();
         }
     }
