@@ -788,13 +788,41 @@
 
 .hud__toggle {
     margin: 0 0 0 var(--space-2);
+    background-color: var(--paper);
+    border-width: 2px;
+    border-color: #C8A046;
+    border-bottom-width: 4px;
+    border-bottom-color: var(--wood-dark);
+    color: var(--ink);
+    padding: var(--space-2) var(--space-5);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-strong);
+    letter-spacing: 1px;
+    transition-property: translate, scale, background-color, border-color;
+    transition-duration: var(--duration-fast);
+}
+
+.hud__toggle:hover {
+    background-color: #FFFDF8;
+    border-color: #E5C158;
+    border-bottom-color: var(--ink);
+    color: var(--ink);
+    translate: var(--hover-lift);
+    scale: var(--hover-scale);
+}
+
+.hud__toggle:active {
+    translate: 0 0;
+    scale: var(--press-scale);
 }
 
 /* The open sound panel marks its button like an open info toggle: filled wood. */
 .button.hud__toggle--open,
 .button.hud__toggle--open:hover {
     background-color: var(--wood);
-    border-color: var(--wood);
+    border-color: #D4AF37;
+    border-bottom-color: var(--wood-dark);
     color: var(--paper);
 }
 
@@ -1342,6 +1370,7 @@
 .menu__screen--select {
     width: 1536px;
     max-width: 96%;
+    min-height: 670px;
     align-items: center;
     padding: var(--space-6) var(--space-8) var(--space-8) var(--space-8);
 }
@@ -1591,6 +1620,7 @@
 /* flex-grow: each card fills its template container, so all four stand at the same height. */
 .god-card {
     width: var(--god-card-width);
+    min-height: 440px;
     flex-grow: 1;
     margin: 0 var(--space-2);
     align-items: center;
@@ -1842,13 +1872,19 @@
 /* What a power just did, above the hint. A row, so a Favor change can lead with the drawn omen icon
    (like the HUD identity line): Inter's ✗ glyph reads as "×" at body size. */
 .hud__news {
-    flex-direction: row;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
     border-width: var(--border-width);
     border-left-width: var(--space-2);
     border-radius: var(--radius-md);
     padding: var(--space-2) var(--space-4);
     margin-top: var(--space-2);
+}
+
+.hud__news-body {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
 }
 
 .hud__news-text {
@@ -1859,7 +1895,7 @@
     color: var(--ink);
     padding: 0;
     margin: 0;
-    -unity-text-align: middle-center;
+    -unity-text-align: middle-left;
 }
 
 .hud__news-icon {
@@ -1867,15 +1903,36 @@
     display: none;
 }
 
-.hud__news--sacred > .hud__news-icon--sacred,
-.hud__news--cursed > .hud__news-icon--cursed {
+.hud__news--sacred .hud__news-icon--sacred,
+.hud__news--cursed .hud__news-icon--cursed {
     display: flex;
+}
+
+.hud__news-progress-track {
+    width: 100%;
+    height: 4px;
+    background-color: rgba(43, 33, 24, 0.18);
+    border-radius: 2px;
+    margin-top: var(--space-2);
+    overflow: hidden;
+}
+
+.hud__news-progress-bar {
+    width: 0%;
+    height: 100%;
+    background-color: var(--ink);
+    border-radius: 2px;
 }
 
 .hud__day-badge.god--zeus, .hud__news.god--zeus { background-color: var(--nation-zeus-tint); border-color: var(--nation-zeus); }
 .hud__day-badge.god--thor, .hud__news.god--thor { background-color: var(--nation-thor-tint); border-color: var(--nation-thor); }
 .hud__day-badge.god--ra, .hud__news.god--ra { background-color: var(--nation-ra-tint); border-color: var(--nation-ra); }
 .hud__day-badge.god--morrigan, .hud__news.god--morrigan { background-color: var(--nation-morrigan-tint); border-color: var(--nation-morrigan); }
+
+.hud__news.god--zeus .hud__news-progress-bar { background-color: var(--nation-zeus); }
+.hud__news.god--thor .hud__news-progress-bar { background-color: var(--nation-thor); }
+.hud__news.god--ra .hud__news-progress-bar { background-color: var(--nation-ra); }
+.hud__news.god--morrigan .hud__news-progress-bar { background-color: var(--nation-morrigan); }
 
 /* The Wrath button: the god's signature power, not a grey "disabled" button. A big tile with the god's
    icon, the Wrath's name in carved capitals over its state, and the three Favor stars. Four states set
@@ -2092,6 +2149,7 @@
     font-size: var(--font-size-body);
     color: var(--ink-soft);
     margin-top: var(--space-2);
+    min-height: 48px;
     -unity-text-align: middle-center;
 }
 

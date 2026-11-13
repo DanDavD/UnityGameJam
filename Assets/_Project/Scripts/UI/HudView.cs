@@ -70,11 +70,11 @@ namespace GameJam.UI
 
         [Tooltip("Seconds an onboarding hint stays, unless the next action hides it first.")]
         [SerializeField, Min(0f)]
-        private float _hintDuration = 4f;
+        private float _hintDuration = 6f;
 
         [Tooltip("Seconds a power's news line stays, unless the next one replaces it.")]
         [SerializeField, Min(0f)]
-        private float _newsDuration = 4f;
+        private float _newsDuration = 6f;
 
         private UIDocument _document;
         private VisualElement _identityCard;
@@ -115,6 +115,7 @@ namespace GameJam.UI
         private Label _dayBadge;
         private VisualElement _news;
         private Label _newsLabel;
+        private VisualElement _newsProgressBar;
         private Button _wrathButton;
         private bool _wrathClickable;
         private IVisualElementScheduledItem _wrathShake;
@@ -225,6 +226,7 @@ namespace GameJam.UI
             _dayBadge = root.Q<Label>("day-badge");
             _news = root.Q<VisualElement>("news");
             _newsLabel = root.Q<Label>("news-label");
+            _newsProgressBar = root.Q<VisualElement>("news-progress-bar");
             _wrathButton = root.Q<Button>("wrath-button");
             _wrathName = root.Q<Label>("wrath-name");
             _wrathState = root.Q<Label>("wrath-state");
@@ -547,7 +549,7 @@ namespace GameJam.UI
             _hintTimeout?.Pause();
             _hintTimeout = _hintLabel
                 .schedule.Execute(HideHint)
-                .StartingIn(SecondsToMs(_hintDuration + ToastExtraSeconds));
+                .StartingIn(SecondsToMs(_hintDuration));
         }
 
         /// <summary>True while an onboarding hint is on screen, so a new one can wait instead of replacing it.</summary>
@@ -779,16 +781,33 @@ namespace GameJam.UI
             _news.EnableInClassList(NewsSacredClass, omen == RollOutcome.Sacred);
             _news.EnableInClassList(NewsCursedClass, omen == RollOutcome.Cursed);
             SetVisible(_news, true);
+            if (_newsProgressBar != null)
+                _newsProgressBar.style.width = Length.Percent(0f);
+
             _newsTimeout?.Pause();
+            float startTime = Time.unscaledTime;
             _newsTimeout = _news
-                .schedule.Execute(HideNews)
-                .StartingIn(SecondsToMs(_newsDuration + ToastExtraSeconds));
+                .schedule.Execute(() =>
+                {
+                    float elapsed = Time.unscaledTime - startTime;
+                    float progress = Mathf.Clamp01(elapsed / _newsDuration);
+                    if (_newsProgressBar != null)
+                        _newsProgressBar.style.width = Length.Percent(progress * 100f);
+
+                    if (elapsed >= _newsDuration)
+                    {
+                        HideNews();
+                    }
+                })
+                .Every(16);
         }
 
         public void HideNews()
         {
             _newsTimeout?.Pause();
             SetVisible(_news, false);
+            if (_newsProgressBar != null)
+                _newsProgressBar.style.width = Length.Percent(0f);
         }
 
         /// <summary>

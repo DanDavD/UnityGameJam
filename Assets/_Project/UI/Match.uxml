@@ -165,9 +165,14 @@
              Favor change leads with the drawn omen icon, never the ✗ glyph) and the one-time hint. -->
         <ui:VisualElement class="hud__toasts" picking-mode="Ignore">
             <ui:VisualElement name="news" class="hud__news god--zeus hud__news--sacred" picking-mode="Ignore">
-                <ui:VisualElement class="omen-icon omen-icon--sacred hud__news-icon hud__news-icon--sacred" picking-mode="Ignore" />
-                <ui:VisualElement class="omen-icon omen-icon--cursed hud__news-icon hud__news-icon--cursed" picking-mode="Ignore" />
-                <ui:Label name="news-label" class="hud__news-text" picking-mode="Ignore" text="1 sacred: +1 Favor (2/3)" />
+                <ui:VisualElement class="hud__news-body" picking-mode="Ignore">
+                    <ui:VisualElement class="omen-icon omen-icon--sacred hud__news-icon hud__news-icon--sacred" picking-mode="Ignore" />
+                    <ui:VisualElement class="omen-icon omen-icon--cursed hud__news-icon hud__news-icon--cursed" picking-mode="Ignore" />
+                    <ui:Label name="news-label" class="hud__news-text" picking-mode="Ignore" text="1 sacred: +1 Favor (2/3)" />
+                </ui:VisualElement>
+                <ui:VisualElement class="hud__news-progress-track" picking-mode="Ignore">
+                    <ui:VisualElement name="news-progress-bar" class="hud__news-progress-bar" picking-mode="Ignore" />
+                </ui:VisualElement>
             </ui:VisualElement>
             <ui:Label name="hint-label" class="hud__hint" picking-mode="Ignore" text="Roll your sacred number in combat to earn Favor" />
         </ui:VisualElement>

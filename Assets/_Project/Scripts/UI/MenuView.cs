@@ -198,7 +198,10 @@ namespace GameJam.UI
             _classicButton.text = MatchText.ClassicModeButton(!enabled);
             _modeLine.text = enabled ? MatchText.PowersModeLine : MatchText.ClassicModeLine;
             foreach (VisualElement powers in _cardPowers)
-                powers.style.display = enabled ? DisplayStyle.Flex : DisplayStyle.None;
+            {
+                powers.style.display = DisplayStyle.Flex;
+                powers.style.visibility = enabled ? Visibility.Visible : Visibility.Hidden;
+            }
         }
 
         private static void SetSelected(Button button, bool selected)
