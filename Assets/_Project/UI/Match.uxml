@@ -365,71 +365,80 @@
                             <ui:VisualElement class="howto__section howto__col" picking-mode="Ignore">
                                 <ui:Label class="howto__section-title" picking-mode="Ignore" text="HOW TO WIN" />
                                 <ui:Label class="howto__section-lead" picking-mode="Ignore" text="One of three ways:" />
-                                <ui:VisualElement class="howto__row" picking-mode="Ignore">
-                                    <ui:Label class="howto__marker" picking-mode="Ignore" text="3" />
-                                    <ui:VisualElement class="howto__row-text" picking-mode="Ignore">
-                                        <ui:Label class="howto__row-title" picking-mode="Ignore" text="Temples" />
-                                        <ui:Label class="howto__row-desc" picking-mode="Ignore" text="Start your turn holding 3 of the 4 Temples." />
+
+                                <ui:VisualElement class="howto__entry" picking-mode="Ignore">
+                                    <ui:VisualElement class="howto__entry-head" picking-mode="Ignore">
+                                        <ui:Label class="howto__marker" picking-mode="Ignore" text="3" />
+                                        <ui:Label class="howto__entry-title" picking-mode="Ignore" text="Temples" />
                                     </ui:VisualElement>
+                                    <ui:Label class="howto__entry-desc" picking-mode="Ignore" text="Start your turn holding 3 of the 4 Temples." />
                                 </ui:VisualElement>
-                                <ui:VisualElement class="howto__row" picking-mode="Ignore">
-                                    <ui:Label class="howto__marker" picking-mode="Ignore" text="1" />
-                                    <ui:VisualElement class="howto__row-text" picking-mode="Ignore">
-                                        <ui:Label class="howto__row-title" picking-mode="Ignore" text="Last god standing" />
-                                        <ui:Label class="howto__row-desc" picking-mode="Ignore" text="Take every territory from the other three gods." />
+
+                                <ui:VisualElement class="howto__entry" picking-mode="Ignore">
+                                    <ui:VisualElement class="howto__entry-head" picking-mode="Ignore">
+                                        <ui:Label class="howto__marker" picking-mode="Ignore" text="1" />
+                                        <ui:Label class="howto__entry-title" picking-mode="Ignore" text="Last god standing" />
                                     </ui:VisualElement>
+                                    <ui:Label class="howto__entry-desc" picking-mode="Ignore" text="Take every territory from the other three gods." />
                                 </ui:VisualElement>
-                                <ui:VisualElement class="howto__row" picking-mode="Ignore">
-                                    <ui:Label class="howto__marker" picking-mode="Ignore" text="15" />
-                                    <ui:VisualElement class="howto__row-text" picking-mode="Ignore">
-                                        <ui:Label class="howto__row-title" picking-mode="Ignore" text="Round 15" />
-                                        <ui:Label class="howto__row-desc" picking-mode="Ignore" text="If no one has won, the god with the most territories wins (then most troops)." />
+
+                                <ui:VisualElement class="howto__entry" picking-mode="Ignore">
+                                    <ui:VisualElement class="howto__entry-head" picking-mode="Ignore">
+                                        <ui:Label class="howto__marker" picking-mode="Ignore" text="15" />
+                                        <ui:Label class="howto__entry-title" picking-mode="Ignore" text="Round 15" />
                                     </ui:VisualElement>
+                                    <ui:Label class="howto__entry-desc" picking-mode="Ignore" text="If no one has won, the god with the most territories wins (then most troops)." />
                                 </ui:VisualElement>
+
                                 <ui:Label class="howto__note" picking-mode="Ignore" text="Turn order is drawn with dice at the start and stays the same all match." />
                             </ui:VisualElement>
 
                             <ui:VisualElement class="howto__col" picking-mode="Ignore">
                                 <ui:VisualElement class="howto__section" picking-mode="Ignore">
                                     <ui:Label class="howto__section-title" picking-mode="Ignore" text="YOUR TURN" />
-                                    <ui:VisualElement class="howto__row" picking-mode="Ignore">
-                                        <ui:Label class="howto__marker howto__marker--step" picking-mode="Ignore" text="1" />
-                                        <ui:VisualElement class="howto__row-text" picking-mode="Ignore">
-                                            <ui:Label class="howto__row-title" picking-mode="Ignore" text="Destiny" />
-                                            <ui:Label class="howto__row-desc" picking-mode="Ignore" text="Each round opens with the Destiny Die (see Dice &amp; omens)." />
+
+                                    <ui:VisualElement class="howto__entry" picking-mode="Ignore">
+                                        <ui:VisualElement class="howto__entry-head" picking-mode="Ignore">
+                                            <ui:Label class="howto__marker howto__marker--step" picking-mode="Ignore" text="1" />
+                                            <ui:Label class="howto__entry-title" picking-mode="Ignore" text="Destiny" />
                                         </ui:VisualElement>
+                                        <ui:Label class="howto__entry-desc" picking-mode="Ignore" text="Each round opens with the Destiny Die (see Dice &amp; omens)." />
                                     </ui:VisualElement>
-                                    <ui:VisualElement class="howto__row" picking-mode="Ignore">
-                                        <ui:Label class="howto__marker howto__marker--step" picking-mode="Ignore" text="2" />
-                                        <ui:VisualElement class="howto__row-text" picking-mode="Ignore">
-                                            <ui:Label class="howto__row-title" picking-mode="Ignore" text="Reinforce" />
-                                            <ui:Label class="howto__row-desc" picking-mode="Ignore" text="Place new troops on your territories: 2, +1 for every 2 territories, +1 per Temple." />
+
+                                    <ui:VisualElement class="howto__entry" picking-mode="Ignore">
+                                        <ui:VisualElement class="howto__entry-head" picking-mode="Ignore">
+                                            <ui:Label class="howto__marker howto__marker--step" picking-mode="Ignore" text="2" />
+                                            <ui:Label class="howto__entry-title" picking-mode="Ignore" text="Reinforce" />
                                         </ui:VisualElement>
+                                        <ui:Label class="howto__entry-desc" picking-mode="Ignore" text="Place new troops on your territories: 2, +1 for every 2 territories, +1 per Temple." />
                                     </ui:VisualElement>
-                                    <ui:VisualElement class="howto__row" picking-mode="Ignore">
-                                        <ui:Label class="howto__marker howto__marker--step" picking-mode="Ignore" text="3" />
-                                        <ui:VisualElement class="howto__row-text" picking-mode="Ignore">
-                                            <ui:Label class="howto__row-title" picking-mode="Ignore" text="Attack" />
-                                            <ui:Label class="howto__row-desc" picking-mode="Ignore" text="Attack a neighbor from a territory with 2+ troops, as often as you like. Press END TURN when done." />
+
+                                    <ui:VisualElement class="howto__entry" picking-mode="Ignore">
+                                        <ui:VisualElement class="howto__entry-head" picking-mode="Ignore">
+                                            <ui:Label class="howto__marker howto__marker--step" picking-mode="Ignore" text="3" />
+                                            <ui:Label class="howto__entry-title" picking-mode="Ignore" text="Attack" />
                                         </ui:VisualElement>
+                                        <ui:Label class="howto__entry-desc" picking-mode="Ignore" text="Attack a neighbor from a territory with 2+ troops, as often as you like. Press END TURN when done." />
                                     </ui:VisualElement>
                                 </ui:VisualElement>
 
                                 <ui:VisualElement class="howto__section" picking-mode="Ignore">
                                     <ui:Label class="howto__section-title" picking-mode="Ignore" text="TAKING LAND" />
-                                    <ui:VisualElement class="howto__row" picking-mode="Ignore">
-                                        <ui:VisualElement class="howto__bullet" picking-mode="Ignore" />
-                                        <ui:VisualElement class="howto__row-text" picking-mode="Ignore">
-                                            <ui:Label class="howto__row-title" picking-mode="Ignore" text="Empty land" />
-                                            <ui:Label class="howto__row-desc" picking-mode="Ignore" text="Temples and the Altar start empty. Taken without a fight; a third of your army moves in." />
+
+                                    <ui:VisualElement class="howto__entry" picking-mode="Ignore">
+                                        <ui:VisualElement class="howto__entry-head" picking-mode="Ignore">
+                                            <ui:VisualElement class="howto__bullet" picking-mode="Ignore" />
+                                            <ui:Label class="howto__entry-title" picking-mode="Ignore" text="Empty land" />
                                         </ui:VisualElement>
+                                        <ui:Label class="howto__entry-desc" picking-mode="Ignore" text="Temples and the Altar start empty. Taken without a fight; a third of your army moves in." />
                                     </ui:VisualElement>
-                                    <ui:VisualElement class="howto__row" picking-mode="Ignore">
-                                        <ui:VisualElement class="howto__bullet" picking-mode="Ignore" />
-                                        <ui:VisualElement class="howto__row-text" picking-mode="Ignore">
-                                            <ui:Label class="howto__row-title" picking-mode="Ignore" text="Enemy land" />
-                                            <ui:Label class="howto__row-desc" picking-mode="Ignore" text="Bring it to 0 troops to take it. All your troops but one move in." />
+
+                                    <ui:VisualElement class="howto__entry" picking-mode="Ignore">
+                                        <ui:VisualElement class="howto__entry-head" picking-mode="Ignore">
+                                            <ui:VisualElement class="howto__bullet" picking-mode="Ignore" />
+                                            <ui:Label class="howto__entry-title" picking-mode="Ignore" text="Enemy land" />
                                         </ui:VisualElement>
+                                        <ui:Label class="howto__entry-desc" picking-mode="Ignore" text="Bring it to 0 troops to take it. All your troops but one move in." />
                                     </ui:VisualElement>
                                 </ui:VisualElement>
                             </ui:VisualElement>
@@ -466,115 +475,145 @@
                             </ui:VisualElement>
                             <ui:VisualElement class="howto__pair" picking-mode="Ignore">
                                 <ui:VisualElement class="howto__face" picking-mode="Ignore">
-                                    <ui:Label class="howto__die" picking-mode="Ignore" text="3" />
+                                    <ui:Label class="howto__die howto__die--fortune" picking-mode="Ignore" text="3" />
                                     <ui:Label class="howto__face-name" picking-mode="Ignore" text="FORTUNE" />
                                 </ui:VisualElement>
                                 <ui:Label class="howto__sum" picking-mode="Ignore" text="3 + 4 = 7" />
                                 <ui:VisualElement class="howto__face" picking-mode="Ignore">
-                                    <ui:Label class="howto__die" picking-mode="Ignore" text="4" />
+                                    <ui:Label class="howto__die howto__die--omen" picking-mode="Ignore" text="4" />
                                     <ui:Label class="howto__face-name" picking-mode="Ignore" text="BAD OMEN" />
                                 </ui:VisualElement>
                             </ui:VisualElement>
                         </ui:VisualElement>
 
                         <ui:VisualElement class="howto__columns" picking-mode="Ignore">
+                            <!-- Column 1: Every roll is one of three (Strict component alignment: icon on left, title on right, matching vertical centers) -->
                             <ui:VisualElement class="howto__section howto__col3" picking-mode="Ignore">
                                 <ui:Label class="howto__section-title" picking-mode="Ignore" text="EVERY ROLL IS ONE OF THREE" />
-                                <ui:VisualElement class="howto__row" picking-mode="Ignore">
-                                    <ui:VisualElement class="omen-icon omen-icon--sacred howto__icon" picking-mode="Ignore" />
-                                    <ui:VisualElement class="howto__row-text" picking-mode="Ignore">
-                                        <ui:Label class="howto__row-title" picking-mode="Ignore" text="Sacred" />
-                                        <ui:Label class="howto__row-desc" picking-mode="Ignore" text="Your own number. Beats any neutral roll." />
+
+                                <ui:VisualElement class="howto__entry" picking-mode="Ignore">
+                                    <ui:VisualElement class="howto__entry-head" picking-mode="Ignore">
+                                        <ui:VisualElement class="omen-icon omen-icon--sacred howto__entry-icon" picking-mode="Ignore" />
+                                        <ui:Label class="howto__entry-title" picking-mode="Ignore" text="Sacred" />
                                     </ui:VisualElement>
+                                    <ui:Label class="howto__entry-desc" picking-mode="Ignore" text="Your own number. Beats any neutral roll." />
                                 </ui:VisualElement>
-                                <ui:VisualElement class="howto__row" picking-mode="Ignore">
-                                    <ui:VisualElement class="howto__neutral-dot" picking-mode="Ignore" />
-                                    <ui:VisualElement class="howto__row-text" picking-mode="Ignore">
-                                        <ui:Label class="howto__row-title" picking-mode="Ignore" text="Neutral" />
-                                        <ui:Label class="howto__row-desc" picking-mode="Ignore" text="Any other face. The higher number wins." />
+
+                                <ui:VisualElement class="howto__entry" picking-mode="Ignore">
+                                    <ui:VisualElement class="howto__entry-head" picking-mode="Ignore">
+                                        <ui:VisualElement class="howto__neutral-dot" picking-mode="Ignore">
+                                            <ui:VisualElement class="howto__neutral-circle" picking-mode="Ignore" />
+                                        </ui:VisualElement>
+                                        <ui:Label class="howto__entry-title" picking-mode="Ignore" text="Neutral" />
                                     </ui:VisualElement>
+                                    <ui:Label class="howto__entry-desc" picking-mode="Ignore" text="Any other face. The higher number wins." />
                                 </ui:VisualElement>
-                                <ui:VisualElement class="howto__row" picking-mode="Ignore">
-                                    <ui:VisualElement class="omen-icon omen-icon--cursed howto__icon" picking-mode="Ignore" />
-                                    <ui:VisualElement class="howto__row-text" picking-mode="Ignore">
-                                        <ui:Label class="howto__row-title" picking-mode="Ignore" text="Cursed" />
-                                        <ui:Label class="howto__row-desc" picking-mode="Ignore" text="Your rival's number. Loses to any neutral roll." />
+
+                                <ui:VisualElement class="howto__entry" picking-mode="Ignore">
+                                    <ui:VisualElement class="howto__entry-head" picking-mode="Ignore">
+                                        <ui:VisualElement class="omen-icon omen-icon--cursed howto__entry-icon" picking-mode="Ignore" />
+                                        <ui:Label class="howto__entry-title" picking-mode="Ignore" text="Cursed" />
                                     </ui:VisualElement>
+                                    <ui:Label class="howto__entry-desc" picking-mode="Ignore" text="Your rival's number. Loses to any neutral roll." />
                                 </ui:VisualElement>
                             </ui:VisualElement>
 
+                            <!-- Column 2: Combat rules -->
                             <ui:VisualElement class="howto__section howto__col3" picking-mode="Ignore">
                                 <ui:Label class="howto__section-title" picking-mode="Ignore" text="COMBAT" />
-                                <ui:VisualElement class="howto__row" picking-mode="Ignore">
+                                <ui:VisualElement class="howto__bullet-row" picking-mode="Ignore">
                                     <ui:VisualElement class="howto__bullet" picking-mode="Ignore" />
-                                    <ui:Label class="howto__row-desc" picking-mode="Ignore" text="Attacker and defender each roll one die." />
+                                    <ui:Label class="howto__bullet-text" picking-mode="Ignore" text="Attacker and defender each roll one die." />
                                 </ui:VisualElement>
-                                <ui:VisualElement class="howto__row" picking-mode="Ignore">
+                                <ui:VisualElement class="howto__bullet-row" picking-mode="Ignore">
                                     <ui:VisualElement class="howto__bullet" picking-mode="Ignore" />
-                                    <ui:Label class="howto__row-desc" picking-mode="Ignore" text="&lt;b&gt;Sacred&lt;/b&gt; beats &lt;b&gt;Neutral&lt;/b&gt; beats &lt;b&gt;Cursed&lt;/b&gt;. Between two neutrals, the higher number wins." />
+                                    <ui:Label class="howto__bullet-text" picking-mode="Ignore" text="&lt;b&gt;Sacred&lt;/b&gt; beats &lt;b&gt;Neutral&lt;/b&gt; beats &lt;b&gt;Cursed&lt;/b&gt;. Between two neutrals, the higher number wins." />
                                 </ui:VisualElement>
-                                <ui:VisualElement class="howto__row" picking-mode="Ignore">
+                                <ui:VisualElement class="howto__bullet-row" picking-mode="Ignore">
                                     <ui:VisualElement class="howto__bullet" picking-mode="Ignore" />
-                                    <ui:Label class="howto__row-desc" picking-mode="Ignore" text="Ties go to the defender. The loser loses 1 troop." />
+                                    <ui:Label class="howto__bullet-text" picking-mode="Ignore" text="Ties go to the defender. The loser loses 1 troop." />
                                 </ui:VisualElement>
+
                                 <ui:VisualElement class="howto__callout" picking-mode="Ignore">
-                                    <ui:Label class="howto__row-title" picking-mode="Ignore" text="Offering" />
-                                    <ui:Label class="howto__row-desc" picking-mode="Ignore" text="Losing an attack? Sacrifice 1 troop to re-roll your die. Once per combat, needs 3+ troops." />
+                                    <ui:Label class="howto__callout-title" picking-mode="Ignore" text="Offering" />
+                                    <ui:Label class="howto__callout-desc" picking-mode="Ignore" text="Losing an attack? Sacrifice 1 troop to re-roll your die. Once per combat, needs 3+ troops." />
                                 </ui:VisualElement>
                             </ui:VisualElement>
 
+                            <!-- Column 3: Destiny die (Redesigned symmetrical 2x2 grid for deity days, perfect vertical alignment) -->
                             <ui:VisualElement class="howto__section howto__col3" picking-mode="Ignore">
                                 <ui:Label class="howto__section-title" picking-mode="Ignore" text="DESTINY DIE" />
                                 <ui:Label class="howto__section-lead" picking-mode="Ignore" text="Rolled at the start of every round:" />
-                                <ui:VisualElement class="howto__row" picking-mode="Ignore">
-                                    <ui:Label class="howto__die howto__die--sm" picking-mode="Ignore" text="3" />
-                                    <ui:VisualElement class="howto__row-text" picking-mode="Ignore">
-                                        <ui:Label class="howto__row-title" picking-mode="Ignore" text="Good fortune" />
-                                        <ui:Label class="howto__row-desc" picking-mode="Ignore" text="Everyone places +1 troop." />
+
+                                <ui:VisualElement class="howto__entry" picking-mode="Ignore">
+                                    <ui:VisualElement class="howto__entry-head" picking-mode="Ignore">
+                                        <ui:Label class="howto__die howto__die--sm howto__die--fortune" picking-mode="Ignore" text="3" />
+                                        <ui:Label class="howto__entry-title" picking-mode="Ignore" text="Good fortune" />
                                     </ui:VisualElement>
+                                    <ui:Label class="howto__entry-desc" picking-mode="Ignore" text="Everyone places +1 troop." />
                                 </ui:VisualElement>
-                                <ui:VisualElement class="howto__row" picking-mode="Ignore">
-                                    <ui:Label class="howto__die howto__die--sm" picking-mode="Ignore" text="4" />
-                                    <ui:VisualElement class="howto__row-text" picking-mode="Ignore">
-                                        <ui:Label class="howto__row-title" picking-mode="Ignore" text="Bad omen" />
-                                        <ui:Label class="howto__row-desc" picking-mode="Ignore" text="Every god's largest army loses 1 troop." />
+
+                                <ui:VisualElement class="howto__entry" picking-mode="Ignore">
+                                    <ui:VisualElement class="howto__entry-head" picking-mode="Ignore">
+                                        <ui:Label class="howto__die howto__die--sm howto__die--omen" picking-mode="Ignore" text="4" />
+                                        <ui:Label class="howto__entry-title" picking-mode="Ignore" text="Bad omen" />
                                     </ui:VisualElement>
+                                    <ui:Label class="howto__entry-desc" picking-mode="Ignore" text="Every god's largest army loses 1 troop." />
                                 </ui:VisualElement>
-                                <ui:VisualElement class="howto__row" picking-mode="Ignore">
-                                    <ui:Label class="howto__die howto__die--sm howto__die--wide" picking-mode="Ignore" text="1 2 5 6" />
-                                    <ui:VisualElement class="howto__row-text" picking-mode="Ignore">
-                                        <ui:Label class="howto__row-title" picking-mode="Ignore" text="A god's number" />
-                                        <ui:Label class="howto__row-desc" picking-mode="Ignore" text="That god's Day (see God powers)." />
+
+                                <!-- Symmetrical Deity Days cluster: 2x2 grid pairing rival numbers 1+6 and 2+5 -->
+                                <ui:VisualElement class="howto__god-days" picking-mode="Ignore">
+                                    <ui:VisualElement class="howto__entry-head" picking-mode="Ignore">
+                                        <ui:Label class="howto__entry-title" picking-mode="Ignore" text="Deity Days" />
+                                        <ui:Label class="howto__entry-sub" picking-mode="Ignore" text="— Activates Day power" />
+                                    </ui:VisualElement>
+                                    <ui:VisualElement class="howto__god-days-grid" picking-mode="Ignore">
+                                        <ui:VisualElement class="howto__god-day-cell" picking-mode="Ignore">
+                                            <ui:Label class="howto__die howto__die--sm god--zeus" picking-mode="Ignore" text="1" />
+                                            <ui:Label class="howto__god-day-name" picking-mode="Ignore" text="Zeus" />
+                                        </ui:VisualElement>
+                                        <ui:VisualElement class="howto__god-day-cell" picking-mode="Ignore">
+                                            <ui:Label class="howto__die howto__die--sm god--thor" picking-mode="Ignore" text="6" />
+                                            <ui:Label class="howto__god-day-name" picking-mode="Ignore" text="Thor" />
+                                        </ui:VisualElement>
+                                        <ui:VisualElement class="howto__god-day-cell" picking-mode="Ignore">
+                                            <ui:Label class="howto__die howto__die--sm god--ra" picking-mode="Ignore" text="2" />
+                                            <ui:Label class="howto__god-day-name" picking-mode="Ignore" text="Ra" />
+                                        </ui:VisualElement>
+                                        <ui:VisualElement class="howto__god-day-cell" picking-mode="Ignore">
+                                            <ui:Label class="howto__die howto__die--sm god--morrigan" picking-mode="Ignore" text="5" />
+                                            <ui:Label class="howto__god-day-name" picking-mode="Ignore" text="Morrígan" />
+                                        </ui:VisualElement>
                                     </ui:VisualElement>
                                 </ui:VisualElement>
                             </ui:VisualElement>
                         </ui:VisualElement>
                     </ui:VisualElement>
 
-                    <!-- Tab 3: God powers -->
-                    <ui:VisualElement name="howto-page-2" class="howto__page" style="display: none;" picking-mode="Ignore">
+                    <!-- Tab 3: God powers (Vertical ScrollView with visible scrollbar & full wheel/trackpad support) -->
+                    <ui:ScrollView name="howto-page-2" class="howto__page howto__scroll" mode="Vertical" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="AlwaysVisible" style="display: none;">
                         <ui:Label class="howto__mode-note" picking-mode="Ignore" text="Pantheon powers mode only. Classic plays without them." />
                         <ui:VisualElement class="howto__columns" picking-mode="Ignore">
                             <ui:VisualElement class="howto__section howto__col" picking-mode="Ignore">
                                 <ui:Label class="howto__section-title" picking-mode="Ignore" text="FAVOR &amp; WRATH" />
-                                <ui:VisualElement class="howto__row" picking-mode="Ignore">
+                                <ui:VisualElement class="howto__bullet-row" picking-mode="Ignore">
                                     <ui:VisualElement class="howto__bullet" picking-mode="Ignore" />
-                                    <ui:Label class="howto__row-desc" picking-mode="Ignore" text="Roll your sacred number in combat: &lt;b&gt;+1 Favor&lt;/b&gt;. Roll your cursed number: &lt;b&gt;−1 Favor&lt;/b&gt;." />
+                                    <ui:Label class="howto__bullet-text" picking-mode="Ignore" text="Roll your sacred number in combat: &lt;b&gt;+1 Favor&lt;/b&gt;. Roll your cursed number: &lt;b&gt;−1 Favor&lt;/b&gt;." />
                                 </ui:VisualElement>
-                                <ui:VisualElement class="howto__row" picking-mode="Ignore">
+                                <ui:VisualElement class="howto__bullet-row" picking-mode="Ignore">
                                     <ui:VisualElement class="howto__bullet" picking-mode="Ignore" />
-                                    <ui:Label class="howto__row-desc" picking-mode="Ignore" text="At &lt;b&gt;3 Favor&lt;/b&gt;, unleash your Wrath while attacking. Once per turn; it spends all your Favor." />
+                                    <ui:Label class="howto__bullet-text" picking-mode="Ignore" text="At &lt;b&gt;3 Favor&lt;/b&gt;, unleash your Wrath while attacking. Once per turn; it spends all your Favor." />
                                 </ui:VisualElement>
                             </ui:VisualElement>
                             <ui:VisualElement class="howto__section howto__col" picking-mode="Ignore">
                                 <ui:Label class="howto__section-title" picking-mode="Ignore" text="SACRED ROAD" />
-                                <ui:VisualElement class="howto__row" picking-mode="Ignore">
+                                <ui:VisualElement class="howto__bullet-row" picking-mode="Ignore">
                                     <ui:VisualElement class="howto__bullet" picking-mode="Ignore" />
-                                    <ui:Label class="howto__row-desc" picking-mode="Ignore" text="A sacred roll on your attack opens the Road: march all troops but one to your land up to &lt;b&gt;2 steps&lt;/b&gt; away, through your own lands." />
+                                    <ui:Label class="howto__bullet-text" picking-mode="Ignore" text="A sacred roll on your attack opens the Road: march all troops but one to your land up to &lt;b&gt;2 steps&lt;/b&gt; away, through your own lands." />
                                 </ui:VisualElement>
-                                <ui:VisualElement class="howto__row" picking-mode="Ignore">
+                                <ui:VisualElement class="howto__bullet-row" picking-mode="Ignore">
                                     <ui:VisualElement class="howto__bullet" picking-mode="Ignore" />
-                                    <ui:Label class="howto__row-desc" picking-mode="Ignore" text="Optional: press &lt;b&gt;SKIP ROAD&lt;/b&gt; to keep attacking. An unused Road closes at the end of your turn." />
+                                    <ui:Label class="howto__bullet-text" picking-mode="Ignore" text="Optional: press &lt;b&gt;SKIP ROAD&lt;/b&gt; to keep attacking. An unused Road closes at the end of your turn." />
                                 </ui:VisualElement>
                             </ui:VisualElement>
                         </ui:VisualElement>
@@ -660,7 +699,7 @@
                                 </ui:VisualElement>
                             </ui:VisualElement>
                         </ui:VisualElement>
-                    </ui:VisualElement>
+                    </ui:ScrollView>
                 </ui:VisualElement>
 
                 <ui:VisualElement class="howto__footer" picking-mode="Ignore">
@@ -672,7 +711,6 @@
                     <ui:Button name="howto-next" text="NEXT: DICE &amp; OMENS →" class="button button--primary howto__next" />
                 </ui:VisualElement>
             </ui:VisualElement>
-
         </ui:VisualElement>
         <ui:VisualElement name="end-banner" class="end-banner">
             <ui:VisualElement name="end-card" class="card end-banner__card" picking-mode="Ignore">

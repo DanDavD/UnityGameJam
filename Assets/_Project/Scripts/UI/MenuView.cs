@@ -237,6 +237,10 @@ namespace GameJam.UI
                 if (_howtoPages[i] != null)
                 {
                     _howtoPages[i].style.display = isActive ? DisplayStyle.Flex : DisplayStyle.None;
+                    if (isActive && _howtoPages[i] is ScrollView sv)
+                    {
+                        sv.scrollOffset = Vector2.zero;
+                    }
                 }
                 if (_howtoDots[i] != null)
                 {

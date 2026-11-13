@@ -1509,6 +1509,56 @@
     justify-content: flex-start;
 }
 
+/* ScrollView for Tab 3 with visible, styled scrollbar & mouse wheel / trackpad support */
+.howto__scroll {
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+}
+
+.howto__scroll > .unity-scroll-view__content-viewport > .unity-scroll-view__content-container {
+    padding-right: 14px;
+    padding-bottom: 28px;
+}
+
+.howto__scroll .unity-scroll-view__vertical-scroller {
+    width: 10px;
+    margin-left: 6px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    border-radius: 5px;
+}
+
+.howto__scroll .unity-scroller__low-button,
+.howto__scroll .unity-scroller__high-button {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+.howto__scroll .unity-base-slider__tracker {
+    background-color: rgba(43, 33, 24, 0.08);
+    border-width: 0;
+    border-radius: 5px;
+    width: 8px;
+    align-self: center;
+}
+
+.howto__scroll .unity-base-slider__dragger {
+    background-color: var(--wood);
+    border-width: 0;
+    border-radius: 5px;
+    width: 8px;
+    min-height: 48px;
+    align-self: center;
+    transition-property: background-color;
+    transition-duration: var(--duration-fast);
+}
+
+.howto__scroll .unity-base-slider__dragger:hover {
+    background-color: var(--wood-dark);
+}
+
 .howto__columns {
     flex-direction: row;
     justify-content: space-between;
@@ -1553,30 +1603,72 @@
     margin-bottom: 8px;
 }
 
-.howto__row {
+/* ========================================================
+   Strict Component Alignment:
+   Symbol on the left, title text on the right with matching vertical centers.
+   ======================================================== */
+.howto__entry {
+    margin-bottom: 10px;
+}
+
+.howto__entry-head {
     flex-direction: row;
-    align-items: flex-start;
-    margin-bottom: 7px;
+    align-items: center; /* PERFECT VERTICAL CENTER ALIGNMENT */
+    margin-bottom: 3px;
 }
 
-.howto__row-text {
-    flex-grow: 1;
-    flex-shrink: 1;
+.howto__entry-icon {
+    width: 22px;
+    height: 22px;
+    margin-right: 8px;
+    flex-shrink: 0;
 }
 
-.howto__row-title {
+.howto__neutral-dot {
+    width: 22px;
+    height: 22px;
+    margin-right: 8px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+}
+
+.howto__neutral-circle {
+    width: 14px;
+    height: 14px;
+    border-radius: 7px;
+    border-width: 2px;
+    border-color: var(--ink-soft);
+}
+
+.howto__entry-title {
     font-size: 14.5px;
     -unity-font-definition: var(--font-strong);
     color: var(--ink);
-    margin-bottom: 1px;
+    margin: 0;
+    padding: 0;
 }
 
-.howto__row-desc {
-    font-size: 14px;
+.howto__entry-sub {
+    font-size: 12px;
+    -unity-font-definition: var(--font-strong);
+    color: var(--wood);
+    margin-left: 6px;
+}
+
+.howto__entry-desc {
+    font-size: 13.5px;
     color: var(--ink-soft);
     white-space: normal;
     line-height: 18px;
-    flex-shrink: 1;
+    margin: 0;
+    padding: 0;
+    margin-left: 30px; /* Aligned flush under title text */
+}
+
+.howto__entry-desc--full {
+    margin-left: 0;
+    margin-bottom: 6px;
 }
 
 .howto__marker {
@@ -1588,8 +1680,7 @@
     background-color: var(--wood);
     color: var(--paper);
     -unity-text-align: middle-center;
-    margin-right: 10px;
-    margin-top: 1px;
+    margin-right: 8px;
     flex-shrink: 0;
 }
 
@@ -1597,18 +1688,32 @@
     background-color: #C8A046;
 }
 
+.howto__bullet-row {
+    flex-direction: row;
+    align-items: flex-start;
+    margin-bottom: 6px;
+}
+
 .howto__bullet {
     width: 6px;
     height: 6px;
     border-radius: 3px;
     background-color: #C8A046;
-    margin-right: 10px;
+    margin-right: 8px;
     margin-top: 6px;
     flex-shrink: 0;
 }
 
-.howto__note {
+.howto__bullet-text {
     font-size: 13.5px;
+    color: var(--ink-soft);
+    line-height: 18px;
+    white-space: normal;
+    flex-shrink: 1;
+}
+
+.howto__note {
+    font-size: 13px;
     color: var(--wood);
     -unity-font-style: italic;
     margin-top: 6px;
@@ -1618,7 +1723,7 @@
     -unity-text-align: middle-center;
 }
 
-/* Tab 2: Dice & Omens */
+/* Tab 2: Dice & Omens Header */
 .howto__lead {
     font-size: 18px;
     -unity-font-definition: var(--font-display);
@@ -1682,33 +1787,27 @@
     letter-spacing: 0.5px;
 }
 
-.howto__icon {
-    width: 18px;
-    height: 18px;
-    margin-right: 8px;
-    margin-top: 1px;
-    flex-shrink: 0;
-}
-
-.howto__neutral-dot {
-    width: 14px;
-    height: 14px;
-    border-radius: 7px;
-    border-width: 2px;
-    border-color: var(--ink-soft);
-    margin-right: 10px;
-    margin-left: 2px;
-    margin-top: 2px;
-    flex-shrink: 0;
-}
-
 .howto__callout {
     background-color: #FAF5E8;
     border-width: 1px;
     border-color: #C8A046;
     border-radius: var(--radius-sm);
-    padding: 6px 10px;
+    padding: 8px 10px;
     margin-top: 6px;
+}
+
+.howto__callout-title {
+    font-size: 14px;
+    -unity-font-definition: var(--font-strong);
+    color: var(--ink);
+    margin-bottom: 2px;
+}
+
+.howto__callout-desc {
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 17px;
+    white-space: normal;
 }
 
 /* Number badges styled like dice faces (no missing unicode characters) */
@@ -1732,17 +1831,62 @@
 .howto__die.god--morrigan { background-color: var(--nation-morrigan-tint); border-color: #4A3B4D; color: #2B212E; }
 
 .howto__die--sm {
-    width: 24px;
-    height: 24px;
-    font-size: 13px;
+    width: 22px;
+    height: 22px;
+    font-size: 12.5px;
     margin-right: 8px;
-    margin-top: 1px;
+    flex-shrink: 0;
 }
 
-.howto__die--wide {
-    width: 64px;
-    font-size: 12px;
-    letter-spacing: 2px;
+.howto__die--fortune {
+    background-color: #E2F0D9;
+    border-color: #70AD47;
+    color: #275016;
+}
+
+.howto__die--omen {
+    background-color: #F8D7DA;
+    border-color: #D9534F;
+    color: #721C24;
+}
+
+/* ========================================================
+   Symmetrical 2x2 Grid for Deity Days (Fix Asymmetry)
+   ======================================================== */
+.howto__god-days {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top-width: 1px;
+    border-top-color: rgba(200, 160, 70, 0.25);
+}
+
+.howto__god-days-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 4px;
+}
+
+.howto__god-day-cell {
+    flex-direction: row;
+    align-items: center; /* STRICT: matching vertical centers */
+    width: 48.5%;
+    background-color: var(--paper);
+    border-width: 1px;
+    border-color: rgba(200, 160, 70, 0.35);
+    border-radius: var(--radius-sm);
+    padding: 3px 6px;
+    margin-bottom: 5px;
+}
+
+.howto__god-day-name {
+    font-size: 13px;
+    -unity-font-definition: var(--font-display);
+    -unity-font-style: bold;
+    color: var(--ink);
+    margin: 0;
+    padding: 0;
 }
 
 /* Tab 3: God Powers */
@@ -1751,7 +1895,7 @@
     color: var(--wood);
     -unity-font-style: italic;
     -unity-text-align: middle-center;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
 }
 
 .howto__gods {
@@ -1759,7 +1903,7 @@
     flex-wrap: wrap;
     justify-content: space-between;
     width: 100%;
-    margin-top: 4px;
+    margin-top: 6px;
 }
 
 .howto__god {
@@ -1768,7 +1912,7 @@
     border-bottom-width: 4px;
     border-radius: var(--radius-md);
     padding: 10px 14px;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 }
 
 .howto__god.god--zeus { background-color: var(--nation-zeus-tint); border-color: var(--nation-zeus); border-bottom-color: #3B82B6; }
@@ -1875,7 +2019,6 @@
     -unity-font-definition: var(--font-strong);
     letter-spacing: 1px;
 }
-
 .hud__road-skip {
     min-height: var(--button-min-height);
     padding: var(--space-2) var(--space-4);
