@@ -1308,10 +1308,35 @@
 }
 
 .menu__screen--home {
-    width: 760px;
-    max-width: 92%;
+    width: 600px;
+    max-width: 90%;
     align-items: center;
-    padding: var(--space-12) var(--space-8) var(--space-8) var(--space-8);
+    padding: 36px 44px 36px 44px;
+    background-color: var(--paper);
+    border-width: 2px;
+    border-color: rgba(200, 160, 70, 0.4);
+    border-bottom-width: 6px;
+    border-bottom-color: rgba(139, 94, 60, 0.45);
+    border-radius: var(--radius-lg);
+}
+
+.menu__pantheon-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-3);
+}
+
+.menu__pantheon-chip {
+    margin: 0 var(--space-2);
+}
+
+.menu__divider {
+    width: 260px;
+    height: 1px;
+    background-color: rgba(200, 160, 70, 0.35);
+    margin-top: var(--space-4);
+    margin-bottom: var(--space-4);
 }
 
 .menu__screen--select {
@@ -1328,52 +1353,53 @@
     padding: var(--space-8) var(--space-8);
 }
 
-.menu__badge {
-    font-size: var(--font-size-caption);
-    -unity-font-definition: var(--font-strong);
-    color: var(--gold);
-    letter-spacing: 2px;
-    margin-top: var(--space-4);
-    margin-bottom: var(--space-6);
-    padding: var(--space-1) var(--space-4);
-    background-color: rgba(200, 160, 70, 0.12);
-    border-width: 1px;
-    border-color: rgba(200, 160, 70, 0.3);
-    border-radius: var(--radius-sm);
-}
-
 .menu__nav-group {
     width: 380px;
-    margin-top: var(--space-4);
-    margin-bottom: var(--space-6);
+    align-items: center;
 }
 
 .menu__nav-btn {
     width: 100%;
-    margin-top: var(--space-2);
-    margin-bottom: var(--space-2);
-    padding: var(--space-3) var(--space-6);
-    font-size: var(--font-size-body);
+    margin-top: 4px;
+    margin-bottom: 4px;
+    padding: 12px var(--space-4);
+    font-size: 15px;
     -unity-font-definition: var(--font-strong);
+    letter-spacing: 1.5px;
     justify-content: center;
     align-items: center;
     border-radius: var(--radius-md);
+    border-width: 1px;
+    border-color: rgba(139, 94, 60, 0.35);
+    background-color: rgba(251, 246, 236, 0.95);
+    color: var(--ink);
+    transition-property: translate, scale, background-color, border-color;
+    transition-duration: var(--duration-fast);
+}
+
+.menu__nav-btn:hover {
+    background-color: var(--paper-shade);
+    border-color: var(--wood);
+    color: var(--ink);
 }
 
 .menu__nav-btn--primary {
-    font-size: var(--font-size-h2);
-    padding: var(--space-4) var(--space-6);
+    font-size: 20px;
+    letter-spacing: 2px;
+    padding: 16px var(--space-6);
+    margin-bottom: 12px;
+    border-radius: var(--radius-md);
+    background-color: var(--wood);
+    color: var(--paper);
+    border-width: 2px;
+    border-color: #D4AF37;
+    border-bottom-width: 4px;
+    border-bottom-color: var(--wood-dark);
 }
 
-.menu__home-footer {
-    margin-top: var(--space-4);
-    align-items: center;
-}
-
-.menu__home-footer-text {
-    font-size: var(--font-size-caption);
-    color: var(--ink-soft);
-    -unity-text-align: middle-center;
+.menu__nav-btn--primary:hover {
+    background-color: var(--wood-dark);
+    border-color: #E5C158;
 }
 
 .menu__header-bar {
@@ -1497,17 +1523,22 @@
 }
 
 .menu__title {
-    font-size: var(--font-size-display);
+    font-size: 56px;
+    -unity-font-definition: var(--font-display);
     -unity-font-style: bold;
     color: var(--ink);
+    letter-spacing: 4px;
     padding: 0;
     margin: 0;
 }
 
 .menu__tagline {
-    font-size: var(--font-size-body);
-    color: var(--ink-soft);
-    margin-top: var(--space-2);
+    font-size: 15px;
+    -unity-font-definition: var(--font-strong);
+    color: var(--wood);
+    letter-spacing: 1.5px;
+    margin-top: var(--space-1);
+    -unity-text-align: middle-center;
 }
 
 /* Body size (not label) so the menu keeps to three text sizes: display, h2, body. */
@@ -1533,8 +1564,9 @@
     flex-direction: row;
 }
 
-/* The sacred-number rule under the cards: body size, so the menu keeps display, h2 and body only. */
+/* The sacred-number rule under the cards: hidden from menu per design request; full rules are in How To Play */
 .menu__rule {
+    display: none;
     align-items: center;
     margin-top: var(--space-6);
 }

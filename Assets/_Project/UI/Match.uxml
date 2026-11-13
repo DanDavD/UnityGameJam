@@ -288,19 +288,32 @@
         <ui:VisualElement name="menu" class="menu">
             <!-- 1. Home / Title screen -->
             <ui:VisualElement name="menu-home-screen" class="card menu__card menu__screen--home">
+                <!-- Pantheon emblems crest -->
+                <ui:VisualElement class="menu__pantheon-row" picking-mode="Ignore">
+                    <ui:VisualElement class="god-chip god-chip--sm god--zeus menu__pantheon-chip" picking-mode="Ignore">
+                        <ui:VisualElement class="god-chip__icon" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="god-chip god-chip--sm god--ra menu__pantheon-chip" picking-mode="Ignore">
+                        <ui:VisualElement class="god-chip__icon" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="god-chip god-chip--sm god--thor menu__pantheon-chip" picking-mode="Ignore">
+                        <ui:VisualElement class="god-chip__icon" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="god-chip god-chip--sm god--morrigan menu__pantheon-chip" picking-mode="Ignore">
+                        <ui:VisualElement class="god-chip__icon" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
                 <ui:Label name="menu-title" class="menu__title" picking-mode="Ignore" text="GodBoard" />
                 <ui:Label name="menu-tagline" class="menu__tagline" picking-mode="Ignore" text="Your lucky number is your rival's curse." />
-                <ui:Label class="menu__badge" picking-mode="Ignore" text="UNITY GAME JAM 2026 · THEME: LUCKY NUMBER 7" />
+
+                <ui:VisualElement class="menu__divider" picking-mode="Ignore" />
 
                 <ui:VisualElement class="menu__nav-group" picking-mode="Ignore">
                     <ui:Button name="menu-btn-play" text="PLAY MATCH" class="button button--primary menu__nav-btn menu__nav-btn--primary" />
                     <ui:Button name="menu-btn-rules" text="HOW TO PLAY" class="button button--secondary menu__nav-btn" />
                     <ui:Button name="menu-btn-pantheon" text="THE FOUR DEITIES" class="button button--secondary menu__nav-btn" />
                     <ui:Button name="menu-btn-theme" text="SACRED &amp; CURSED NUMBERS" class="button button--secondary menu__nav-btn" />
-                </ui:VisualElement>
-
-                <ui:VisualElement class="menu__home-footer" picking-mode="Ignore">
-                    <ui:Label class="menu__home-footer-text" picking-mode="Ignore" text="Opposing dice faces sum to 7 · 1 Ra ↔ 6 Zeus · 2 Morrígan ↔ 5 Thor" />
                 </ui:VisualElement>
             </ui:VisualElement>
 
