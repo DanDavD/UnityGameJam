@@ -1376,10 +1376,10 @@
 }
 
 .menu__screen--content {
-    width: 1100px;
-    max-width: 94%;
+    width: 1140px;
+    max-width: 96%;
     align-items: center;
-    padding: var(--space-8) var(--space-8);
+    padding: 20px var(--space-8) 24px var(--space-8);
 }
 
 .menu__nav-group {
@@ -1436,10 +1436,10 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    margin-bottom: var(--space-6);
-    padding-bottom: var(--space-3);
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-2);
     border-bottom-width: 1px;
-    border-bottom-color: var(--border-soft);
+    border-bottom-color: rgba(200, 160, 70, 0.35);
 }
 
 .menu__back-btn {
@@ -1462,84 +1462,353 @@
     padding: 0;
 }
 
-.menu__content-grid {
+/* ========================================================
+   1. Rules screen styling (HOW TO PLAY)
+   ======================================================== */
+.rules__grid {
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: space-between;
     width: 100%;
 }
 
-.menu__info-box {
-    width: 48%;
-    background-color: var(--bg-card);
-    border-width: 1px;
-    border-color: var(--border-soft);
+.rules__card {
+    width: 48.5%;
+    background-color: var(--paper);
+    border-width: 1.5px;
+    border-color: rgba(200, 160, 70, 0.4);
+    border-bottom-width: 4px;
+    border-bottom-color: var(--shadow);
     border-radius: var(--radius-md);
-    padding: var(--space-4);
-    margin-bottom: var(--space-4);
+    padding: 12px 16px;
+    margin-bottom: 12px;
 }
 
-.menu__info-box-title {
-    font-size: var(--font-size-body);
-    -unity-font-definition: var(--font-strong);
-    color: var(--gold);
-    margin-bottom: var(--space-2);
-}
-
-.menu__info-box-text {
-    font-size: var(--font-size-caption);
-    color: var(--ink-soft);
-    white-space: normal;
-}
-
-.menu__deities-grid {
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    width: 100%;
-}
-
-.menu__deity-box {
-    width: 48%;
-    background-color: var(--bg-card);
-    border-width: 1px;
-    border-color: var(--border-soft);
-    border-radius: var(--radius-md);
-    padding: var(--space-4);
-    margin-bottom: var(--space-4);
-}
-
-.menu__deity-box.god--zeus { border-color: var(--nation-zeus); background-color: var(--nation-zeus-tint); }
-.menu__deity-box.god--ra { border-color: var(--nation-ra); background-color: var(--nation-ra-tint); }
-.menu__deity-box.god--thor { border-color: var(--nation-thor); background-color: var(--nation-thor-tint); }
-.menu__deity-box.god--morrigan { border-color: var(--nation-morrigan); background-color: var(--nation-morrigan-tint); }
-
-.menu__deity-header {
+.rules__card-header {
     flex-direction: row;
     align-items: center;
-    margin-bottom: var(--space-3);
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(200, 160, 70, 0.25);
 }
 
-.menu__deity-title-group {
-    margin-left: var(--space-3);
+.rules__card-tag {
+    font-size: 10px;
+    -unity-font-definition: var(--font-strong);
+    color: var(--paper);
+    background-color: var(--wood);
+    border-radius: 3px;
+    padding: 1px 6px;
+    margin-right: 8px;
+    letter-spacing: 1px;
 }
 
-.menu__deity-name {
-    font-size: var(--font-size-body);
+.rules__card-title {
+    font-size: 14px;
+    -unity-font-definition: var(--font-display);
+    -unity-font-style: bold;
+    color: var(--ink);
+    letter-spacing: 1px;
+}
+
+.rules__item {
+    flex-direction: row;
+    align-items: flex-start;
+    margin-bottom: 5px;
+}
+
+.rules__bullet {
+    font-size: 8px;
+    color: #C8A046;
+    margin-right: 6px;
+    margin-top: 3px;
+}
+
+.rules__step-badge {
+    font-size: 10px;
+    -unity-font-definition: var(--font-strong);
+    color: var(--paper);
+    background-color: #C8A046;
+    border-radius: 8px;
+    width: 16px;
+    height: 16px;
+    -unity-text-align: middle-center;
+    margin-right: 6px;
+    margin-top: 1px;
+}
+
+.rules__text {
+    font-size: 12px;
+    color: var(--ink-soft);
+    white-space: normal;
+    flex-shrink: 1;
+    -unity-text-align: middle-left;
+    line-height: 15px;
+}
+
+/* ========================================================
+   2. Pantheon / Deities screen styling
+   ======================================================== */
+.pantheon__grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.deity-box {
+    width: 48.5%;
+    border-width: 1.5px;
+    border-bottom-width: 4px;
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    margin-bottom: 12px;
+}
+
+.deity-box.god--zeus { background-color: var(--nation-zeus-tint); border-color: var(--nation-zeus); border-bottom-color: #3B82B6; }
+.deity-box.god--ra { background-color: var(--nation-ra-tint); border-color: var(--nation-ra); border-bottom-color: #B57D00; }
+.deity-box.god--thor { background-color: var(--nation-thor-tint); border-color: var(--nation-thor); border-bottom-color: #9C4500; }
+.deity-box.god--morrigan { background-color: var(--nation-morrigan-tint); border-color: #4A3B4D; border-bottom-color: #2B212E; }
+
+.deity-box__header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.deity-box__title-group {
+    margin-left: 10px;
+    flex-grow: 1;
+}
+
+.deity-box__name {
+    font-size: 16px;
+    -unity-font-definition: var(--font-display);
+    -unity-font-style: bold;
+    color: var(--ink);
+    letter-spacing: 1px;
+}
+
+.deity-box__realm {
+    font-size: 10px;
+    -unity-font-definition: var(--font-strong);
+    color: var(--wood);
+    letter-spacing: 0.5px;
+}
+
+.deity-box__badges {
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.deity-badge {
+    font-size: 10px;
+    -unity-font-definition: var(--font-strong);
+    border-radius: 3px;
+    padding: 1px 6px;
+    margin-bottom: 2px;
+    letter-spacing: 0.5px;
+}
+
+.deity-badge--sacred {
+    background-color: #FFF9E6;
+    border-width: 1px;
+    border-color: #C8A046;
+    color: var(--ink);
+}
+
+.deity-badge--cursed {
+    background-color: rgba(43, 33, 24, 0.08);
+    border-width: 1px;
+    border-color: rgba(43, 33, 24, 0.2);
+    color: var(--ink-soft);
+}
+
+.deity-box__divider {
+    height: 1px;
+    background-color: rgba(43, 33, 24, 0.12);
+    margin-top: 8px;
+    margin-bottom: 8px;
+    width: 100%;
+}
+
+.deity-box__power-row {
+    flex-direction: row;
+    align-items: flex-start;
+    margin-top: 3px;
+    margin-bottom: 3px;
+}
+
+.deity-pill {
+    font-size: 9px;
+    -unity-font-definition: var(--font-strong);
+    border-radius: 3px;
+    padding: 1px 5px;
+    margin-right: 6px;
+    margin-top: 2px;
+    letter-spacing: 0.5px;
+    width: 52px;
+    -unity-text-align: middle-center;
+}
+
+.deity-pill--day {
+    background-color: var(--wood);
+    color: var(--paper);
+}
+
+.deity-pill--wrath {
+    background-color: #8C2D19;
+    color: #FFFFFF;
+}
+
+.deity-box__power-text-group {
+    flex-shrink: 1;
+}
+
+.deity-box__power-title {
+    font-size: 11px;
+    -unity-font-definition: var(--font-strong);
+    color: var(--ink);
+}
+
+.deity-box__power-desc {
+    font-size: 11px;
+    color: var(--ink-soft);
+    white-space: normal;
+    line-height: 14px;
+}
+
+/* ========================================================
+   3. Theme screen styling (SACRED & CURSED · RULE OF 7)
+   ======================================================== */
+.theme__subtitle {
+    font-size: 13px;
+    color: var(--wood);
+    margin-bottom: 12px;
+    -unity-text-align: middle-center;
+    letter-spacing: 0.5px;
+}
+
+.theme__pairs {
+    width: 100%;
+    margin-bottom: 12px;
+}
+
+.theme__pair-strip {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    background-color: var(--paper);
+    border-width: 1px;
+    border-color: rgba(200, 160, 70, 0.35);
+    border-radius: var(--radius-md);
+    padding: 6px 16px;
+    margin-bottom: 6px;
+}
+
+.theme__die-face {
+    flex-direction: row;
+    align-items: center;
+    width: 120px;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    border-width: 1px;
+}
+
+.theme__die-face.god--zeus { background-color: var(--nation-zeus-tint); border-color: var(--nation-zeus); }
+.theme__die-face.god--thor { background-color: var(--nation-thor-tint); border-color: var(--nation-thor); }
+.theme__die-face.god--ra { background-color: var(--nation-ra-tint); border-color: var(--nation-ra); }
+.theme__die-face.god--morrigan { background-color: var(--nation-morrigan-tint); border-color: #4A3B4D; }
+.theme__die-face--fortune { background-color: #E2F0D9; border-color: #70AD47; }
+.theme__die-face--omen { background-color: #F8D7DA; border-color: #D9534F; }
+
+.theme__die-num {
+    font-size: 15px;
+    -unity-font-definition: var(--font-strong);
+    color: var(--ink);
+    margin-right: 6px;
+}
+
+.theme__die-name {
+    font-size: 12px;
     -unity-font-definition: var(--font-display);
     -unity-font-style: bold;
     color: var(--ink);
 }
 
-.menu__deity-subtitle {
-    font-size: var(--font-size-caption);
-    color: var(--gold);
+.theme__sum-bridge {
+    align-items: center;
+    flex-grow: 1;
+    margin: 0 16px;
 }
 
-.menu__deity-desc {
-    font-size: var(--font-size-caption);
+.theme__sum-pill {
+    font-size: 12px;
+    -unity-font-definition: var(--font-strong);
+    color: var(--wood-dark);
+    background-color: #F2E3C6;
+    border-width: 1px;
+    border-color: #C8A046;
+    border-radius: 10px;
+    padding: 2px 14px;
+    letter-spacing: 1px;
+}
+
+.theme__sum-desc {
+    font-size: 10px;
+    color: var(--ink-soft);
+    margin-top: 2px;
+    -unity-text-align: middle-center;
+}
+
+.theme__rules-row {
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.theme__rule-box {
+    width: 48.5%;
+    border-width: 1.5px;
+    border-bottom-width: 3px;
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+}
+
+.theme__rule-box--sacred {
+    background-color: #FAF5E8;
+    border-color: #C8A046;
+    border-bottom-color: #9E7D30;
+}
+
+.theme__rule-box--cursed {
+    background-color: #F2ECE4;
+    border-color: rgba(43, 33, 24, 0.25);
+    border-bottom-color: var(--wood);
+}
+
+.theme__rule-header {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.theme__rule-title {
+    font-size: 12px;
+    -unity-font-definition: var(--font-display);
+    -unity-font-style: bold;
+    color: var(--ink);
+    letter-spacing: 1px;
+    margin-left: 6px;
+}
+
+.theme__rule-text {
+    font-size: 11px;
     color: var(--ink-soft);
     white-space: normal;
+    line-height: 15px;
 }
 
 .hud__road-skip {

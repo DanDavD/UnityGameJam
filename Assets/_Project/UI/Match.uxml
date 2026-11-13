@@ -370,22 +370,90 @@
                     <ui:Label class="menu__screen-title" picking-mode="Ignore" text="HOW TO PLAY" />
                     <ui:VisualElement class="menu__header-spacer" picking-mode="Ignore" />
                 </ui:VisualElement>
-                <ui:VisualElement class="menu__content-grid" picking-mode="Ignore">
-                    <ui:VisualElement class="menu__info-box" picking-mode="Ignore">
-                        <ui:Label class="menu__info-box-title" picking-mode="Ignore" text="1. OBJECTIVE &amp; VICTORY" />
-                        <ui:Label class="menu__info-box-text" picking-mode="Ignore" text="Lead your pantheon to absolute dominion over the mortal realm. Win by:&#10;• Capturing all 4 Capitals on the board.&#10;• Controlling 3 Temples at the start of your turn.&#10;• Controlling the Altar of Destiny + 1 Temple.&#10;• Holding the most territories when the round limit is reached." />
+
+                <ui:VisualElement class="rules__grid" picking-mode="Ignore">
+                    <!-- Card 1: Objective & Victory -->
+                    <ui:VisualElement class="rules__card" picking-mode="Ignore">
+                        <ui:VisualElement class="rules__card-header" picking-mode="Ignore">
+                            <ui:Label class="rules__card-tag" picking-mode="Ignore" text="VICTORY" />
+                            <ui:Label class="rules__card-title" picking-mode="Ignore" text="OBJECTIVE" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="rules__item" picking-mode="Ignore">
+                            <ui:Label class="rules__bullet" picking-mode="Ignore" text="●" />
+                            <ui:Label class="rules__text" picking-mode="Ignore" text="Capitals: Capture all 4 rival capitals to eliminate other pantheons." />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="rules__item" picking-mode="Ignore">
+                            <ui:Label class="rules__bullet" picking-mode="Ignore" text="●" />
+                            <ui:Label class="rules__text" picking-mode="Ignore" text="Temples: Hold 3 Temples at the start of your turn to claim victory." />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="rules__item" picking-mode="Ignore">
+                            <ui:Label class="rules__bullet" picking-mode="Ignore" text="●" />
+                            <ui:Label class="rules__text" picking-mode="Ignore" text="Altar of Destiny: Hold the central Altar + 1 Temple to win." />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="rules__item" picking-mode="Ignore">
+                            <ui:Label class="rules__bullet" picking-mode="Ignore" text="●" />
+                            <ui:Label class="rules__text" picking-mode="Ignore" text="Domain: If round 15 expires, the god with the most lands wins." />
+                        </ui:VisualElement>
                     </ui:VisualElement>
-                    <ui:VisualElement class="menu__info-box" picking-mode="Ignore">
-                        <ui:Label class="menu__info-box-title" picking-mode="Ignore" text="2. ROUND &amp; TURN PHASES" />
-                        <ui:Label class="menu__info-box-text" picking-mode="Ignore" text="• Destiny Roll: The Destiny Die rolls each round. Faces 1, 2, 5, 6 activate that god's Day power. Face 3 awards +1 fortune to all. Face 4 strikes the largest armies.&#10;• Reinforce: Place troops based on your territories, held temples, and fortune.&#10;• Attack: Roll dice against neighboring enemy lands to conquer territories." />
+
+                    <!-- Card 2: Round & Turn Phases -->
+                    <ui:VisualElement class="rules__card" picking-mode="Ignore">
+                        <ui:VisualElement class="rules__card-header" picking-mode="Ignore">
+                            <ui:Label class="rules__card-tag" picking-mode="Ignore" text="TURNS" />
+                            <ui:Label class="rules__card-title" picking-mode="Ignore" text="ROUND PHASES" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="rules__item" picking-mode="Ignore">
+                            <ui:Label class="rules__step-badge" picking-mode="Ignore" text="1" />
+                            <ui:Label class="rules__text" picking-mode="Ignore" text="Destiny Roll: Rolls each round. Faces 1, 2, 5, 6 trigger God Days. 3 adds fortune; 4 strikes large armies." />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="rules__item" picking-mode="Ignore">
+                            <ui:Label class="rules__step-badge" picking-mode="Ignore" text="2" />
+                            <ui:Label class="rules__text" picking-mode="Ignore" text="Reinforce: Place troops on your lands based on territory count, held temples, and fortune." />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="rules__item" picking-mode="Ignore">
+                            <ui:Label class="rules__step-badge" picking-mode="Ignore" text="3" />
+                            <ui:Label class="rules__text" picking-mode="Ignore" text="Attack: Clash dice against adjacent enemy territories to conquer lands and advance." />
+                        </ui:VisualElement>
                     </ui:VisualElement>
-                    <ui:VisualElement class="menu__info-box" picking-mode="Ignore">
-                        <ui:Label class="menu__info-box-title" picking-mode="Ignore" text="3. SACRED ROAD" />
-                        <ui:Label class="menu__info-box-text" picking-mode="Ignore" text="Rolling your sacred number during an attack opens a Sacred Road!&#10;• March all troops but one from an army up to 4 friendly territories away.&#10;• Or click 'SKIP ROAD' to decline the march and keep attacking freely." />
+
+                    <!-- Card 3: Sacred Road -->
+                    <ui:VisualElement class="rules__card" picking-mode="Ignore">
+                        <ui:VisualElement class="rules__card-header" picking-mode="Ignore">
+                            <ui:Label class="rules__card-tag" picking-mode="Ignore" text="TACTICS" />
+                            <ui:Label class="rules__card-title" picking-mode="Ignore" text="THE SACRED ROAD" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="rules__item" picking-mode="Ignore">
+                            <ui:Label class="rules__bullet" picking-mode="Ignore" text="●" />
+                            <ui:Label class="rules__text" picking-mode="Ignore" text="Sacred Roll: Rolling your sacred number in combat unlocks the Sacred Road." />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="rules__item" picking-mode="Ignore">
+                            <ui:Label class="rules__bullet" picking-mode="Ignore" text="●" />
+                            <ui:Label class="rules__text" picking-mode="Ignore" text="Free March: Move all troops but one from an army up to 2 connected lands away." />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="rules__item" picking-mode="Ignore">
+                            <ui:Label class="rules__bullet" picking-mode="Ignore" text="●" />
+                            <ui:Label class="rules__text" picking-mode="Ignore" text="Optional: Press 'SKIP ROAD' anytime to decline and keep attacking freely." />
+                        </ui:VisualElement>
                     </ui:VisualElement>
-                    <ui:VisualElement class="menu__info-box" picking-mode="Ignore">
-                        <ui:Label class="menu__info-box-title" picking-mode="Ignore" text="4. FAVOR &amp; WRATH" />
-                        <ui:Label class="menu__info-box-text" picking-mode="Ignore" text="Each sacred roll earns +1 Divine Favor. Reach 3 Favor to unleash your god's devastating Wrath power once per turn (Thunderbolt, Mjölnir, Eye of Ra, or Harvest of Crows)!" />
+
+                    <!-- Card 4: Favor & Wrath -->
+                    <ui:VisualElement class="rules__card" picking-mode="Ignore">
+                        <ui:VisualElement class="rules__card-header" picking-mode="Ignore">
+                            <ui:Label class="rules__card-tag" picking-mode="Ignore" text="POWERS" />
+                            <ui:Label class="rules__card-title" picking-mode="Ignore" text="FAVOR &amp; WRATH" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="rules__item" picking-mode="Ignore">
+                            <ui:Label class="rules__bullet" picking-mode="Ignore" text="●" />
+                            <ui:Label class="rules__text" picking-mode="Ignore" text="Gain Favor: Each combat Sacred roll awards +1 Divine Favor (0 to 3 ★)." />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="rules__item" picking-mode="Ignore">
+                            <ui:Label class="rules__bullet" picking-mode="Ignore" text="●" />
+                            <ui:Label class="rules__text" picking-mode="Ignore" text="Cast Wrath: At 3 Favor, spend all Favor to cast your signature god power once per turn!" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="rules__item" picking-mode="Ignore">
+                            <ui:Label class="rules__bullet" picking-mode="Ignore" text="●" />
+                            <ui:Label class="rules__text" picking-mode="Ignore" text="Arsenal: Thunderbolt (Zeus), Sun at Noon (Ra), Mjölnir (Thor), Harvest (Morrígan)." />
+                        </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
@@ -397,57 +465,134 @@
                     <ui:Label class="menu__screen-title" picking-mode="Ignore" text="THE FOUR DEITIES" />
                     <ui:VisualElement class="menu__header-spacer" picking-mode="Ignore" />
                 </ui:VisualElement>
-                <ui:VisualElement class="menu__deities-grid" picking-mode="Ignore">
-                    <ui:VisualElement class="menu__deity-box god--zeus" picking-mode="Ignore">
-                        <ui:VisualElement class="menu__deity-header" picking-mode="Ignore">
-                            <ui:VisualElement class="god-chip god--zeus" picking-mode="Ignore">
+
+                <ui:VisualElement class="pantheon__grid" picking-mode="Ignore">
+                    <!-- Zeus -->
+                    <ui:VisualElement class="deity-box god--zeus" picking-mode="Ignore">
+                        <ui:VisualElement class="deity-box__header" picking-mode="Ignore">
+                            <ui:VisualElement class="god-chip god-chip--sm god--zeus" picking-mode="Ignore">
                                 <ui:VisualElement class="god-chip__icon" picking-mode="Ignore" />
                             </ui:VisualElement>
-                            <ui:VisualElement class="menu__deity-title-group" picking-mode="Ignore">
-                                <ui:Label class="menu__deity-name" picking-mode="Ignore" text="ZEUS" />
-                                <ui:Label class="menu__deity-subtitle" picking-mode="Ignore" text="Olympus · Sacred VI · Cursed I (Rival: Ra)" />
+                            <ui:VisualElement class="deity-box__title-group" picking-mode="Ignore">
+                                <ui:Label class="deity-box__name" picking-mode="Ignore" text="ZEUS" />
+                                <ui:Label class="deity-box__realm" picking-mode="Ignore" text="GREECE · OLYMPUS" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="deity-box__badges" picking-mode="Ignore">
+                                <ui:Label class="deity-badge deity-badge--sacred" picking-mode="Ignore" text="◆ 1 SACRED" />
+                                <ui:Label class="deity-badge deity-badge--cursed" picking-mode="Ignore" text="⚅ 6 CURSED (THOR)" />
                             </ui:VisualElement>
                         </ui:VisualElement>
-                        <ui:Label class="menu__deity-desc" picking-mode="Ignore" text="&lt;b&gt;Day: Storm of Olympus&lt;/b&gt;&#10;Every enemy territory with 2+ troops loses 1 troop to Zeus.&#10;&#10;&lt;b&gt;Wrath: Thunderbolt&lt;/b&gt;&#10;Hurls two lightning strikes at enemy armies, reducing each targeted garrison by half!" />
+                        <ui:VisualElement class="deity-box__divider" picking-mode="Ignore" />
+                        <ui:VisualElement class="deity-box__power-row" picking-mode="Ignore">
+                            <ui:Label class="deity-pill deity-pill--day" picking-mode="Ignore" text="DAY" />
+                            <ui:VisualElement class="deity-box__power-text-group" picking-mode="Ignore">
+                                <ui:Label class="deity-box__power-title" picking-mode="Ignore" text="Storm of Olympus" />
+                                <ui:Label class="deity-box__power-desc" picking-mode="Ignore" text="Destiny 1: Every enemy land with 2+ troops loses 1 troop to Zeus." />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="deity-box__power-row" picking-mode="Ignore">
+                            <ui:Label class="deity-pill deity-pill--wrath" picking-mode="Ignore" text="WRATH" />
+                            <ui:VisualElement class="deity-box__power-text-group" picking-mode="Ignore">
+                                <ui:Label class="deity-box__power-title" picking-mode="Ignore" text="Thunderbolt (3 ★)" />
+                                <ui:Label class="deity-box__power-desc" picking-mode="Ignore" text="Hurls 2 lightning bolts; each halves the target army's garrison." />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
                     </ui:VisualElement>
 
-                    <ui:VisualElement class="menu__deity-box god--ra" picking-mode="Ignore">
-                        <ui:VisualElement class="menu__deity-header" picking-mode="Ignore">
-                            <ui:VisualElement class="god-chip god--ra" picking-mode="Ignore">
+                    <!-- Ra -->
+                    <ui:VisualElement class="deity-box god--ra" picking-mode="Ignore">
+                        <ui:VisualElement class="deity-box__header" picking-mode="Ignore">
+                            <ui:VisualElement class="god-chip god-chip--sm god--ra" picking-mode="Ignore">
                                 <ui:VisualElement class="god-chip__icon" picking-mode="Ignore" />
                             </ui:VisualElement>
-                            <ui:VisualElement class="menu__deity-title-group" picking-mode="Ignore">
-                                <ui:Label class="menu__deity-name" picking-mode="Ignore" text="RA" />
-                                <ui:Label class="menu__deity-subtitle" picking-mode="Ignore" text="The Sun · Sacred I · Cursed VI (Rival: Zeus)" />
+                            <ui:VisualElement class="deity-box__title-group" picking-mode="Ignore">
+                                <ui:Label class="deity-box__name" picking-mode="Ignore" text="RA" />
+                                <ui:Label class="deity-box__realm" picking-mode="Ignore" text="EGYPT · THE SUN" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="deity-box__badges" picking-mode="Ignore">
+                                <ui:Label class="deity-badge deity-badge--sacred" picking-mode="Ignore" text="◆ 2 SACRED" />
+                                <ui:Label class="deity-badge deity-badge--cursed" picking-mode="Ignore" text="⚄ 5 CURSED (MORRÍGAN)" />
                             </ui:VisualElement>
                         </ui:VisualElement>
-                        <ui:Label class="menu__deity-desc" picking-mode="Ignore" text="&lt;b&gt;Day: Sun at Noon&lt;/b&gt;&#10;Grants +1 troop reinforcement to every Ra territory across the board.&#10;&#10;&lt;b&gt;Wrath: Eye of Ra&lt;/b&gt;&#10;Instantly converts an enemy territory bordering 2 or more of Ra's armies." />
+                        <ui:VisualElement class="deity-box__divider" picking-mode="Ignore" />
+                        <ui:VisualElement class="deity-box__power-row" picking-mode="Ignore">
+                            <ui:Label class="deity-pill deity-pill--day" picking-mode="Ignore" text="DAY" />
+                            <ui:VisualElement class="deity-box__power-text-group" picking-mode="Ignore">
+                                <ui:Label class="deity-box__power-title" picking-mode="Ignore" text="Sun at Noon" />
+                                <ui:Label class="deity-box__power-desc" picking-mode="Ignore" text="Destiny 2: Grants +1 troop reinforcement to every Ra territory across the board." />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="deity-box__power-row" picking-mode="Ignore">
+                            <ui:Label class="deity-pill deity-pill--wrath" picking-mode="Ignore" text="WRATH" />
+                            <ui:VisualElement class="deity-box__power-text-group" picking-mode="Ignore">
+                                <ui:Label class="deity-box__power-title" picking-mode="Ignore" text="Eye of Ra (3 ★)" />
+                                <ui:Label class="deity-box__power-desc" picking-mode="Ignore" text="Instantly converts an enemy land bordering 2 or more of Ra's armies." />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
                     </ui:VisualElement>
 
-                    <ui:VisualElement class="menu__deity-box god--thor" picking-mode="Ignore">
-                        <ui:VisualElement class="menu__deity-header" picking-mode="Ignore">
-                            <ui:VisualElement class="god-chip god--thor" picking-mode="Ignore">
+                    <!-- Thor -->
+                    <ui:VisualElement class="deity-box god--thor" picking-mode="Ignore">
+                        <ui:VisualElement class="deity-box__header" picking-mode="Ignore">
+                            <ui:VisualElement class="god-chip god-chip--sm god--thor" picking-mode="Ignore">
                                 <ui:VisualElement class="god-chip__icon" picking-mode="Ignore" />
                             </ui:VisualElement>
-                            <ui:VisualElement class="menu__deity-title-group" picking-mode="Ignore">
-                                <ui:Label class="menu__deity-name" picking-mode="Ignore" text="THOR" />
-                                <ui:Label class="menu__deity-subtitle" picking-mode="Ignore" text="Asgard · Sacred V · Cursed II (Rival: Morrígan)" />
+                            <ui:VisualElement class="deity-box__title-group" picking-mode="Ignore">
+                                <ui:Label class="deity-box__name" picking-mode="Ignore" text="THOR" />
+                                <ui:Label class="deity-box__realm" picking-mode="Ignore" text="NORSE · ASGARD" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="deity-box__badges" picking-mode="Ignore">
+                                <ui:Label class="deity-badge deity-badge--sacred" picking-mode="Ignore" text="◆ 6 SACRED" />
+                                <ui:Label class="deity-badge deity-badge--cursed" picking-mode="Ignore" text="⚀ 1 CURSED (ZEUS)" />
                             </ui:VisualElement>
                         </ui:VisualElement>
-                        <ui:Label class="menu__deity-desc" picking-mode="Ignore" text="&lt;b&gt;Day: Ragnarök&lt;/b&gt;&#10;Thor wins all ties in combat, and each victory eliminates 2 enemy troops.&#10;&#10;&lt;b&gt;Wrath: Mjölnir&lt;/b&gt;&#10;Delivers an irresistible 3-troop hammer strike to an adjacent enemy, capturing empty lands." />
+                        <ui:VisualElement class="deity-box__divider" picking-mode="Ignore" />
+                        <ui:VisualElement class="deity-box__power-row" picking-mode="Ignore">
+                            <ui:Label class="deity-pill deity-pill--day" picking-mode="Ignore" text="DAY" />
+                            <ui:VisualElement class="deity-box__power-text-group" picking-mode="Ignore">
+                                <ui:Label class="deity-box__power-title" picking-mode="Ignore" text="Ragnarök" />
+                                <ui:Label class="deity-box__power-desc" picking-mode="Ignore" text="Destiny 6: Thor wins all combat ties, and each victory eliminates 2 enemy troops." />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="deity-box__power-row" picking-mode="Ignore">
+                            <ui:Label class="deity-pill deity-pill--wrath" picking-mode="Ignore" text="WRATH" />
+                            <ui:VisualElement class="deity-box__power-text-group" picking-mode="Ignore">
+                                <ui:Label class="deity-box__power-title" picking-mode="Ignore" text="Mjölnir (3 ★)" />
+                                <ui:Label class="deity-box__power-desc" picking-mode="Ignore" text="Delivers a 3-troop hammer strike to an adjacent enemy, taking empty lands." />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
                     </ui:VisualElement>
 
-                    <ui:VisualElement class="menu__deity-box god--morrigan" picking-mode="Ignore">
-                        <ui:VisualElement class="menu__deity-header" picking-mode="Ignore">
-                            <ui:VisualElement class="god-chip god--morrigan" picking-mode="Ignore">
+                    <!-- The Morrígan -->
+                    <ui:VisualElement class="deity-box god--morrigan" picking-mode="Ignore">
+                        <ui:VisualElement class="deity-box__header" picking-mode="Ignore">
+                            <ui:VisualElement class="god-chip god-chip--sm god--morrigan" picking-mode="Ignore">
                                 <ui:VisualElement class="god-chip__icon" picking-mode="Ignore" />
                             </ui:VisualElement>
-                            <ui:VisualElement class="menu__deity-title-group" picking-mode="Ignore">
-                                <ui:Label class="menu__deity-name" picking-mode="Ignore" text="THE MORRÍGAN" />
-                                <ui:Label class="menu__deity-subtitle" picking-mode="Ignore" text="The Celts · Sacred II · Cursed V (Rival: Thor)" />
+                            <ui:VisualElement class="deity-box__title-group" picking-mode="Ignore">
+                                <ui:Label class="deity-box__name" picking-mode="Ignore" text="THE MORRÍGAN" />
+                                <ui:Label class="deity-box__realm" picking-mode="Ignore" text="CELTS · THE RAVEN" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="deity-box__badges" picking-mode="Ignore">
+                                <ui:Label class="deity-badge deity-badge--sacred" picking-mode="Ignore" text="◆ 5 SACRED" />
+                                <ui:Label class="deity-badge deity-badge--cursed" picking-mode="Ignore" text="⚁ 2 CURSED (RA)" />
                             </ui:VisualElement>
                         </ui:VisualElement>
-                        <ui:Label class="menu__deity-desc" picking-mode="Ignore" text="&lt;b&gt;Day: Night of Crows&lt;/b&gt;&#10;Fallen troops from any battle across the board rise to join Morrígan's armies.&#10;&#10;&lt;b&gt;Wrath: Harvest of Crows&lt;/b&gt;&#10;Her next combat victory harvests the defeated enemy troops directly into her ranks." />
+                        <ui:VisualElement class="deity-box__divider" picking-mode="Ignore" />
+                        <ui:VisualElement class="deity-box__power-row" picking-mode="Ignore">
+                            <ui:Label class="deity-pill deity-pill--day" picking-mode="Ignore" text="DAY" />
+                            <ui:VisualElement class="deity-box__power-text-group" picking-mode="Ignore">
+                                <ui:Label class="deity-box__power-title" picking-mode="Ignore" text="Night of Crows" />
+                                <ui:Label class="deity-box__power-desc" picking-mode="Ignore" text="Destiny 5: Fallen troops from battles everywhere rise to join Morrígan's armies." />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="deity-box__power-row" picking-mode="Ignore">
+                            <ui:Label class="deity-pill deity-pill--wrath" picking-mode="Ignore" text="WRATH" />
+                            <ui:VisualElement class="deity-box__power-text-group" picking-mode="Ignore">
+                                <ui:Label class="deity-box__power-title" picking-mode="Ignore" text="Harvest (3 ★)" />
+                                <ui:Label class="deity-box__power-desc" picking-mode="Ignore" text="Her next victory recruits all eliminated enemy troops directly into her ranks." />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
@@ -459,22 +604,74 @@
                     <ui:Label class="menu__screen-title" picking-mode="Ignore" text="SACRED &amp; CURSED · THE RULE OF 7" />
                     <ui:VisualElement class="menu__header-spacer" picking-mode="Ignore" />
                 </ui:VisualElement>
-                <ui:VisualElement class="menu__content-grid" picking-mode="Ignore">
-                    <ui:VisualElement class="menu__info-box" picking-mode="Ignore">
-                        <ui:Label class="menu__info-box-title" picking-mode="Ignore" text="THE GEOMETRY OF DESTINY: 7" />
-                        <ui:Label class="menu__info-box-text" picking-mode="Ignore" text="On every standard six-sided die, opposite faces always sum to 7:&#10;• 1 + 6 = 7 (Ra vs Zeus)&#10;• 2 + 5 = 7 (Morrígan vs Thor)&#10;• 3 + 4 = 7 (Good Fortune vs Bad Omen)&#10;In GodBoard, this fundamental symmetry is the heartbeat of gameplay." />
+
+                <ui:Label class="theme__subtitle" picking-mode="Ignore" text="Opposite faces of every six-sided die always sum to 7. Your lucky number is your rival's curse." />
+
+                <ui:VisualElement class="theme__pairs" picking-mode="Ignore">
+                    <!-- Pair 1: Zeus & Thor -->
+                    <ui:VisualElement class="theme__pair-strip" picking-mode="Ignore">
+                        <ui:VisualElement class="theme__die-face god--zeus" picking-mode="Ignore">
+                            <ui:Label class="theme__die-num" picking-mode="Ignore" text="⚀ 1" />
+                            <ui:Label class="theme__die-name" picking-mode="Ignore" text="ZEUS" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="theme__sum-bridge" picking-mode="Ignore">
+                            <ui:Label class="theme__sum-pill" picking-mode="Ignore" text="1 + 6 = 7" />
+                            <ui:Label class="theme__sum-desc" picking-mode="Ignore" text="Zeus's Sacred (1) is Thor's Curse ↔ Thor's Sacred (6) is Zeus's Curse" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="theme__die-face god--thor" picking-mode="Ignore">
+                            <ui:Label class="theme__die-num" picking-mode="Ignore" text="⚅ 6" />
+                            <ui:Label class="theme__die-name" picking-mode="Ignore" text="THOR" />
+                        </ui:VisualElement>
                     </ui:VisualElement>
-                    <ui:VisualElement class="menu__info-box" picking-mode="Ignore">
-                        <ui:Label class="menu__info-box-title" picking-mode="Ignore" text="LUCKY NUMBERS &amp; RIVAL'S CURSE" />
-                        <ui:Label class="menu__info-box-text" picking-mode="Ignore" text="When you roll your deity's Sacred face in combat, you defeat any standard roll (3 or 4) and win ties against your rival.&#10;&#10;However, your rival's Sacred face is your Cursed face! Rolling it means automatic defeat against any neutral roll." />
+
+                    <!-- Pair 2: Ra & Morrígan -->
+                    <ui:VisualElement class="theme__pair-strip" picking-mode="Ignore">
+                        <ui:VisualElement class="theme__die-face god--ra" picking-mode="Ignore">
+                            <ui:Label class="theme__die-num" picking-mode="Ignore" text="⚁ 2" />
+                            <ui:Label class="theme__die-name" picking-mode="Ignore" text="RA" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="theme__sum-bridge" picking-mode="Ignore">
+                            <ui:Label class="theme__sum-pill" picking-mode="Ignore" text="2 + 5 = 7" />
+                            <ui:Label class="theme__sum-desc" picking-mode="Ignore" text="Ra's Sacred (2) is Morrígan's Curse ↔ Morrígan's Sacred (5) is Ra's Curse" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="theme__die-face god--morrigan" picking-mode="Ignore">
+                            <ui:Label class="theme__die-num" picking-mode="Ignore" text="⚄ 5" />
+                            <ui:Label class="theme__die-name" picking-mode="Ignore" text="MORRÍGAN" />
+                        </ui:VisualElement>
                     </ui:VisualElement>
-                    <ui:VisualElement class="menu__info-box" picking-mode="Ignore">
-                        <ui:Label class="menu__info-box-title" picking-mode="Ignore" text="DIVINE FAVOR &amp; SACRED ROADS" />
-                        <ui:Label class="menu__info-box-text" picking-mode="Ignore" text="Rolling your Lucky Number doesn't just win battles—it channels the gods:&#10;• +1 Favor towards unleashing your devastating Wrath.&#10;• Unlocks the Sacred Road, granting lightning-fast strategic troop repositioning across your empire." />
+
+                    <!-- Pair 3: Neutral Faces -->
+                    <ui:VisualElement class="theme__pair-strip theme__pair-strip--neutral" picking-mode="Ignore">
+                        <ui:VisualElement class="theme__die-face theme__die-face--fortune" picking-mode="Ignore">
+                            <ui:Label class="theme__die-num" picking-mode="Ignore" text="⚂ 3" />
+                            <ui:Label class="theme__die-name" picking-mode="Ignore" text="FORTUNE" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="theme__sum-bridge" picking-mode="Ignore">
+                            <ui:Label class="theme__sum-pill" picking-mode="Ignore" text="3 + 4 = 7" />
+                            <ui:Label class="theme__sum-desc" picking-mode="Ignore" text="Face 3 grants +1 fortune to all ↔ Face 4 strikes the largest armies" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="theme__die-face theme__die-face--omen" picking-mode="Ignore">
+                            <ui:Label class="theme__die-num" picking-mode="Ignore" text="⚃ 4" />
+                            <ui:Label class="theme__die-name" picking-mode="Ignore" text="BAD OMEN" />
+                        </ui:VisualElement>
                     </ui:VisualElement>
-                    <ui:VisualElement class="menu__info-box" picking-mode="Ignore">
-                        <ui:Label class="menu__info-box-title" picking-mode="Ignore" text="COMBAT AS A SACRED DUEL" />
-                        <ui:Label class="menu__info-box-text" picking-mode="Ignore" text="Combat is never just raw dice math. By understanding your sacred face and your rival's cursed face, every clash becomes a calculated duel between fortune, omen, and divine providence." />
+                </ui:VisualElement>
+
+                <!-- Core rules comparison cards -->
+                <ui:VisualElement class="theme__rules-row" picking-mode="Ignore">
+                    <ui:VisualElement class="theme__rule-box theme__rule-box--sacred" picking-mode="Ignore">
+                        <ui:VisualElement class="theme__rule-header" picking-mode="Ignore">
+                            <ui:VisualElement class="omen-icon omen-icon--sacred" picking-mode="Ignore" />
+                            <ui:Label class="theme__rule-title" picking-mode="Ignore" text="YOUR SACRED NUMBER" />
+                        </ui:VisualElement>
+                        <ui:Label class="theme__rule-text" picking-mode="Ignore" text="• Beats any neutral roll (3 or 4) automatically in combat.&#10;• Wins all ties against your rival.&#10;• Grants +1 Divine Favor and unlocks the Sacred Road." />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="theme__rule-box theme__rule-box--cursed" picking-mode="Ignore">
+                        <ui:VisualElement class="theme__rule-header" picking-mode="Ignore">
+                            <ui:VisualElement class="omen-icon omen-icon--cursed" picking-mode="Ignore" />
+                            <ui:Label class="theme__rule-title" picking-mode="Ignore" text="YOUR CURSED NUMBER" />
+                        </ui:VisualElement>
+                        <ui:Label class="theme__rule-text" picking-mode="Ignore" text="• Your rival's sacred number is your curse.&#10;• Rolling it in combat loses against any neutral roll.&#10;• Vulnerable to decisive defeat if your rival rolls their sacred face." />
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
