@@ -74,7 +74,7 @@
     --draw-place-width: 128px;
     --draw-verdict-height: 88px;
     --icon-sm: 20px;
-    --nations-panel-width: 300px;
+    --nations-panel-width: 320px;
     /* Wide enough that every power line (Day, Wrath) fits on one line at body size */
     --god-card-width: 352px;
     /* The Wrath button: icon, carved name over its state, the three Favor stars. Wide and tall enough
@@ -118,8 +118,8 @@
     --road-popup-top: 108px;
     /* The round "i" badge that says "click for the full explanation" (round line, nation rows) */
     --info-badge-size: 28px;
-    /* Space a row/bar reserves on its right for the absolutely anchored "i" badge (badge + 8px) */
-    --info-badge-reserve: 36px;
+    /* Space a row/bar reserves on its right for the absolutely anchored "i" badge (badge + 4px) */
+    --info-badge-reserve: 32px;
     /* Same for the round line, whose badge sits 12px from the card edge (badge + 2 x 12px) */
     --info-badge-gutter: 52px;
     /* Max width of the round info panel under the round line */

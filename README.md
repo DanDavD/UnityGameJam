@@ -9,7 +9,7 @@
   <img src="https://img.shields.io/badge/Unity-6000.6.5f1-black?logo=unity" alt="Unity 6" />
   <img src="https://img.shields.io/badge/Language-C%23%2012%20%2F%20.NET%209-blue?logo=csharp" alt="C# 12" />
   <img src="https://img.shields.io/badge/Platform-WebGL%20Browser-orange?logo=webassembly" alt="Platform" />
-  <img src="https://img.shields.io/badge/Tests-380%20Passed-brightgreen" alt="Tests" />
+  <img src="https://img.shields.io/badge/Tests-387%20Passed-brightgreen" alt="Tests" />
   <img src="https://img.shields.io/badge/Architecture-Decoupled%20Pure%20C%23-purple" alt="Architecture" />
   <img src="https://img.shields.io/badge/License-MIT-lightgrey" alt="License" />
 </p>
@@ -55,7 +55,7 @@ Matches are designed to be fast, tense, and decisive (7–10 minutes), driven by
 
 ### Victory Conditions
 A match concludes immediately upon achieving any of the following (evaluated in priority order):
-1. **Temple Conquest (Primary):** Control **3 of the 4 Temples** at the beginning of your turn (giving rivals one full round to respond).
+1. **Temple Conquest (Primary):** Control **3 of the 4 Temples** (the 4 diamond-shaped territories: North, South, East, West) at the beginning of your turn (giving rivals one full round to respond).
 2. **Total Domination:** Eliminate all rival deities from the altar.
 3. **Round 15 Tie-Break:** The deity controlling the highest number of territories when the 15-round limit expires wins.
 
@@ -80,6 +80,7 @@ Following Destiny, nations act in clockwise initiative:
 ### Controls
 * **Left Click:** Select territories, reinforce, issue attack orders, make Offerings, click UI controls.
 * **Right Click / Escape:** Cancel selection, dismiss popups, skip Sacred Road march.
+* **Hover:** Hover over diamond Temple territories to reveal dynamic tooltips with ownership status.
 * **Sound Menu:** Adjust master, music, and SFX volumes independently.
 * **Fast Bots (▶▶):** Toggle accelerated AI turn speeds.
 
@@ -136,7 +137,7 @@ Audio assets were generated using custom Python physical modeling synthesis:
 
 ## Test Suite & Code Quality
 
-The project includes **380 automated tests** across edit-mode and core test suites:
+The project includes **387 automated tests** across edit-mode and core test suites:
 - **Combat Resolution:** Verification of sacred vs cursed hierarchies, offering odds, and tie-breakers.
 - **Turn State Machine:** Validation of reinforcement quotas, attack permissions, road marches, and victory triggers.
 - **Board Topology:** Graph connectivity, temple adjacency, and pathfinding distances across all 13 territories.

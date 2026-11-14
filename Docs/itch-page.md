@@ -41,7 +41,7 @@ Opposite faces of a six-sided die always add up to 7: **your sacred number is yo
 ### How to Play
 
 #### Conquest Goals (First to achieve wins)
-1. **Hold 3 of the 4 Temples** at the start of your turn (Primary victory).
+1. **Hold 3 of the 4 Temples** (the 4 diamond-shaped territories on the board: North, South, East, West) at the start of your turn (Primary victory).
 2. **Eliminate all rival nations** (Last standing).
 3. **Control the most territories after 15 rounds** (Tie-breaker).
 
@@ -67,6 +67,7 @@ Each round begins with the rolling of the **Destiny Die**:
 ### Controls & Options
 * **Mouse Left-Click:** Select territories, reinforce, issue attacks, trigger Offerings, interact with UI buttons.
 * **Mouse Right-Click / Escape:** Cancel active selection, close overlays or info panels.
+* **Mouse Hover:** Hover over any of the 4 diamond Temple territories to reveal dynamic tooltips with ownership status.
 * **SOUND Button:** Open the volume panel to fine-tune music and sound effects independently.
 * **▶▶ FAST BOTS:** Toggle fast animations for rapid bot turns.
 
