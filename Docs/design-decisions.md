@@ -182,6 +182,14 @@ Key product, game-design and architecture decisions behind **GodBoard**, with th
 **Decision:** no frameworks, DI containers, event buses, reflection or complex generics. Static functions for pure rules, enums and plain classes elsewhere. If something can be deleted without losing behavior, it is deleted.
 **Why:** it is a small game, and the code should read in minutes.
 
+### Temple Discoverability & Non-Intrusive Tooltips
+**Decision:** identify the 4 Temples as diamond shapes in the Rules tutorial (including explicit diamond icon visuals) and implement snappy, lightweight hover tooltips on the board (unclaimed shows cardinal position e.g. "North Temple", claimed shows ownership e.g. "Ra's Temple").
+**Why:** user testing highlighted confusion distinguishing regular territories from temples without opening the help menu. The hover overlay is zero-friction and purely visual, adding clarity without altering gameplay mechanics or hitboxes.
+
+### Robust Nations Panel Alignment
+**Decision:** fixed spacing and non-expanding flex layout for `.nation-row__name`, ensuring the deity's name, the `[YOU]` badge, and the information `[i]` button maintain consistent, collision-free alignment across all 4 deities (Zeus, Ra, Thor, and Morrígan).
+**Why:** longer god names like Morrígan pushed the `[YOU]` tag into the absolutely anchored `[i]` button. Restricting flex-growth and allocating a dedicated 320px column resolved this across all screen aspect ratios.
+
 ---
 
 ## Process

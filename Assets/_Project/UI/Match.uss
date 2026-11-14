@@ -1007,17 +1007,18 @@
 
 /* Chip, name, then the info key pushed to the head's right end (same x on every row). */
 .nation-row__name {
-    flex-grow: 1;
+    flex-grow: 0;
+    flex-shrink: 0;
     font-size: var(--font-size-body);
     -unity-font-style: bold;
     color: var(--ink);
     padding: 0;
-    margin: 0 0 0 var(--space-2);
+    margin: 0 0 0 6px;
 }
 
 /* The place in the drawn turn order, a small numbered tag right after the chip. */
 .nation-row__place {
-    margin-left: var(--space-2);
+    margin-left: 6px;
     padding: 0 var(--space-1);
     font-size: var(--font-size-label);
     -unity-font-definition: var(--font-strong);
@@ -1025,16 +1026,18 @@
     border-width: var(--border-width);
     border-color: var(--ink-faint);
     border-radius: var(--radius-sm);
+    flex-shrink: 0;
 }
 
 .nation-row__you {
-    margin-left: var(--space-2);
+    margin-left: 6px;
     padding: 0 var(--space-1);
     font-size: var(--font-size-label);
     letter-spacing: var(--letter-spacing-label);
     color: var(--paper);
     background-color: var(--wood);
     border-radius: var(--radius-sm);
+    flex-shrink: 0;
 }
 
 .nation-row__stats {
