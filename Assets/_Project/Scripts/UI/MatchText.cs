@@ -385,6 +385,22 @@ namespace GameJam.UI
         /// <summary>One dot of the nations panel temple line: ● held, ○ not.</summary>
         public static string TempleDot(bool held) => held ? HeldTempleDot : EmptyTempleDot;
 
+        /// <summary>Tooltip title for a temple: directional name when unclaimed ("North Temple"), owner's temple when claimed ("Ra's Temple").</summary>
+        public static string TempleTooltipTitle(Territory territory)
+        {
+            if (territory.Owner.HasValue)
+                return $"{GodName(territory.Owner.Value)}'s Temple";
+            return territory.Name;
+        }
+
+        /// <summary>Tooltip subtitle for a temple: "TEMPLE · UNCLAIMED" or directional context ("NORTH TEMPLE · CLAIMED").</summary>
+        public static string TempleTooltipSubtitle(Territory territory)
+        {
+            if (territory.Owner.HasValue)
+                return $"{territory.Name.ToUpperInvariant()} · CLAIMED";
+            return "TEMPLE · UNCLAIMED";
+        }
+
         /// <summary>"Thor's temples": the end-screen stat names whose temples it counts.</summary>
         public static string WinnerTemplesStat(God winner) => $"{GodName(winner)}'s temples";
 

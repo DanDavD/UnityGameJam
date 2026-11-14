@@ -72,6 +72,14 @@ namespace GameJam.Gameplay
         /// <summary>World position of a territory's center; its link lines and the attack path start here.</summary>
         public Vector3 PositionOf(Territory territory) => _views[territory.Id].transform.position;
 
+        /// <summary>Screen position of a territory's center (bottom-left origin), for UI overlay positioning.</summary>
+        public Vector2 ScreenPositionOf(Territory territory)
+        {
+            if (territory == null || _camera == null)
+                return Vector2.zero;
+            return _camera.WorldToScreenPoint(PositionOf(territory));
+        }
+
         /// <summary>
         /// How far from its center a piece's edge lies along a direction (a unit vector), so a path
         /// ends at the edge instead of running under the piece. Capitals are squares, temples diamonds,
