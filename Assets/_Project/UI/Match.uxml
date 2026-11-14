@@ -115,50 +115,40 @@
                     <ui:Label name="prompt-label" class="prompt__instruction" picking-mode="Ignore" text="" />
                 </ui:VisualElement>
             </ui:VisualElement>
-            <!-- Three slots, so the center (END TURN, or the counter while reinforcing) sits at the exact
-                 bottom center whatever the Wrath button beside it shows. -->
+            <!-- Action bar: flex row dynamically centered. Symmetrically holds Wrath and End Turn
+                 (2 buttons) or Wrath, Skip Road and End Turn (3 buttons), or the Reinforce counter. -->
             <ui:VisualElement class="hud__actions" picking-mode="Ignore">
-                <ui:VisualElement class="hud__actions-side hud__actions-side--left" picking-mode="Ignore">
-                    <!-- The god's signature power: icon, carved name over its state, three Favor stars.
-                         Locked / ready / used / aiming classes and the god class are set by HudView. -->
-                    <ui:Button name="wrath-button" class="button wrath god--zeus">
-                        <ui:VisualElement class="wrath__halo" picking-mode="Ignore" />
-                        <ui:VisualElement class="wrath__icon god-chip__icon" picking-mode="Ignore" />
-                        <ui:VisualElement class="wrath__text" picking-mode="Ignore">
-                            <ui:Label name="wrath-name" class="wrath__name" picking-mode="Ignore" text="THUNDERBOLT" />
-                            <ui:Label name="wrath-state" class="wrath__state" picking-mode="Ignore" text="FAVOR 1/3" />
+                <ui:Button name="wrath-button" class="button wrath god--zeus">
+                    <ui:VisualElement class="wrath__halo" picking-mode="Ignore" />
+                    <ui:VisualElement class="wrath__icon god-chip__icon" picking-mode="Ignore" />
+                    <ui:VisualElement class="wrath__text" picking-mode="Ignore">
+                        <ui:Label name="wrath-name" class="wrath__name" picking-mode="Ignore" text="THUNDERBOLT" />
+                        <ui:Label name="wrath-state" class="wrath__state" picking-mode="Ignore" text="FAVOR 1/3" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="wrath-stars" class="wrath__stars" picking-mode="Ignore">
+                        <ui:VisualElement class="wrath__star wrath__star--on" picking-mode="Ignore">
+                            <ui:VisualElement class="wrath__star-back" picking-mode="Ignore" />
+                            <ui:VisualElement class="wrath__star-front" picking-mode="Ignore" />
                         </ui:VisualElement>
-                        <ui:VisualElement name="wrath-stars" class="wrath__stars" picking-mode="Ignore">
-                            <ui:VisualElement class="wrath__star wrath__star--on" picking-mode="Ignore">
-                                <ui:VisualElement class="wrath__star-back" picking-mode="Ignore" />
-                                <ui:VisualElement class="wrath__star-front" picking-mode="Ignore" />
-                            </ui:VisualElement>
-                            <ui:VisualElement class="wrath__star" picking-mode="Ignore">
-                                <ui:VisualElement class="wrath__star-back" picking-mode="Ignore" />
-                                <ui:VisualElement class="wrath__star-front" picking-mode="Ignore" />
-                            </ui:VisualElement>
-                            <ui:VisualElement class="wrath__star" picking-mode="Ignore">
-                                <ui:VisualElement class="wrath__star-back" picking-mode="Ignore" />
-                                <ui:VisualElement class="wrath__star-front" picking-mode="Ignore" />
-                            </ui:VisualElement>
+                        <ui:VisualElement class="wrath__star" picking-mode="Ignore">
+                            <ui:VisualElement class="wrath__star-back" picking-mode="Ignore" />
+                            <ui:VisualElement class="wrath__star-front" picking-mode="Ignore" />
                         </ui:VisualElement>
-                    </ui:Button>
-                </ui:VisualElement>
-                <ui:VisualElement class="hud__actions-center" picking-mode="Ignore">
-                    <!-- While the human reinforces: troops still to place, in a die-like token that pops on every
-                         placement, and where they came from on the line under the caption. -->
-                    <ui:VisualElement name="reinforce-counter" class="card reinforce-counter" picking-mode="Ignore">
-                        <ui:Label name="reinforce-count" class="reinforce-counter__count" picking-mode="Ignore" text="5" />
-                        <ui:VisualElement class="reinforce-counter__text" picking-mode="Ignore">
-                            <ui:Label name="reinforce-caption" class="reinforce-counter__label" picking-mode="Ignore" text="TROOPS TO PLACE" />
-                            <ui:Label name="reinforce-formula" class="reinforce-counter__formula" picking-mode="Ignore" text="2 base + 1 for 2 territories + 2 Destiny" />
+                        <ui:VisualElement class="wrath__star" picking-mode="Ignore">
+                            <ui:VisualElement class="wrath__star-back" picking-mode="Ignore" />
+                            <ui:VisualElement class="wrath__star-front" picking-mode="Ignore" />
                         </ui:VisualElement>
                     </ui:VisualElement>
-                    <ui:Button name="end-turn-button" text="END TURN" class="button button--primary button--end-turn" />
+                </ui:Button>
+                <ui:VisualElement name="reinforce-counter" class="card reinforce-counter" picking-mode="Ignore">
+                    <ui:Label name="reinforce-count" class="reinforce-counter__count" picking-mode="Ignore" text="5" />
+                    <ui:VisualElement class="reinforce-counter__text" picking-mode="Ignore">
+                        <ui:Label name="reinforce-caption" class="reinforce-counter__label" picking-mode="Ignore" text="TROOPS TO PLACE" />
+                        <ui:Label name="reinforce-formula" class="reinforce-counter__formula" picking-mode="Ignore" text="2 base + 1 for 2 territories + 2 Destiny" />
+                    </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:VisualElement class="hud__actions-side hud__actions-side--right" picking-mode="Ignore">
-                    <ui:Button name="road-skip-button" text="SKIP ROAD" class="button button--secondary hud__road-skip" style="display: none;" />
-                </ui:VisualElement>
+                <ui:Button name="road-skip-button" text="SKIP ROAD" class="button button--primary button--end-turn hud__road-skip" style="display: none;" />
+                <ui:Button name="end-turn-button" text="END TURN" class="button button--primary button--end-turn" />
             </ui:VisualElement>
         </ui:VisualElement>
         <!-- Toasts in the right gutter's free corner: what a power just did (god class set by HudView; a

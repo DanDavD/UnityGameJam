@@ -283,37 +283,32 @@
     border-right-color: var(--ink);
 }
 
-/* Three slots across the bottom: the two sides share the leftover width equally, so the center
-   (END TURN, or the reinforcement counter) sits at the exact bottom center; the Wrath waits on its left. */
+/* Bottom action bar: dynamically centered flex row. Symmetrically centers the actions
+   in all phases: 1 button (End Turn in Classic), 2 buttons (Wrath + End Turn),
+   3 buttons (Wrath + Skip Road + End Turn), or the Reinforcement counter. */
 .hud__actions {
     align-self: stretch;
-    flex-direction: row;
-    align-items: center;
-}
-
-.hud__actions-side {
-    flex-grow: 1;
-    flex-basis: 0;
-    flex-direction: row;
-    align-items: center;
-}
-
-.hud__actions-side--left {
-    justify-content: flex-end;
-}
-
-.hud__actions-center {
-    flex-shrink: 0;
     flex-direction: row;
     justify-content: center;
     align-items: center;
 }
 
-/* END TURN: the main action of every turn, taller and wider than any other button. */
+.hud__actions-side {
+    display: none;
+}
+
+.hud__actions-center {
+    display: none;
+}
+
+/* Primary action buttons across the bottom: END TURN and SKIP ROAD */
 .button.button--end-turn {
     height: var(--action-button-height);
-    padding: 0 var(--space-12);
+    min-width: 220px;
+    margin: 0 var(--space-3);
+    padding: 0 var(--space-8);
     font-size: var(--font-size-body);
+    -unity-font-definition: var(--font-strong);
 }
 
 /* Nation chip: nation color + icon, so the god is never color alone */
@@ -2074,12 +2069,12 @@
     letter-spacing: 1px;
 }
 .hud__road-skip {
-    min-height: var(--button-min-height);
-    padding: var(--space-2) var(--space-4);
-    font-size: var(--font-size-caption);
+    height: var(--action-button-height);
+    min-width: 220px;
+    margin: 0 var(--space-3);
+    padding: 0 var(--space-8);
+    font-size: var(--font-size-body);
     -unity-font-definition: var(--font-strong);
-    color: var(--ink);
-    border-color: var(--gold);
 }
 
 .menu__title {
@@ -2478,7 +2473,7 @@
     align-items: center;
     min-width: var(--wrath-button-min-width);
     height: var(--wrath-button-height);
-    margin: 0 var(--space-4) 0 0;
+    margin: 0 var(--space-3);
     padding: 0 var(--space-4) 0 var(--space-3);
     border-width: var(--space-1);
     border-bottom-width: var(--space-2);

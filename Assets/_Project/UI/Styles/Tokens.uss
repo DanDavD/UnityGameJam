@@ -84,8 +84,8 @@
     --wrath-star-size: 36px;
     /* How far the ready Wrath's halo ring stands outside the button */
     --wrath-halo-offset: -10px;
-    /* END TURN, the main action, stands taller than every other button */
-    --action-button-height: 72px;
+    /* END TURN and SKIP ROAD match the Wrath button's height for a unified, symmetrical action bar */
+    --action-button-height: 84px;
     /* The action prompt above the buttons: one paper bar (god chip, label, instruction) for every prompt */
     --prompt-max-width: 900px;
     /* The turn box: top right, under the sound and fast-bots toggles */
