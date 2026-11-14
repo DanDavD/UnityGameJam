@@ -32,6 +32,9 @@ namespace GameJam.Core
         /// <summary>Zeus's Thunderbolt only strikes territories with at least this many troops.</summary>
         public const int ThunderboltMinTroops = 2;
 
+        /// <summary>Zeus's Wrath can unleash up to this many lightning strikes in one turn.</summary>
+        public const int ThunderboltStrikes = 2;
+
         /// <summary>Troops Thor's Mjölnir takes from the defender, with no roll.</summary>
         public const int MjolnirDamage = 3;
 

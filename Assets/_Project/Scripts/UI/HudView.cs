@@ -70,11 +70,11 @@ namespace GameJam.UI
 
         [Tooltip("Seconds an onboarding hint stays, unless the next action hides it first.")]
         [SerializeField, Min(0f)]
-        private float _hintDuration = 4f;
+        private float _hintDuration = 6f;
 
         [Tooltip("Seconds a power's news line stays, unless the next one replaces it.")]
         [SerializeField, Min(0f)]
-        private float _newsDuration = 4f;
+        private float _newsDuration = 6f;
 
         private UIDocument _document;
         private VisualElement _identityCard;
@@ -115,6 +115,7 @@ namespace GameJam.UI
         private Label _dayBadge;
         private VisualElement _news;
         private Label _newsLabel;
+        private VisualElement _newsProgressBar;
         private Button _wrathButton;
         private bool _wrathClickable;
         private IVisualElementScheduledItem _wrathShake;
@@ -134,6 +135,7 @@ namespace GameJam.UI
         private IVisualElementScheduledItem _turnBoxEnter;
         private Label _hintLabel;
         private Button _endTurnButton;
+        private Button _roadSkipButton;
         private VisualElement _toggles;
         private Button _soundButton;
         private VisualElement _soundPanel;
@@ -142,6 +144,10 @@ namespace GameJam.UI
         private Label _musicValue;
         private Label _effectsValue;
         private Button _fastBotsButton;
+        private Button _quitButton;
+        private VisualElement _quitModal;
+        private Button _quitConfirmButton;
+        private Button _quitCancelButton;
         private VisualElement _endBanner;
         private VisualElement _endCard;
         private VisualElement _winnerChip;
@@ -160,6 +166,7 @@ namespace GameJam.UI
         private IVisualElementScheduledItem _newsTimeout;
 
         public event Action EndTurnClicked;
+        public event Action RoadSkipClicked;
         public event Action WrathClicked;
 
         /// <summary>The Wrath was clicked while locked or used: the controller says why.</summary>
@@ -191,7 +198,11 @@ namespace GameJam.UI
         // UIDocument rebuilds its tree when enabled, so elements are queried here, not in Awake.
         private void OnEnable()
         {
-            VisualElement root = _document.rootVisualElement;
+            if (_document == null)
+                _document = GetComponent<UIDocument>();
+            VisualElement root = _document != null ? _document.rootVisualElement : null;
+            if (root == null)
+                return;
             // The full-screen root must not swallow board clicks; only real controls should.
             root.pickingMode = PickingMode.Ignore;
             _identityCard = root.Q<VisualElement>("identity-card");
@@ -223,6 +234,7 @@ namespace GameJam.UI
             _dayBadge = root.Q<Label>("day-badge");
             _news = root.Q<VisualElement>("news");
             _newsLabel = root.Q<Label>("news-label");
+            _newsProgressBar = root.Q<VisualElement>("news-progress-bar");
             _wrathButton = root.Q<Button>("wrath-button");
             _wrathName = root.Q<Label>("wrath-name");
             _wrathState = root.Q<Label>("wrath-state");
@@ -255,6 +267,13 @@ namespace GameJam.UI
             _turnBoxStatus = root.Q<Label>("turn-box-status");
             _hintLabel = root.Q<Label>("hint-label");
             _endTurnButton = root.Q<Button>("end-turn-button");
+            _roadSkipButton = root.Q<Button>("road-skip-button");
+            if (_roadSkipButton != null)
+            {
+                _roadSkipButton.text = MatchText.RoadSkipButtonLabel;
+                _roadSkipButton.clicked += HandleRoadSkipClicked;
+                SetVisible(_roadSkipButton, false);
+            }
             _toggles = root.Q<VisualElement>("hud-toggles");
             _soundButton = root.Q<Button>("sound-button");
             _soundPanel = root.Q<VisualElement>("sound-panel");
@@ -263,6 +282,10 @@ namespace GameJam.UI
             _musicValue = root.Q<Label>("music-value");
             _effectsValue = root.Q<Label>("effects-value");
             _fastBotsButton = root.Q<Button>("fast-bots-button");
+            _quitButton = root.Q<Button>("quit-button");
+            _quitModal = root.Q<VisualElement>("quit-modal");
+            _quitConfirmButton = root.Q<Button>("quit-confirm-button");
+            _quitCancelButton = root.Q<Button>("quit-cancel-button");
             _endBanner = root.Q<VisualElement>("end-banner");
             _endCard = root.Q<VisualElement>("end-card");
             _winnerChip = root.Q<VisualElement>("winner-chip");
@@ -290,6 +313,30 @@ namespace GameJam.UI
             _endTurnButton.text = MatchText.EndTurnButton;
             _playAgainButton.text = MatchText.PlayAgainButton;
             _mainMenuButton.text = MatchText.MainMenuButton;
+            if (_quitButton != null)
+            {
+                _quitButton.text = MatchText.QuitButton;
+                _quitButton.clicked += HandleQuitButtonClicked;
+            }
+            if (_quitConfirmButton != null)
+            {
+                _quitConfirmButton.text = MatchText.QuitConfirmButton;
+                _quitConfirmButton.clicked += HandleQuitConfirmClicked;
+            }
+            if (_quitCancelButton != null)
+            {
+                _quitCancelButton.text = MatchText.QuitCancelButton;
+                _quitCancelButton.clicked += HandleQuitCancelClicked;
+            }
+            if (_quitModal != null)
+            {
+                var qTitle = _quitModal.Q<Label>("quit-modal-title");
+                if (qTitle != null)
+                    qTitle.text = MatchText.QuitModalTitle;
+                var qMsg = _quitModal.Q<Label>("quit-modal-message");
+                if (qMsg != null)
+                    qMsg.text = MatchText.QuitModalMessage;
+            }
             root.Q<Label>("stat-rounds-label").text = MatchText.RoundsStat;
             _endTurnButton.clicked += HandleEndTurnClicked;
             _wrathButton.clicked += HandleWrathClicked;
@@ -326,10 +373,13 @@ namespace GameJam.UI
             // The sound toggle already works on the main menu; fast bots only means something in a match.
             SetVisible(_toggles, true);
             SetVisible(_fastBotsButton, false);
+            SetVisible(_quitButton, false);
+            SetVisible(_quitModal, false);
             SetRound(string.Empty, string.Empty, Destiny.GoodFortuneFace);
             SetPrompt(string.Empty);
             HideHint();
             ShowEndTurn(false);
+            ShowRoadSkip(false);
             HideReinforcements();
             ShowWrath(false);
             ShowFavor(false);
@@ -342,6 +392,8 @@ namespace GameJam.UI
         private void OnDisable()
         {
             _endTurnButton.clicked -= HandleEndTurnClicked;
+            if (_roadSkipButton != null)
+                _roadSkipButton.clicked -= HandleRoadSkipClicked;
             _wrathButton.clicked -= HandleWrathClicked;
             _fastBotsButton.clicked -= HandleFastBotsClicked;
             _soundButton.clicked -= HandleSoundClicked;
@@ -350,6 +402,12 @@ namespace GameJam.UI
             _effectsSlider.UnregisterCallback<PointerCaptureOutEvent>(HandleEffectsDragEnded);
             _playAgainButton.clicked -= HandlePlayAgainClicked;
             _mainMenuButton.clicked -= HandleMainMenuClicked;
+            if (_quitButton != null)
+                _quitButton.clicked -= HandleQuitButtonClicked;
+            if (_quitConfirmButton != null)
+                _quitConfirmButton.clicked -= HandleQuitConfirmClicked;
+            if (_quitCancelButton != null)
+                _quitCancelButton.clicked -= HandleQuitCancelClicked;
             _roundBar.UnregisterCallback<ClickEvent>(HandleRoundBarClicked);
             _roundInfo.UnregisterCallback<ClickEvent>(HandleRoundInfoClicked);
             _hintTimeout?.Pause();
@@ -406,7 +464,12 @@ namespace GameJam.UI
             _identityCursedLabel.text = MatchText.IdentityCursed(god);
             SetVisible(_identityCard, true);
             SetVisible(_fastBotsButton, true);
+            SetVisible(_quitButton, true);
         }
+
+        public bool IsQuitModalOpen => _quitModal != null && _quitModal.style.display == DisplayStyle.Flex;
+
+        public void CloseQuitModal() => SetVisible(_quitModal, false);
 
         /// <summary>Whether the identity card is on screen (a star can fly to its Favor stars).</summary>
         public bool IsIdentityShown => _identityCard.style.display == DisplayStyle.Flex;
@@ -424,6 +487,8 @@ namespace GameJam.UI
             _roundLabel.text = destinyLine;
             GodUss.ApplyDestinyIcon(_roundGodIcon, _roundOmenIcon, destinyFace);
             _roundCounter.text = roundCounter;
+            _roundBar.EnableInClassList("round--fortune", destinyFace == Destiny.GoodFortuneFace);
+            _roundBar.EnableInClassList("round--omen", Destiny.IsBadOmen(destinyFace));
             SetVisible(_roundBar, shown);
             if (!shown)
                 CloseRoundInfo();
@@ -443,6 +508,8 @@ namespace GameJam.UI
         {
             _roundInfoTitle.text = title;
             GodUss.ApplyDestinyIcon(_infoGodIcon, _infoOmenIcon, destinyFace);
+            _roundInfo.EnableInClassList("round--fortune", destinyFace == Destiny.GoodFortuneFace);
+            _roundInfo.EnableInClassList("round--omen", Destiny.IsBadOmen(destinyFace));
             for (int i = 0; i < _roundInfoGods.Length; i++)
                 _roundInfoGods[i].text = godLines[i];
             bool hasDay = dayHeading != null;
@@ -535,7 +602,7 @@ namespace GameJam.UI
             _hintTimeout?.Pause();
             _hintTimeout = _hintLabel
                 .schedule.Execute(HideHint)
-                .StartingIn(SecondsToMs(_hintDuration + ToastExtraSeconds));
+                .StartingIn(SecondsToMs(_hintDuration));
         }
 
         /// <summary>True while an onboarding hint is on screen, so a new one can wait instead of replacing it.</summary>
@@ -547,15 +614,23 @@ namespace GameJam.UI
             SetVisible(_hintLabel, false);
         }
 
-        public void SetFastBots(bool on) => _fastBotsButton.text = MatchText.FastBotsButton(on);
+        public void SetFastBots(bool on)
+        {
+            if (_fastBotsButton != null)
+                _fastBotsButton.text = MatchText.FastBotsButton(on);
+        }
 
         /// <summary>Shows the stored volumes (0..1) on the sliders without raising the change events.</summary>
         public void SetVolumes(float music, float effects)
         {
-            _musicSlider.SetValueWithoutNotify(ToPercent(music));
-            _effectsSlider.SetValueWithoutNotify(ToPercent(effects));
-            _musicValue.text = MatchText.VolumePercent(ToPercent(music));
-            _effectsValue.text = MatchText.VolumePercent(ToPercent(effects));
+            if (_musicSlider != null)
+                _musicSlider.SetValueWithoutNotify(ToPercent(music));
+            if (_effectsSlider != null)
+                _effectsSlider.SetValueWithoutNotify(ToPercent(effects));
+            if (_musicValue != null)
+                _musicValue.text = MatchText.VolumePercent(ToPercent(music));
+            if (_effectsValue != null)
+                _effectsValue.text = MatchText.VolumePercent(ToPercent(effects));
         }
 
         public bool IsSoundPanelOpen => _soundPanel.style.display == DisplayStyle.Flex;
@@ -563,6 +638,12 @@ namespace GameJam.UI
         public void CloseSoundPanel() => SetSoundPanelOpen(false);
 
         public void ShowEndTurn(bool visible) => SetVisible(_endTurnButton, visible);
+
+        public void ShowRoadSkip(bool visible)
+        {
+            if (_roadSkipButton != null)
+                SetVisible(_roadSkipButton, visible);
+        }
 
         /// <summary>Shows the Wrath line on the identity card; hidden in Classic.</summary>
         public void ShowFavor(bool visible) => SetVisible(_identityWrath, visible);
@@ -761,16 +842,33 @@ namespace GameJam.UI
             _news.EnableInClassList(NewsSacredClass, omen == RollOutcome.Sacred);
             _news.EnableInClassList(NewsCursedClass, omen == RollOutcome.Cursed);
             SetVisible(_news, true);
+            if (_newsProgressBar != null)
+                _newsProgressBar.style.width = Length.Percent(0f);
+
             _newsTimeout?.Pause();
+            float startTime = Time.unscaledTime;
             _newsTimeout = _news
-                .schedule.Execute(HideNews)
-                .StartingIn(SecondsToMs(_newsDuration + ToastExtraSeconds));
+                .schedule.Execute(() =>
+                {
+                    float elapsed = Time.unscaledTime - startTime;
+                    float progress = Mathf.Clamp01(elapsed / _newsDuration);
+                    if (_newsProgressBar != null)
+                        _newsProgressBar.style.width = Length.Percent(progress * 100f);
+
+                    if (elapsed >= _newsDuration)
+                    {
+                        HideNews();
+                    }
+                })
+                .Every(16);
         }
 
         public void HideNews()
         {
             _newsTimeout?.Pause();
             SetVisible(_news, false);
+            if (_newsProgressBar != null)
+                _newsProgressBar.style.width = Length.Percent(0f);
         }
 
         /// <summary>
@@ -816,12 +914,17 @@ namespace GameJam.UI
             SetPrompt(string.Empty);
             HideTurn();
             SetVisible(_toggles, false);
+            SetVisible(_quitButton, false);
+            SetVisible(_quitModal, false);
             SetVisible(_endBanner, true);
         }
 
         /// <summary>True when a screen position (Input System, origin bottom-left) is over a pickable HUD element.</summary>
         public bool IsPointerOverUi(Vector2 screenPosition)
         {
+            if (IsQuitModalOpen)
+                return true;
+
             IPanel panel = _document.rootVisualElement.panel;
             if (panel == null)
                 return false;
@@ -838,6 +941,8 @@ namespace GameJam.UI
             element.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
 
         private void HandleEndTurnClicked() => EndTurnClicked?.Invoke();
+
+        private void HandleRoadSkipClicked() => RoadSkipClicked?.Invoke();
 
         private void HandleWrathClicked()
         {
@@ -907,6 +1012,21 @@ namespace GameJam.UI
         private void HandlePlayAgainClicked() => PlayAgainClicked?.Invoke();
 
         private void HandleMainMenuClicked() => MainMenuClicked?.Invoke();
+
+        private void HandleQuitButtonClicked()
+        {
+            CloseRoundInfo();
+            CloseSoundPanel();
+            SetVisible(_quitModal, true);
+        }
+
+        private void HandleQuitCancelClicked() => SetVisible(_quitModal, false);
+
+        private void HandleQuitConfirmClicked()
+        {
+            SetVisible(_quitModal, false);
+            HandleMainMenuClicked();
+        }
 
         private void HandleRoundBarClicked(ClickEvent evt) => SetRoundInfoOpen(!IsRoundInfoOpen);
 

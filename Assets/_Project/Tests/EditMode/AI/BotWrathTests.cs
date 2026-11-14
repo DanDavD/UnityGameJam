@@ -64,6 +64,26 @@ namespace GameJam.Tests.AI
             AssertZeusStrikes(Board.ThorCapital);
         }
 
+        [Test]
+        public void Zeus_PicksTwoTargets()
+        {
+            MatchSetup.Set(_board, Board.ThorCapital, God.Thor, 6);
+            MatchSetup.Set(_board, Board.RaCapital, God.Ra, 4);
+            Match match = StartReady(God.Zeus, Board.ZeusCapital);
+
+            Assert.IsTrue(
+                BotPlayer.TryChooseWrath(
+                    match,
+                    out Territory from,
+                    out Territory to,
+                    out Territory secondTo
+                )
+            );
+            Assert.IsNull(from);
+            Assert.AreSame(_board.Get(Board.ThorCapital), to);
+            Assert.AreSame(_board.Get(Board.RaCapital), secondTo);
+        }
+
         // Thor: Mjölnir only when the blow captures, Temples first.
 
         [Test]

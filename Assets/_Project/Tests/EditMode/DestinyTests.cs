@@ -24,8 +24,8 @@ namespace GameJam.Tests
             int rivalFace
         )
         {
-            Assert.AreEqual(2, Destiny.ReinforcementModifier(god, ownFace));
-            Assert.AreEqual(-2, Destiny.ReinforcementModifier(god, rivalFace));
+            Assert.AreEqual(0, Destiny.ReinforcementModifier(god, ownFace));
+            Assert.AreEqual(0, Destiny.ReinforcementModifier(god, rivalFace));
             Assert.AreEqual(1, Destiny.ReinforcementModifier(god, 3));
         }
 

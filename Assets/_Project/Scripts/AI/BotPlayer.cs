@@ -116,19 +116,27 @@ namespace GameJam.AI
         /// <summary>
         /// Phase Attack, with <see cref="Match.IsWrathReady"/>. True when the bot should unleash its
         /// Wrath now with these arguments (null when the god needs none). Ask before every attack:
-        /// Favor can fill up in the middle of a turn.
+        /// Favor can fill up in the middle of a turn. Zeus can choose up to two targets.
         /// </summary>
-        public static bool TryChooseWrath(Match match, out Territory source, out Territory target)
+        public static bool TryChooseWrath(
+            Match match,
+            out Territory source,
+            out Territory target,
+            out Territory secondTarget
+        )
         {
             source = null;
             target = null;
+            secondTarget = null;
             if (!match.IsWrathReady)
                 return false;
 
             switch (match.CurrentGod)
             {
                 case God.Zeus:
-                    target = ThunderboltTarget(match);
+                    target = ThunderboltTarget(match, null);
+                    if (target != null)
+                        secondTarget = ThunderboltTarget(match, target);
                     break;
                 case God.Thor:
                     return TryChooseMjolnir(match, out source, out target);
@@ -140,6 +148,9 @@ namespace GameJam.AI
             }
             return target != null;
         }
+
+        public static bool TryChooseWrath(Match match, out Territory source, out Territory target) =>
+            TryChooseWrath(match, out source, out target, out _);
 
         /// <summary>
         /// Phase Attack, with <see cref="Match.IsRoadAvailable"/>. True when the bot should march along
@@ -242,21 +253,35 @@ namespace GameJam.AI
         }
 
         // The biggest enemy army, preferring Temples and the Altar: they decide the match, and halving
-        // the garrison opens them for the attacks that follow.
-        private static Territory ThunderboltTarget(Match match)
+        // the garrison opens them for the attacks that follow. If exclude is given, finds a second target
+        // (or checks if the excluded one still has enough troops after one strike to be hit again).
+        private static Territory ThunderboltTarget(Match match, Territory exclude)
         {
             Territory best = null;
+            var bestKey = (priority: 999, troops: int.MinValue);
             foreach (Territory territory in match.Board.Territories)
             {
-                if (!match.CanUnleashWrath(target: territory))
+                if (territory == exclude)
+                {
+                    int remaining = territory.Troops - GodPowers.ThunderboltLoss(territory.Troops);
+                    if (remaining < GodPowers.ThunderboltMinTroops)
+                        continue;
+                }
+                else if (!match.CanUnleashWrath(target: territory))
+                {
                     continue;
+                }
 
-                var candidate = (IsSacredSite(territory) ? 0 : 1, -territory.Troops);
-                if (
-                    best == null
-                    || candidate.CompareTo((IsSacredSite(best) ? 0 : 1, -best.Troops)) < 0
-                )
+                int effectiveTroops = territory == exclude
+                    ? territory.Troops - GodPowers.ThunderboltLoss(territory.Troops)
+                    : territory.Troops;
+
+                var candidate = (IsSacredSite(territory) ? 0 : 1, -effectiveTroops);
+                if (best == null || candidate.CompareTo(bestKey) < 0)
+                {
                     best = territory;
+                    bestKey = candidate;
+                }
             }
             return best;
         }

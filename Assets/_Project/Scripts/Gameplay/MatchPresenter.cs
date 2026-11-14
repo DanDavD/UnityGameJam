@@ -229,6 +229,11 @@ namespace GameJam.Gameplay
             Keyboard keyboard = Keyboard.current;
             if (keyboard == null || !keyboard.escapeKey.wasPressedThisFrame)
                 return;
+            if (_hud.IsQuitModalOpen)
+            {
+                _hud.CloseQuitModal();
+                return;
+            }
             _hud.CloseRoundInfo();
             _hud.CloseSoundPanel();
             _nations.CloseInfo();
@@ -915,11 +920,28 @@ namespace GameJam.Gameplay
             {
                 case God.Zeus:
                 {
-                    Territory target = targets[0];
-                    int loss = GodPowers.ThunderboltLoss(target.Troops);
-                    _godVfx.PlayThunderbolt(target, VfxPace);
-                    ShowWrathBlow(target, loss);
-                    news = MatchText.ThunderboltLine(target, loss);
+                    if (targets.Count > 1)
+                    {
+                        Territory target1 = targets[0];
+                        Territory target2 = targets[1];
+                        int loss1 = GodPowers.ThunderboltLoss(target1.Troops);
+                        int loss2 = target1 == target2
+                            ? GodPowers.ThunderboltLoss(target1.Troops - loss1)
+                            : GodPowers.ThunderboltLoss(target2.Troops);
+                        _godVfx.PlayThunderbolt(target1, VfxPace);
+                        ShowWrathBlow(target1, loss1);
+                        _godVfx.PlayThunderbolt(target2, VfxPace);
+                        ShowWrathBlow(target2, loss2);
+                        news = MatchText.ThunderboltLine(target1, loss1, target2, loss2);
+                    }
+                    else
+                    {
+                        Territory target = targets[0];
+                        int loss = GodPowers.ThunderboltLoss(target.Troops);
+                        _godVfx.PlayThunderbolt(target, VfxPace);
+                        ShowWrathBlow(target, loss);
+                        news = MatchText.ThunderboltLine(target, loss);
+                    }
                     break;
                 }
                 case God.Thor:

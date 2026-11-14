@@ -180,6 +180,33 @@
     margin: 0;
 }
 
+/* Good fortune and Bad omen visual cues on HUD round bar */
+.hud__round.round--fortune {
+    background-color: #E2F0D9;
+    border-color: #70AD47;
+}
+
+.hud__round.round--fortune .hud__round-text {
+    color: #275016;
+}
+
+.hud__round.round--fortune .destiny-name__icon.omen-icon--sacred {
+    -unity-background-image-tint-color: #275016;
+}
+
+.hud__round.round--omen {
+    background-color: #F8D7DA;
+    border-color: #D9534F;
+}
+
+.hud__round.round--omen .hud__round-text {
+    color: #721C24;
+}
+
+.hud__round.round--omen .destiny-name__icon.omen-icon--cursed {
+    -unity-background-image-tint-color: #721C24;
+}
+
 /* Bottom center: prompt and actions */
 .hud__bottom {
     align-items: center;
@@ -788,13 +815,41 @@
 
 .hud__toggle {
     margin: 0 0 0 var(--space-2);
+    background-color: var(--paper);
+    border-width: 2px;
+    border-color: #C8A046;
+    border-bottom-width: 4px;
+    border-bottom-color: var(--wood-dark);
+    color: var(--ink);
+    padding: var(--space-2) var(--space-5);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-strong);
+    letter-spacing: 1px;
+    transition-property: translate, scale, background-color, border-color;
+    transition-duration: var(--duration-fast);
+}
+
+.hud__toggle:hover {
+    background-color: #FFFDF8;
+    border-color: #E5C158;
+    border-bottom-color: var(--ink);
+    color: var(--ink);
+    translate: var(--hover-lift);
+    scale: var(--hover-scale);
+}
+
+.hud__toggle:active {
+    translate: 0 0;
+    scale: var(--press-scale);
 }
 
 /* The open sound panel marks its button like an open info toggle: filled wood. */
 .button.hud__toggle--open,
 .button.hud__toggle--open:hover {
     background-color: var(--wood);
-    border-color: var(--wood);
+    border-color: #D4AF37;
+    border-bottom-color: var(--wood-dark);
     color: var(--paper);
 }
 
@@ -1242,6 +1297,33 @@
 .die--destiny.god--ra { background-color: var(--nation-ra-tint); }
 .die--destiny.god--morrigan { background-color: var(--nation-morrigan-tint); }
 
+/* Good fortune and bad omen on the Destiny die */
+.die--destiny.destiny--fortune {
+    background-color: #E2F0D9;
+    border-color: #70AD47;
+}
+
+.die--destiny.destiny--fortune > .die__face {
+    color: #275016;
+}
+
+.die--destiny.destiny--omen {
+    background-color: #F8D7DA;
+    border-color: #D9534F;
+}
+
+.die--destiny.destiny--omen > .die__face {
+    color: #721C24;
+}
+
+.destiny-card__chip.omen-icon.omen-icon--sacred {
+    -unity-background-image-tint-color: #275016;
+}
+
+.destiny-card__chip.omen-icon.omen-icon--cursed {
+    -unity-background-image-tint-color: #721C24;
+}
+
 .destiny-card__chip {
     position: absolute;
     top: var(--space-2);
@@ -1301,21 +1383,722 @@
 
 .menu__card {
     align-items: center;
-    padding: var(--space-12) var(--space-8) var(--space-8) var(--space-8);
+}
+
+.menu__screen {
+    align-items: center;
+}
+
+.menu__screen--home {
+    width: 600px;
+    max-width: 90%;
+    align-items: center;
+    padding: 36px 44px 36px 44px;
+    background-color: var(--paper);
+    border-width: 2px;
+    border-color: rgba(200, 160, 70, 0.4);
+    border-bottom-width: 6px;
+    border-bottom-color: rgba(139, 94, 60, 0.45);
+    border-radius: var(--radius-lg);
+}
+
+.menu__pantheon-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-3);
+}
+
+.menu__pantheon-chip {
+    margin: 0 var(--space-2);
+}
+
+.menu__divider {
+    width: 260px;
+    height: 1px;
+    background-color: rgba(200, 160, 70, 0.35);
+    margin-top: var(--space-4);
+    margin-bottom: var(--space-4);
+}
+
+.menu__screen--select {
+    width: 1536px;
+    max-width: 96%;
+    min-height: 670px;
+    align-items: center;
+    padding: var(--space-6) var(--space-8) var(--space-8) var(--space-8);
+}
+
+.menu__screen--content {
+    width: 1140px;
+    max-width: 96%;
+    align-items: center;
+    padding: 20px var(--space-8) 24px var(--space-8);
+}
+
+.menu__nav-group {
+    width: 380px;
+    align-items: center;
+}
+
+.menu__nav-btn {
+    width: 100%;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    padding: 12px var(--space-4);
+    font-size: 15px;
+    -unity-font-definition: var(--font-strong);
+    letter-spacing: 1.5px;
+    justify-content: center;
+    align-items: center;
+    border-radius: var(--radius-md);
+    border-width: 1px;
+    border-color: rgba(139, 94, 60, 0.35);
+    background-color: rgba(251, 246, 236, 0.95);
+    color: var(--ink);
+    transition-property: translate, scale, background-color, border-color;
+    transition-duration: var(--duration-fast);
+}
+
+.menu__nav-btn:hover {
+    background-color: var(--paper-shade);
+    border-color: var(--wood);
+    color: var(--ink);
+}
+
+.menu__nav-btn--primary {
+    font-size: 20px;
+    letter-spacing: 2px;
+    padding: 16px var(--space-6);
+    margin-bottom: 12px;
+    border-radius: var(--radius-md);
+    background-color: var(--wood);
+    color: var(--paper);
+    border-width: 2px;
+    border-color: #D4AF37;
+    border-bottom-width: 4px;
+    border-bottom-color: var(--wood-dark);
+}
+
+.menu__nav-btn--primary:hover {
+    background-color: var(--wood-dark);
+    border-color: #E5C158;
+}
+
+.menu__header-bar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-2);
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(200, 160, 70, 0.35);
+}
+
+.menu__back-btn {
+    width: 150px;
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--font-size-caption);
+    -unity-text-align: middle-center;
+}
+
+.menu__header-spacer {
+    width: 150px;
+}
+
+.menu__screen-title {
+    font-size: var(--font-size-h2);
+    -unity-font-definition: var(--font-display);
+    -unity-font-style: bold;
+    color: var(--ink);
+    margin: 0;
+    padding: 0;
+}
+
+/* ========================================================
+   How to play card & 3-tab navigation
+   ======================================================== */
+.howto {
+    width: 1220px;
+    max-width: 96%;
+    height: 720px;
+    padding: 24px 32px 20px 32px;
+    align-items: stretch;
+    justify-content: space-between;
+    background-color: var(--paper);
+    border-width: 2px;
+    border-color: rgba(200, 160, 70, 0.4);
+    border-bottom-width: 6px;
+    border-bottom-color: rgba(139, 94, 60, 0.45);
+    border-radius: var(--radius-lg);
+}
+
+.howto__tabs {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.howto__tab {
+    min-width: 210px;
+    height: 42px;
+    margin: 0 8px;
+    font-size: 15px;
+    -unity-font-definition: var(--font-strong);
+    letter-spacing: 1px;
+    border-radius: var(--radius-md);
+}
+
+.howto__pages {
+    flex-grow: 1;
+    width: 100%;
+    overflow: hidden;
+}
+
+.howto__page {
+    flex-grow: 1;
+    width: 100%;
+    justify-content: flex-start;
+}
+
+/* ScrollView for Tab 3 with visible, styled scrollbar & mouse wheel / trackpad support */
+.howto__scroll {
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+}
+
+.howto__scroll > .unity-scroll-view__content-viewport > .unity-scroll-view__content-container {
+    padding-right: 14px;
+    padding-bottom: 28px;
+}
+
+.howto__scroll .unity-scroll-view__vertical-scroller {
+    width: 10px;
+    margin-left: 6px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    border-radius: 5px;
+}
+
+.howto__scroll .unity-scroller__low-button,
+.howto__scroll .unity-scroller__high-button {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+.howto__scroll .unity-base-slider__tracker {
+    background-color: rgba(43, 33, 24, 0.08);
+    border-width: 0;
+    border-radius: 5px;
+    width: 8px;
+    align-self: center;
+}
+
+.howto__scroll .unity-base-slider__dragger {
+    background-color: var(--wood);
+    border-width: 0;
+    border-radius: 5px;
+    width: 8px;
+    min-height: 48px;
+    align-self: center;
+    transition-property: background-color;
+    transition-duration: var(--duration-fast);
+}
+
+.howto__scroll .unity-base-slider__dragger:hover {
+    background-color: var(--wood-dark);
+}
+
+.howto__columns {
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.howto__col {
+    width: 48.8%;
+}
+
+.howto__col3 {
+    width: 32%;
+}
+
+.howto__section {
+    background-color: var(--paper);
+    border-width: 1.5px;
+    border-color: rgba(200, 160, 70, 0.35);
+    border-bottom-width: 4px;
+    border-bottom-color: var(--shadow);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    margin-bottom: 10px;
+}
+
+.howto__section-title {
+    font-size: 15px;
+    -unity-font-definition: var(--font-display);
+    -unity-font-style: bold;
+    color: var(--ink);
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(200, 160, 70, 0.25);
+}
+
+.howto__section-lead {
+    font-size: 14px;
+    color: var(--wood-dark);
+    -unity-font-definition: var(--font-strong);
+    margin-bottom: 8px;
+}
+
+/* ========================================================
+   Strict Component Alignment:
+   Symbol on the left, title text on the right with matching vertical centers.
+   ======================================================== */
+.howto__entry {
+    margin-bottom: 10px;
+}
+
+.howto__entry-head {
+    flex-direction: row;
+    align-items: center; /* PERFECT VERTICAL CENTER ALIGNMENT */
+    margin-bottom: 3px;
+}
+
+.howto__entry-icon {
+    width: 22px;
+    height: 22px;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.howto__neutral-dot {
+    width: 22px;
+    height: 22px;
+    margin-right: 8px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+}
+
+.howto__neutral-circle {
+    width: 14px;
+    height: 14px;
+    border-radius: 7px;
+    border-width: 2px;
+    border-color: var(--ink-soft);
+}
+
+.howto__entry-title {
+    font-size: 14.5px;
+    -unity-font-definition: var(--font-strong);
+    color: var(--ink);
+    margin: 0;
+    padding: 0;
+}
+
+.howto__entry-sub {
+    font-size: 12px;
+    -unity-font-definition: var(--font-strong);
+    color: var(--wood);
+    margin-left: 6px;
+}
+
+.howto__entry-desc {
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    white-space: normal;
+    line-height: 18px;
+    margin: 0;
+    padding: 0;
+    margin-left: 30px; /* Aligned flush under title text */
+}
+
+.howto__entry-desc--full {
+    margin-left: 0;
+    margin-bottom: 6px;
+}
+
+.howto__marker {
+    font-size: 12px;
+    -unity-font-definition: var(--font-strong);
+    width: 22px;
+    height: 22px;
+    border-radius: 11px;
+    background-color: var(--wood);
+    color: var(--paper);
+    -unity-text-align: middle-center;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.howto__marker--step {
+    background-color: #C8A046;
+}
+
+.howto__bullet-row {
+    flex-direction: row;
+    align-items: flex-start;
+    margin-bottom: 6px;
+}
+
+.howto__bullet {
+    width: 6px;
+    height: 6px;
+    border-radius: 3px;
+    background-color: #C8A046;
+    margin-right: 8px;
+    margin-top: 6px;
+    flex-shrink: 0;
+}
+
+.howto__bullet-text {
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    line-height: 18px;
+    white-space: normal;
+    flex-shrink: 1;
+}
+
+.howto__note {
+    font-size: 13px;
+    color: var(--wood);
+    -unity-font-style: italic;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top-width: 1px;
+    border-top-color: rgba(200, 160, 70, 0.2);
+    -unity-text-align: middle-center;
+}
+
+/* Tab 2: Dice & Omens Header */
+.howto__lead {
+    font-size: 18px;
+    -unity-font-definition: var(--font-display);
+    -unity-font-style: bold;
+    color: var(--ink);
+    -unity-text-align: middle-center;
+    letter-spacing: 1px;
+    margin-bottom: 2px;
+}
+
+.howto__lead-sub {
+    font-size: 14px;
+    color: var(--wood-dark);
+    -unity-text-align: middle-center;
+    margin-bottom: 10px;
+}
+
+.howto__pairs {
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.howto__pair {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 32%;
+    background-color: var(--paper);
+    border-width: 1.5px;
+    border-color: rgba(200, 160, 70, 0.4);
+    border-bottom-width: 3px;
+    border-bottom-color: var(--shadow);
+    border-radius: var(--radius-md);
+    padding: 6px 12px;
+}
+
+.howto__face {
+    flex-direction: row;
+    align-items: center;
+}
+
+.howto__face-name {
+    font-size: 13.5px;
+    -unity-font-definition: var(--font-display);
+    -unity-font-style: bold;
+    color: var(--ink);
+    margin-left: 6px;
+}
+
+.howto__sum {
+    font-size: 12px;
+    -unity-font-definition: var(--font-strong);
+    color: var(--wood-dark);
+    background-color: #F2E3C6;
+    border-width: 1px;
+    border-color: #C8A046;
+    border-radius: 10px;
+    padding: 2px 10px;
+    letter-spacing: 0.5px;
+}
+
+.howto__callout {
+    background-color: #FAF5E8;
+    border-width: 1px;
+    border-color: #C8A046;
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    margin-top: 6px;
+}
+
+.howto__callout-title {
+    font-size: 14px;
+    -unity-font-definition: var(--font-strong);
+    color: var(--ink);
+    margin-bottom: 2px;
+}
+
+.howto__callout-desc {
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 17px;
+    white-space: normal;
+}
+
+/* Number badges styled like dice faces (no missing unicode characters) */
+.howto__die {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    border-width: 1.5px;
+    border-color: rgba(43, 33, 24, 0.35);
+    background-color: var(--paper);
+    font-size: 15px;
+    -unity-font-definition: var(--font-strong);
+    -unity-text-align: middle-center;
+    color: var(--ink);
+    flex-shrink: 0;
+}
+
+.howto__die.god--zeus { background-color: var(--nation-zeus-tint); border-color: var(--nation-zeus); color: #164E63; }
+.howto__die.god--thor { background-color: var(--nation-thor-tint); border-color: var(--nation-thor); color: #7C2D12; }
+.howto__die.god--ra { background-color: var(--nation-ra-tint); border-color: var(--nation-ra); color: #78350F; }
+.howto__die.god--morrigan { background-color: var(--nation-morrigan-tint); border-color: #4A3B4D; color: #2B212E; }
+
+.howto__die--sm {
+    width: 22px;
+    height: 22px;
+    font-size: 12.5px;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.howto__die--fortune {
+    background-color: #E2F0D9;
+    border-color: #70AD47;
+    color: #275016;
+}
+
+.howto__die--omen {
+    background-color: #F8D7DA;
+    border-color: #D9534F;
+    color: #721C24;
+}
+
+/* ========================================================
+   Symmetrical 2x2 Grid for Deity Days (Fix Asymmetry)
+   ======================================================== */
+.howto__god-days {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top-width: 1px;
+    border-top-color: rgba(200, 160, 70, 0.25);
+}
+
+.howto__god-days-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 4px;
+}
+
+.howto__god-day-cell {
+    flex-direction: row;
+    align-items: center; /* STRICT: matching vertical centers */
+    width: 48.5%;
+    background-color: var(--paper);
+    border-width: 1px;
+    border-color: rgba(200, 160, 70, 0.35);
+    border-radius: var(--radius-sm);
+    padding: 3px 6px;
+    margin-bottom: 5px;
+}
+
+.howto__god-day-name {
+    font-size: 13px;
+    -unity-font-definition: var(--font-display);
+    -unity-font-style: bold;
+    color: var(--ink);
+    margin: 0;
+    padding: 0;
+}
+
+/* Tab 3: God Powers */
+.howto__mode-note {
+    font-size: 13.5px;
+    color: var(--wood);
+    -unity-font-style: italic;
+    -unity-text-align: middle-center;
+    margin-bottom: 8px;
+}
+
+.howto__gods {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 6px;
+}
+
+.howto__god {
+    width: 48.8%;
+    border-width: 1.5px;
+    border-bottom-width: 4px;
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    margin-bottom: 10px;
+}
+
+.howto__god.god--zeus { background-color: var(--nation-zeus-tint); border-color: var(--nation-zeus); border-bottom-color: #3B82B6; }
+.howto__god.god--ra { background-color: var(--nation-ra-tint); border-color: var(--nation-ra); border-bottom-color: #B57D00; }
+.howto__god.god--thor { background-color: var(--nation-thor-tint); border-color: var(--nation-thor); border-bottom-color: #9C4500; }
+.howto__god.god--morrigan { background-color: var(--nation-morrigan-tint); border-color: #4A3B4D; border-bottom-color: #2B212E; }
+
+.howto__god-id {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.howto__god-id-text {
+    margin-left: 8px;
+}
+
+.howto__god-name {
+    font-size: 16px;
+    -unity-font-definition: var(--font-display);
+    -unity-font-style: bold;
+    color: var(--ink);
+    letter-spacing: 1px;
+}
+
+.howto__god-meta {
+    font-size: 12.5px;
+    -unity-font-definition: var(--font-strong);
+    color: var(--wood-dark);
+}
+
+.howto__power {
+    flex-direction: row;
+    align-items: flex-start;
+    margin-top: 3px;
+}
+
+.howto__power-text {
+    font-size: 13.5px;
+    color: var(--ink);
+    line-height: 17px;
+    flex-shrink: 1;
+    white-space: normal;
+}
+
+.howto__pill {
+    font-size: 10px;
+    -unity-font-definition: var(--font-strong);
+    border-radius: 3px;
+    padding: 1px 6px;
+    margin-right: 8px;
+    margin-top: 2px;
+    width: 56px;
+    -unity-text-align: middle-center;
+    flex-shrink: 0;
+}
+
+.howto__pill--day {
+    background-color: var(--wood);
+    color: var(--paper);
+}
+
+.howto__pill--wrath {
+    background-color: #8C2D19;
+    color: #FFFFFF;
+}
+
+/* Footer: page indicator dots and next button */
+.howto__footer {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding-top: 10px;
+    border-top-width: 1px;
+    border-top-color: rgba(200, 160, 70, 0.3);
+}
+
+.howto__dots {
+    flex-direction: row;
+    align-items: center;
+    margin-left: 6px;
+}
+
+.howto__dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 5px;
+    background-color: rgba(43, 33, 24, 0.25);
+    margin: 0 4px;
+    transition-property: width, background-color;
+    transition-duration: var(--duration-fast);
+}
+
+.howto__dot--active {
+    width: 24px;
+    background-color: var(--wood);
+}
+
+.howto__next {
+    min-width: 250px;
+    height: 44px;
+    font-size: 15px;
+    -unity-font-definition: var(--font-strong);
+    letter-spacing: 1px;
+}
+.hud__road-skip {
+    min-height: var(--button-min-height);
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--font-size-caption);
+    -unity-font-definition: var(--font-strong);
+    color: var(--ink);
+    border-color: var(--gold);
 }
 
 .menu__title {
-    font-size: var(--font-size-display);
+    font-size: 56px;
+    -unity-font-definition: var(--font-display);
     -unity-font-style: bold;
     color: var(--ink);
+    letter-spacing: 4px;
     padding: 0;
     margin: 0;
 }
 
 .menu__tagline {
-    font-size: var(--font-size-body);
-    color: var(--ink-soft);
-    margin-top: var(--space-2);
+    font-size: 15px;
+    -unity-font-definition: var(--font-strong);
+    color: var(--wood);
+    letter-spacing: 1.5px;
+    margin-top: var(--space-1);
+    -unity-text-align: middle-center;
 }
 
 /* Body size (not label) so the menu keeps to three text sizes: display, h2, body. */
@@ -1341,8 +2124,9 @@
     flex-direction: row;
 }
 
-/* The sacred-number rule under the cards: body size, so the menu keeps display, h2 and body only. */
+/* The sacred-number rule under the cards: hidden from menu per design request; full rules are in How To Play */
 .menu__rule {
+    display: none;
     align-items: center;
     margin-top: var(--space-6);
 }
@@ -1367,6 +2151,7 @@
 /* flex-grow: each card fills its template container, so all four stand at the same height. */
 .god-card {
     width: var(--god-card-width);
+    min-height: 440px;
     flex-grow: 1;
     margin: 0 var(--space-2);
     align-items: center;
@@ -1618,13 +2403,19 @@
 /* What a power just did, above the hint. A row, so a Favor change can lead with the drawn omen icon
    (like the HUD identity line): Inter's ✗ glyph reads as "×" at body size. */
 .hud__news {
-    flex-direction: row;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
     border-width: var(--border-width);
     border-left-width: var(--space-2);
     border-radius: var(--radius-md);
     padding: var(--space-2) var(--space-4);
     margin-top: var(--space-2);
+}
+
+.hud__news-body {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
 }
 
 .hud__news-text {
@@ -1635,7 +2426,7 @@
     color: var(--ink);
     padding: 0;
     margin: 0;
-    -unity-text-align: middle-center;
+    -unity-text-align: middle-left;
 }
 
 .hud__news-icon {
@@ -1643,15 +2434,36 @@
     display: none;
 }
 
-.hud__news--sacred > .hud__news-icon--sacred,
-.hud__news--cursed > .hud__news-icon--cursed {
+.hud__news--sacred .hud__news-icon--sacred,
+.hud__news--cursed .hud__news-icon--cursed {
     display: flex;
+}
+
+.hud__news-progress-track {
+    width: 100%;
+    height: 4px;
+    background-color: rgba(43, 33, 24, 0.18);
+    border-radius: 2px;
+    margin-top: var(--space-2);
+    overflow: hidden;
+}
+
+.hud__news-progress-bar {
+    width: 0%;
+    height: 100%;
+    background-color: var(--ink);
+    border-radius: 2px;
 }
 
 .hud__day-badge.god--zeus, .hud__news.god--zeus { background-color: var(--nation-zeus-tint); border-color: var(--nation-zeus); }
 .hud__day-badge.god--thor, .hud__news.god--thor { background-color: var(--nation-thor-tint); border-color: var(--nation-thor); }
 .hud__day-badge.god--ra, .hud__news.god--ra { background-color: var(--nation-ra-tint); border-color: var(--nation-ra); }
 .hud__day-badge.god--morrigan, .hud__news.god--morrigan { background-color: var(--nation-morrigan-tint); border-color: var(--nation-morrigan); }
+
+.hud__news.god--zeus .hud__news-progress-bar { background-color: var(--nation-zeus); }
+.hud__news.god--thor .hud__news-progress-bar { background-color: var(--nation-thor); }
+.hud__news.god--ra .hud__news-progress-bar { background-color: var(--nation-ra); }
+.hud__news.god--morrigan .hud__news-progress-bar { background-color: var(--nation-morrigan); }
 
 /* The Wrath button: the god's signature power, not a grey "disabled" button. A big tile with the god's
    icon, the Wrath's name in carved capitals over its state, and the three Favor stars. Four states set
@@ -1868,6 +2680,7 @@
     font-size: var(--font-size-body);
     color: var(--ink-soft);
     margin-top: var(--space-2);
+    min-height: 48px;
     -unity-text-align: middle-center;
 }
 
@@ -2071,6 +2884,24 @@
 .round-info__god-text {
     flex-shrink: 1;
     margin: 0 0 0 var(--space-3);
+}
+
+.round-info.round--fortune {
+    border-top-width: var(--space-2);
+    border-top-color: #70AD47;
+}
+
+.round-info.round--fortune #round-info-title {
+    color: #275016;
+}
+
+.round-info.round--omen {
+    border-top-width: var(--space-2);
+    border-top-color: #D9534F;
+}
+
+.round-info.round--omen #round-info-title {
+    color: #721C24;
 }
 
 /* A god's powers card, a flyout to the right of its row, aligned with it: paper with the nation

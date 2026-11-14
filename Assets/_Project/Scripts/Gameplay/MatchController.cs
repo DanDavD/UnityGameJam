@@ -103,6 +103,7 @@ namespace GameJam.Gameplay
         // also picks its source first, kept apart from the attack selection.
         private bool _aimingWrath;
         private Territory _wrathSource;
+        private Territory _zeusFirstTarget;
 
         // Sacred Road mode, for the human only: while a Road is open and some army can march, the
         // ringed origins (own territories with 2+ troops and a path) are the only territories that react
@@ -115,6 +116,7 @@ namespace GameJam.Gameplay
 
         // Set by menu, HUD and dice button events and consumed by the loop, so clicks never issue commands.
         private bool _offeringRequested;
+        private bool _roadSkipRequested;
 
         // True only while the Offering button is on screen, so a click queued for the frame the window
         // closes can never re-roll a combat the player already saw confirm.
@@ -169,6 +171,7 @@ namespace GameJam.Gameplay
             _menu.PowersChosen += HandlePowersChosen;
             _dice.OfferingClicked += HandleOfferingClicked;
             _hud.EndTurnClicked += HandleEndTurnClicked;
+            _hud.RoadSkipClicked += HandleRoadSkipClicked;
             _hud.WrathClicked += HandleWrathClicked;
             _hud.WrathBlocked += HandleWrathBlocked;
             _hud.FastBotsClicked += HandleFastBotsClicked;
@@ -189,6 +192,7 @@ namespace GameJam.Gameplay
             _menu.PowersChosen -= HandlePowersChosen;
             _dice.OfferingClicked -= HandleOfferingClicked;
             _hud.EndTurnClicked -= HandleEndTurnClicked;
+            _hud.RoadSkipClicked -= HandleRoadSkipClicked;
             _hud.WrathClicked -= HandleWrathClicked;
             _hud.WrathBlocked -= HandleWrathBlocked;
             _hud.FastBotsClicked -= HandleFastBotsClicked;
@@ -350,6 +354,7 @@ namespace GameJam.Gameplay
             // A sacred roll's Road starts here, back in the attack loop, never over the combat's dice.
             if (StartRoadMode())
             {
+                _hud.ShowRoadSkip(true);
                 // The popup says what the rings are about, so both appear together, once the Favor
                 // line of the sacred die has been read. Clicks wait for that moment, no longer.
                 yield return _presenter.ShowRoadPopupIfOpened();
@@ -357,6 +362,7 @@ namespace GameJam.Gameplay
             }
             else
             {
+                _hud.ShowRoadSkip(false);
                 // A Road no army can use gets no popup, now or later this turn.
                 _presenter.ClearPendingRoadPopup();
                 if (!(wrathUsable && _presenter.ShowHintOnce(Hint.Wrath)))
@@ -376,6 +382,13 @@ namespace GameJam.Gameplay
                     Select(null);
                     _match.EndTurn();
                     yield break;
+                }
+
+                if (_roadSkipRequested)
+                {
+                    _roadSkipRequested = false;
+                    HandleRoadSkip();
+                    continue;
                 }
 
                 if (_wrathRequested)
@@ -399,12 +412,29 @@ namespace GameJam.Gameplay
                     continue;
                 }
 
-                if ((_aimingWrath || _roadSource != null) && WasCancelPressed())
+                if ((_aimingWrath || _roadMode) && WasCancelPressed())
                 {
                     if (_aimingWrath)
-                        CancelWrath();
-                    else
+                    {
+                        if (_zeusFirstTarget != null)
+                        {
+                            _zeusFirstTarget = null;
+                            ShowWrathTargets();
+                            _sfx.Play(SfxCue.Click);
+                        }
+                        else
+                        {
+                            CancelWrath();
+                        }
+                    }
+                    else if (_roadSource != null)
+                    {
                         DropRoadOrigin();
+                    }
+                    else
+                    {
+                        HandleRoadSkip();
+                    }
                     continue;
                 }
 
@@ -416,9 +446,11 @@ namespace GameJam.Gameplay
                     if (!TryAimWrathAt(clicked))
                         continue;
                     Territory source = _wrathSource;
+                    Territory first = _zeusFirstTarget ?? clicked;
+                    Territory second = _zeusFirstTarget != null ? clicked : null;
                     StopAimingWrath();
                     LeaveHumanAttack();
-                    _match.UnleashWrath(source, clicked);
+                    _match.UnleashWrath(source, first, second);
                     yield break;
                 }
 
@@ -445,6 +477,18 @@ namespace GameJam.Gameplay
             }
         }
 
+        private void HandleRoadSkip()
+        {
+            if (!_roadMode)
+                return;
+            _presenter.HideRoadPopup();
+            StopRoadMode();
+            _match.DeclineRoad();
+            _hud.ShowRoadSkip(false);
+            Select(null);
+            _sfx.Play(SfxCue.Click);
+        }
+
         // The attack loop's buttons and hint go away before a command. The selection stays, so an
         // attack keeps its rings during the combat and the next visit can reselect it. Road mode ends
         // with any command (a march spends the Road, a Wrath or END TURN leaves the loop). The prompt is
@@ -454,6 +498,7 @@ namespace GameJam.Gameplay
             _awaitingBoardClick = false;
             _lastTarget = null;
             _hud.ShowEndTurn(false);
+            _hud.ShowRoadSkip(false);
             _hud.ShowWrath(false);
             _hud.HideHint();
             _hud.SetPrompt(string.Empty);
@@ -539,6 +584,8 @@ namespace GameJam.Gameplay
         {
             God god = _match.CurrentGod;
             _aimingWrath = true;
+            _zeusFirstTarget = null;
+            _hud.ShowRoadSkip(false);
             // The Wrath suspends Road mode (its highlights are redrawn); cancelling restores it.
             _roadSource = null;
             _roadDestinations.Clear();
@@ -561,9 +608,14 @@ namespace GameJam.Gameplay
             StopAimingWrath();
             RefreshWrathButton();
             if (_roadMode)
+            {
+                _hud.ShowRoadSkip(true);
                 ShowRoadOrigins();
+            }
             else
+            {
                 Select(null);
+            }
             _sfx.Play(SfxCue.Click);
         }
 
@@ -571,6 +623,7 @@ namespace GameJam.Gameplay
         {
             _aimingWrath = false;
             _wrathSource = null;
+            _zeusFirstTarget = null;
         }
 
         // Rings every legal target with the troops the Wrath would take ("-3"), so the choice is read
@@ -579,12 +632,29 @@ namespace GameJam.Gameplay
         {
             _board.ClearHighlights();
             God god = _match.CurrentGod;
-            SetWrathPrompt(MatchText.WrathTargetPrompt(god, _wrathSource));
+            int strikeNum = _zeusFirstTarget == null ? 1 : 2;
+            SetWrathPrompt(MatchText.WrathTargetPrompt(god, _wrathSource, strikeNum));
             bool needsSource = GodPowers.WrathNeedsSource(god);
             if (needsSource && _wrathSource == null)
                 return;
             if (needsSource)
                 _board.SetHighlight(_wrathSource, TerritoryHighlight.Selected);
+
+            if (god == God.Zeus && _zeusFirstTarget != null)
+            {
+                _board.SetHighlight(_zeusFirstTarget, TerritoryHighlight.Selected);
+                foreach (Territory target in _match.Board.Territories)
+                {
+                    if (!_match.CanUnleashWrath(target: _zeusFirstTarget, secondTarget: target))
+                        continue;
+                    _board.SetHighlight(target, TerritoryHighlight.Target);
+                    int loss = target == _zeusFirstTarget
+                        ? GodPowers.ThunderboltLoss(target.Troops - GodPowers.ThunderboltLoss(target.Troops))
+                        : GodPowers.ThunderboltLoss(target.Troops);
+                    _board.SetPreview(target, -loss);
+                }
+                return;
+            }
 
             foreach (Territory target in _match.Board.Territories)
             {
@@ -602,10 +672,52 @@ namespace GameJam.Gameplay
         // (or drops) his source instead; anything else says why it cannot be struck.
         private bool TryAimWrathAt(Territory clicked)
         {
+            God god = _match.CurrentGod;
+            if (god == God.Zeus)
+            {
+                if (_zeusFirstTarget == null)
+                {
+                    if (!_match.CanUnleashWrath(target: clicked))
+                    {
+                        SetWrathPrompt(
+                            MatchText.WithHint(
+                                MatchText.WrathTargetPrompt(god, null, 1),
+                                MatchText.WrathNoTargetHint(god)
+                            )
+                        );
+                        _sfx.Play(SfxCue.Invalid);
+                        return false;
+                    }
+
+                    if (HasSecondThunderboltTarget(clicked))
+                    {
+                        _zeusFirstTarget = clicked;
+                        ShowWrathTargets();
+                        _sfx.Play(SfxCue.Click);
+                        return false;
+                    }
+
+                    return true;
+                }
+
+                if (!_match.CanUnleashWrath(target: _zeusFirstTarget, secondTarget: clicked))
+                {
+                    SetWrathPrompt(
+                        MatchText.WithHint(
+                            MatchText.WrathTargetPrompt(god, null, 2),
+                            MatchText.WrathNoTargetHint(god)
+                        )
+                    );
+                    _sfx.Play(SfxCue.Invalid);
+                    return false;
+                }
+
+                return true;
+            }
+
             if (_match.CanUnleashWrath(_wrathSource, clicked))
                 return true;
 
-            God god = _match.CurrentGod;
             if (GodPowers.WrathNeedsSource(god) && clicked.Owner == god)
             {
                 bool canStrikeFromHere = clicked != _wrathSource && HasWrathTargetFrom(clicked);
@@ -633,6 +745,16 @@ namespace GameJam.Gameplay
                     : MatchText.WrathNoTargetHint(god);
             SetWrathPrompt(MatchText.WithHint(MatchText.WrathTargetPrompt(god, _wrathSource), why));
             _sfx.Play(SfxCue.Invalid);
+            return false;
+        }
+
+        private bool HasSecondThunderboltTarget(Territory firstTarget)
+        {
+            foreach (Territory territory in _match.Board.Territories)
+            {
+                if (_match.CanUnleashWrath(target: firstTarget, secondTarget: territory))
+                    return true;
+            }
             return false;
         }
 
@@ -846,9 +968,9 @@ namespace GameJam.Gameplay
             _hud.SetTurnStatus(MatchText.StatusThinking);
             yield return BotPause(_botStepPause);
             // Asked before every attack: Favor can fill up in the middle of the turn.
-            if (BotPlayer.TryChooseWrath(_match, out Territory source, out Territory target))
+            if (BotPlayer.TryChooseWrath(_match, out Territory source, out Territory target, out Territory secondTarget))
             {
-                yield return BotWrath(source, target);
+                yield return BotWrath(source, target, secondTarget);
                 yield break;
             }
             // The march comes before the attack: it brings the army to where the fight is.
@@ -873,17 +995,19 @@ namespace GameJam.Gameplay
         }
 
         // Paced like an attack: the aim shows first, then the blow, then its result stays readable.
-        private IEnumerator BotWrath(Territory source, Territory target)
+        private IEnumerator BotWrath(Territory source, Territory target, Territory secondTarget = null)
         {
             God god = _match.CurrentGod;
             if (source != null)
                 _board.SetHighlight(source, TerritoryHighlight.Selected);
             if (target != null)
                 _board.SetHighlight(target, TerritoryHighlight.Target);
+            if (secondTarget != null)
+                _board.SetHighlight(secondTarget, TerritoryHighlight.Target);
             _hud.SetTurnStatus(MatchText.StatusWrath(god));
             yield return BotPause(_botStepPause);
 
-            _match.UnleashWrath(source, target);
+            _match.UnleashWrath(source, target, secondTarget);
             yield return BotPause(_botResultHold);
             // A Wrath that ended the match, or knocked the last person out, leaves the end screen alone.
             if (_match.Phase != TurnPhase.MatchOver && !AreAllHumansOut)
@@ -952,9 +1076,15 @@ namespace GameJam.Gameplay
         // While aiming: a target, or (Thor) one of his territories that can strike from there.
         private bool IsWrathClickUsable(Territory territory)
         {
+            God god = _match.CurrentGod;
+            if (god == God.Zeus)
+            {
+                return _zeusFirstTarget == null
+                    ? _match.CanUnleashWrath(target: territory)
+                    : _match.CanUnleashWrath(target: _zeusFirstTarget, secondTarget: territory);
+            }
             if (_match.CanUnleashWrath(_wrathSource, territory))
                 return true;
-            God god = _match.CurrentGod;
             return GodPowers.WrathNeedsSource(god)
                 && territory.Owner == god
                 && HasWrathTargetFrom(territory);
@@ -1051,6 +1181,7 @@ namespace GameJam.Gameplay
             StopAimingWrath();
             StopRoadMode();
             _offeringRequested = false;
+            _roadSkipRequested = false;
             _carriedClick = null;
             _lastTarget = null;
             _endTurnRequested = false;
@@ -1141,6 +1272,12 @@ namespace GameJam.Gameplay
         private void HandleEndTurnClicked()
         {
             _endTurnRequested = true;
+            _sfx.Play(SfxCue.Click);
+        }
+
+        private void HandleRoadSkipClicked()
+        {
+            _roadSkipRequested = true;
             _sfx.Play(SfxCue.Click);
         }
 
