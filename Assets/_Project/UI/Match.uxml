@@ -274,6 +274,8 @@
                     <ui:VisualElement name="destiny-chip" class="god-chip destiny-card__chip" picking-mode="Ignore">
                         <ui:VisualElement class="god-chip__icon" picking-mode="Ignore" />
                     </ui:VisualElement>
+                    <!-- Sacred / cursed mark shown for Good Fortune (3) or Bad Omen (4). -->
+                    <ui:VisualElement name="destiny-omen-badge" class="omen-icon destiny-card__chip" picking-mode="Ignore" />
                 </ui:VisualElement>
                 <ui:VisualElement class="destiny-name destiny-name--effect" picking-mode="Ignore">
                     <ui:VisualElement name="destiny-god-icon" class="god-chip god-chip--sm destiny-name__icon" picking-mode="Ignore">
@@ -835,6 +837,7 @@
         <ui:VisualElement name="hud-toggles" class="hud__toggles" picking-mode="Ignore">
             <ui:Button name="sound-button" text="SOUND" class="button button--secondary hud__toggle" />
             <ui:Button name="fast-bots-button" text="▶▶ FAST BOTS: OFF" class="button button--secondary hud__toggle" />
+            <ui:Button name="quit-button" text="QUIT MATCH" class="button button--secondary hud__toggle" />
             <!-- Music and effects volumes. Clicks inside never close it (the sliders drag); a click outside, Esc or SOUND does. Text set by HudView. -->
             <ui:VisualElement name="sound-panel" class="card info-panel sound-panel">
                 <ui:Label name="sound-heading" class="info-panel__heading sound-panel__heading" picking-mode="Ignore" text="SOUND" />
@@ -849,6 +852,17 @@
                     <ui:Label name="effects-value" class="info-panel__text sound-panel__value" picking-mode="Ignore" text="100%" />
                 </ui:VisualElement>
                 <ui:Label name="sound-close" class="info-panel__close" picking-mode="Ignore" text="CLICK OUTSIDE OR ESC TO CLOSE" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <!-- Confirmation modal for quitting match: strictly reuses end-banner scrim, home card, screen title, and standard action buttons. -->
+        <ui:VisualElement name="quit-modal" class="end-banner" style="display: none;">
+            <ui:VisualElement class="card menu__card menu__screen--home" picking-mode="Ignore">
+                <ui:Label name="quit-modal-title" class="menu__screen-title" picking-mode="Ignore" text="ABANDON MATCH" />
+                <ui:Label name="quit-modal-message" class="menu__tagline" picking-mode="Ignore" text="Are you sure you want to quit? Your current match progress will be lost." style="margin-top: 16px; margin-bottom: 28px; white-space: normal; -unity-text-align: middle-center;" />
+                <ui:VisualElement class="end-banner__actions" picking-mode="Ignore">
+                    <ui:Button name="quit-confirm-button" text="QUIT MATCH" class="button button--primary" style="margin-right: 14px;" />
+                    <ui:Button name="quit-cancel-button" text="RESUME" class="button button--secondary" />
+                </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>

@@ -62,6 +62,12 @@ namespace GameJam.UI
         public const string EndTurnButton = "END TURN";
         public const string PlayAgainButton = "PLAY AGAIN";
         public const string MainMenuButton = "MAIN MENU";
+        public const string QuitButton = "QUIT MATCH";
+        public const string QuitModalTitle = "ABANDON MATCH";
+        public const string QuitModalMessage =
+            "Are you sure you want to quit? Your current match progress will be lost.";
+        public const string QuitConfirmButton = "QUIT MATCH";
+        public const string QuitCancelButton = "RESUME";
 
         public const string GameTitle = "GodBoard";
         public const string Tagline = "Your lucky number is your rival's curse.";

@@ -59,6 +59,7 @@ namespace GameJam.UI
         private Label _effect;
         private VisualElement _nameGodIcon;
         private VisualElement _nameOmenIcon;
+        private VisualElement _destinyOmenBadge;
         private Label _day;
         private Label _you;
         private Label _skip;
@@ -95,6 +96,7 @@ namespace GameJam.UI
             _effect = root.Q<Label>("destiny-effect");
             _nameGodIcon = root.Q<VisualElement>("destiny-god-icon");
             _nameOmenIcon = root.Q<VisualElement>("destiny-omen-icon");
+            _destinyOmenBadge = root.Q<VisualElement>("destiny-omen-badge");
             _day = root.Q<Label>("destiny-day");
             _you = root.Q<Label>("destiny-you");
             _skip = root.Q<Label>("destiny-skip");
@@ -151,6 +153,13 @@ namespace GameJam.UI
             StopAllCoroutines();
             IsPlaying = false;
             _overlay.style.display = DisplayStyle.None;
+            if (_die != null)
+            {
+                _die.RemoveFromClassList("destiny--fortune");
+                _die.RemoveFromClassList("destiny--omen");
+            }
+            if (_destinyOmenBadge != null)
+                _destinyOmenBadge.style.display = DisplayStyle.None;
         }
 
         private IEnumerator Play(
@@ -177,6 +186,10 @@ namespace GameJam.UI
             _you.style.visibility = Visibility.Hidden;
             GodUss.Apply(_die, null);
             GodUss.Apply(_chip, null);
+            _die.RemoveFromClassList("destiny--fortune");
+            _die.RemoveFromClassList("destiny--omen");
+            if (_destinyOmenBadge != null)
+                _destinyOmenBadge.style.display = DisplayStyle.None;
             _nameGodIcon.style.display = DisplayStyle.None;
             _nameOmenIcon.style.display = DisplayStyle.None;
 
@@ -188,6 +201,18 @@ namespace GameJam.UI
             GodUss.Apply(_die, favored);
             GodUss.Apply(_chip, favored);
             GodUss.ApplyDestinyIcon(_nameGodIcon, _nameOmenIcon, face);
+
+            bool isFortune = face == Destiny.GoodFortuneFace;
+            bool isOmen = Destiny.IsBadOmen(face);
+            _die.EnableInClassList("destiny--fortune", isFortune);
+            _die.EnableInClassList("destiny--omen", isOmen);
+            if (_destinyOmenBadge != null)
+            {
+                _destinyOmenBadge.EnableInClassList("omen-icon--sacred", isFortune);
+                _destinyOmenBadge.EnableInClassList("omen-icon--cursed", isOmen);
+                _destinyOmenBadge.style.display = (isFortune || isOmen) ? DisplayStyle.Flex : DisplayStyle.None;
+            }
+
             yield return Land();
 
             _landed = true;

@@ -229,6 +229,11 @@ namespace GameJam.Gameplay
             Keyboard keyboard = Keyboard.current;
             if (keyboard == null || !keyboard.escapeKey.wasPressedThisFrame)
                 return;
+            if (_hud.IsQuitModalOpen)
+            {
+                _hud.CloseQuitModal();
+                return;
+            }
             _hud.CloseRoundInfo();
             _hud.CloseSoundPanel();
             _nations.CloseInfo();

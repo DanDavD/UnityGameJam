@@ -180,6 +180,33 @@
     margin: 0;
 }
 
+/* Good fortune and Bad omen visual cues on HUD round bar */
+.hud__round.round--fortune {
+    background-color: #E2F0D9;
+    border-color: #70AD47;
+}
+
+.hud__round.round--fortune .hud__round-text {
+    color: #275016;
+}
+
+.hud__round.round--fortune .destiny-name__icon.omen-icon--sacred {
+    -unity-background-image-tint-color: #275016;
+}
+
+.hud__round.round--omen {
+    background-color: #F8D7DA;
+    border-color: #D9534F;
+}
+
+.hud__round.round--omen .hud__round-text {
+    color: #721C24;
+}
+
+.hud__round.round--omen .destiny-name__icon.omen-icon--cursed {
+    -unity-background-image-tint-color: #721C24;
+}
+
 /* Bottom center: prompt and actions */
 .hud__bottom {
     align-items: center;
@@ -1269,6 +1296,33 @@
 .die--destiny.god--thor { background-color: var(--nation-thor-tint); }
 .die--destiny.god--ra { background-color: var(--nation-ra-tint); }
 .die--destiny.god--morrigan { background-color: var(--nation-morrigan-tint); }
+
+/* Good fortune and bad omen on the Destiny die */
+.die--destiny.destiny--fortune {
+    background-color: #E2F0D9;
+    border-color: #70AD47;
+}
+
+.die--destiny.destiny--fortune > .die__face {
+    color: #275016;
+}
+
+.die--destiny.destiny--omen {
+    background-color: #F8D7DA;
+    border-color: #D9534F;
+}
+
+.die--destiny.destiny--omen > .die__face {
+    color: #721C24;
+}
+
+.destiny-card__chip.omen-icon.omen-icon--sacred {
+    -unity-background-image-tint-color: #275016;
+}
+
+.destiny-card__chip.omen-icon.omen-icon--cursed {
+    -unity-background-image-tint-color: #721C24;
+}
 
 .destiny-card__chip {
     position: absolute;
@@ -2830,6 +2884,24 @@
 .round-info__god-text {
     flex-shrink: 1;
     margin: 0 0 0 var(--space-3);
+}
+
+.round-info.round--fortune {
+    border-top-width: var(--space-2);
+    border-top-color: #70AD47;
+}
+
+.round-info.round--fortune #round-info-title {
+    color: #275016;
+}
+
+.round-info.round--omen {
+    border-top-width: var(--space-2);
+    border-top-color: #D9534F;
+}
+
+.round-info.round--omen #round-info-title {
+    color: #721C24;
 }
 
 /* A god's powers card, a flyout to the right of its row, aligned with it: paper with the nation
