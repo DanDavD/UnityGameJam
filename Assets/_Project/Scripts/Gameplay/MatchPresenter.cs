@@ -518,7 +518,7 @@ namespace GameJam.Gameplay
             _humanDestinyModifier = modifier;
             bool humanLosesTroop =
                 Destiny.IsBadOmen(destinyFace)
-                && Destiny.BadOmenTarget(_match.Board, human) != null;
+                && Destiny.HasBadOmenTarget(_match.Board, human);
             _destiny.Show(
                 round,
                 destinyFace,

@@ -568,6 +568,7 @@ namespace GameJam.Core
             // A god's face and the bad omen exclude each other, so at most one of these runs.
             if (Destiny.IsBadOmen(DestinyFace))
                 ApplyBadOmen();
+
             if (DayGod != null)
                 StartDay(DayGod.Value);
         }
@@ -643,14 +644,13 @@ namespace GameJam.Core
 
         private void ApplyBadOmen()
         {
-            foreach (God god in BaseTurnOrder)
+            foreach (Territory territory in Board.Territories)
             {
-                Territory target = Destiny.BadOmenTarget(Board, god);
-                if (target == null)
-                    continue;
-
-                target.Troops--;
-                TerritoryChanged?.Invoke(target);
+                if (territory.Owner != null && territory.Troops >= Destiny.BadOmenMinTroops)
+                {
+                    territory.Troops--;
+                    TerritoryChanged?.Invoke(territory);
+                }
             }
         }
 

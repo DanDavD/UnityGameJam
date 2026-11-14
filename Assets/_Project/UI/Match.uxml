@@ -542,7 +542,7 @@
                                         <ui:Label class="howto__die howto__die--sm howto__die--fortune" picking-mode="Ignore" text="3" />
                                         <ui:Label class="howto__entry-title" picking-mode="Ignore" text="Good fortune" />
                                     </ui:VisualElement>
-                                    <ui:Label class="howto__entry-desc" picking-mode="Ignore" text="Everyone places +1 troop." />
+                                    <ui:Label class="howto__entry-desc" picking-mode="Ignore" text="Everyone gets +1 reinforcement." />
                                 </ui:VisualElement>
 
                                 <ui:VisualElement class="howto__entry" picking-mode="Ignore">
@@ -550,7 +550,7 @@
                                         <ui:Label class="howto__die howto__die--sm howto__die--omen" picking-mode="Ignore" text="4" />
                                         <ui:Label class="howto__entry-title" picking-mode="Ignore" text="Bad omen" />
                                     </ui:VisualElement>
-                                    <ui:Label class="howto__entry-desc" picking-mode="Ignore" text="Every god's largest army loses 1 troop." />
+                                    <ui:Label class="howto__entry-desc" picking-mode="Ignore" text="All territories with 2+ troops lose 1 troop." />
                                 </ui:VisualElement>
 
                                 <!-- Symmetrical Deity Days cluster: 2x2 grid pairing rival numbers 1+6 and 2+5 -->

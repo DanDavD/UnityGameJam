@@ -806,23 +806,33 @@
     right: var(--space-8);
     top: var(--space-8);
     flex-direction: row;
+    align-items: center;
 }
 
 .hud__toggle {
-    margin: 0 0 0 var(--space-2);
+    min-height: 40px;
+    height: 40px;
+    margin: 0 0 0 12px;
     background-color: var(--paper);
     border-width: 2px;
     border-color: #C8A046;
     border-bottom-width: 4px;
     border-bottom-color: var(--wood-dark);
     color: var(--ink);
-    padding: var(--space-2) var(--space-5);
+    padding: 0 16px 2px 16px;
     border-radius: var(--radius-md);
     font-size: var(--font-size-label);
     -unity-font-definition: var(--font-strong);
     letter-spacing: 1px;
+    -unity-text-align: middle-center;
+    justify-content: center;
+    align-items: center;
     transition-property: translate, scale, background-color, border-color;
     transition-duration: var(--duration-fast);
+}
+
+#sound-button.hud__toggle {
+    margin-left: 0;
 }
 
 .hud__toggle:hover {

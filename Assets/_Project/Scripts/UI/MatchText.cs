@@ -169,10 +169,14 @@ namespace GameJam.UI
                 return name + EliminatedTag;
             if (Destiny.IsBadOmen(destinyFace))
             {
-                Territory target = Destiny.BadOmenTarget(match.Board, god);
-                return target != null
-                    ? $"{name}loses 1 troop from its largest army ({target.Name})"
-                    : $"{name}loses nothing (no army of {Destiny.BadOmenMinTroops}+ troops)";
+                bool loses = Destiny.HasBadOmenTarget(match.Board, god);
+                return loses
+                    ? $"{name}-1 troop in all territories with 2+ troops"
+                    : $"{name}loses nothing (all armies have 1 troop)";
+            }
+            if (Destiny.IsGoodFortune(destinyFace))
+            {
+                return $"{name}+1 reinforcement (good fortune)";
             }
 
             int modifier = match.DestinyModifierOf(god);
@@ -319,7 +323,7 @@ namespace GameJam.UI
                     ? $"You: +{modifier} · {DayName(yourDay.Value)} is yours"
                     : $"You: {DayName(yourDay.Value)} is yours";
             if (losesTroop)
-                return "You: lose 1 troop";
+                return "You: -1 troop in territories with 2+ troops";
             if (modifier > 0)
                 return $"You: +{modifier}";
             if (modifier < 0)

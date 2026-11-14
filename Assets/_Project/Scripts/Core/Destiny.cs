@@ -12,7 +12,7 @@ namespace GameJam.Core
         /// <summary>A bad omen never takes a nation's last troop from a territory.</summary>
         public const int BadOmenMinTroops = 2;
 
-        // A god's face brings its Day (god power) without direct reinforcement modifiers. Face 3 grants good fortune (+1).
+        // A god's face brings its Day (god power). Face 3 grants good fortune (+1 reinforcement to all).
         public static int ReinforcementModifier(God god, int destinyFace)
         {
             Die.EnsureValidFace(destinyFace);
@@ -43,10 +43,27 @@ namespace GameJam.Core
             }
         }
 
+        public static bool IsGoodFortune(int destinyFace)
+        {
+            Die.EnsureValidFace(destinyFace);
+            return destinyFace == GoodFortuneFace;
+        }
+
         public static bool IsBadOmen(int destinyFace)
         {
             Die.EnsureValidFace(destinyFace);
             return destinyFace == BadOmenFace;
+        }
+
+        /// <summary>True when the god owns at least one territory with 2+ troops.</summary>
+        public static bool HasBadOmenTarget(Board board, God god)
+        {
+            foreach (Territory territory in board.TerritoriesOf(god))
+            {
+                if (territory.Troops >= BadOmenMinTroops)
+                    return true;
+            }
+            return false;
         }
 
         /// <summary>

@@ -30,6 +30,15 @@ namespace GameJam.Tests
         }
 
         [TestCase(1, false)]
+        [TestCase(3, true)]
+        [TestCase(4, false)]
+        [TestCase(6, false)]
+        public void IsGoodFortune_OnlyFaceThree(int face, bool expected)
+        {
+            Assert.AreEqual(expected, Destiny.IsGoodFortune(face));
+        }
+
+        [TestCase(1, false)]
         [TestCase(3, false)]
         [TestCase(4, true)]
         [TestCase(6, false)]
