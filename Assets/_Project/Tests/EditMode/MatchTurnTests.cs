@@ -122,7 +122,7 @@ namespace GameJam.Tests
         }
 
         [Test]
-        public void Start_BadOmen_EachNationLosesOneFromLargestArmy()
+        public void Start_BadOmen_EachNationLosesOneFromEachTerritoryWithMultipleTroops()
         {
             var changed = new List<int>();
             var match = new Match(_board, new FakeRandom(Destiny.BadOmenFace));
@@ -132,24 +132,15 @@ namespace GameJam.Tests
 
             foreach (God god in Match.BaseTurnOrder)
             {
-                Assert.AreEqual(4, _board.TotalTroops(god), god.ToString());
+                Assert.AreEqual(3, _board.TotalTroops(god), god.ToString());
             }
             Assert.AreEqual(2, _board.Get(Board.ZeusCapital).Troops);
-            Assert.AreEqual(2, _board.Get(Board.ZeusVillage).Troops);
-            CollectionAssert.AreEqual(
-                new[]
-                {
-                    Board.ZeusCapital,
-                    Board.RaCapital,
-                    Board.ThorCapital,
-                    Board.MorriganCapital,
-                },
-                changed
-            );
+            Assert.AreEqual(1, _board.Get(Board.ZeusVillage).Troops);
+            Assert.AreEqual(8, changed.Count);
         }
 
         [Test]
-        public void Start_BadOmen_LargestArmyWithOneTroop_IsSpared()
+        public void Start_BadOmen_TerritoryWithOneTroop_IsSpared()
         {
             MatchSetup.Set(_board, Board.RaCapital, God.Ra, 1);
             MatchSetup.Set(_board, Board.RaVillage, God.Ra, 1);
@@ -161,7 +152,7 @@ namespace GameJam.Tests
         }
 
         [Test]
-        public void Start_BadOmen_TiedLargestArmies_LowestIdLoses()
+        public void Start_BadOmen_AllTerritoriesWithMultipleTroops_LoseOne()
         {
             MatchSetup.Set(_board, Board.ZeusCapital, God.Zeus, 2);
             MatchSetup.Set(_board, Board.ZeusVillage, God.Zeus, 4);
@@ -169,9 +160,20 @@ namespace GameJam.Tests
 
             MatchSetup.Start(_board, Destiny.BadOmenFace);
 
+            Assert.AreEqual(1, _board.Get(Board.ZeusCapital).Troops);
             Assert.AreEqual(3, _board.Get(Board.ZeusVillage).Troops);
-            Assert.AreEqual(4, _board.Get(Board.NorthTemple).Troops);
-            Assert.AreEqual(2, _board.Get(Board.ZeusCapital).Troops);
+            Assert.AreEqual(3, _board.Get(Board.NorthTemple).Troops);
+        }
+
+        [Test]
+        public void Start_GoodFortune_EachNationReceivesExtraReinforcement()
+        {
+            var match = new Match(_board, new FakeRandom(Destiny.GoodFortuneFace));
+            match.Start();
+
+            // Good Fortune grants +1 reinforcement to all gods: 2 base + 1 territory bonus + 1 Good Fortune = 4.
+            Assert.AreEqual(4, match.ReinforcementsLeft);
+            Assert.AreEqual(1, match.TurnReinforcements.FromDestiny);
         }
 
         [Test]
