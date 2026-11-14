@@ -231,6 +231,7 @@ namespace GameJam.Gameplay
         private void Update()
         {
             _board.SetHovered(UsableTerritoryUnderPointer());
+            UpdateTempleTooltipHover();
             // A click that skips the Destiny Die belongs to its overlay, not the board. UI Toolkit may
             // handle it before or after this Update, so the frame after the overlay last showed is
             // ignored too.
@@ -1050,6 +1051,38 @@ namespace GameJam.Gameplay
             )
                 return null;
             return IsUsableNow(territory) ? territory : null;
+        }
+
+        private void UpdateTempleTooltipHover()
+        {
+            if (!_matchStarted || _hud.IsQuitModalOpen || _destiny.IsPlaying)
+            {
+                _hud.HideTempleTooltip();
+                return;
+            }
+
+            Pointer pointer = Pointer.current;
+            if (pointer == null)
+            {
+                _hud.HideTempleTooltip();
+                return;
+            }
+
+            Vector2 position = pointer.position.ReadValue();
+            if (_hud.IsPointerOverUi(position) || !_board.TryPick(position, out Territory territory))
+            {
+                _hud.HideTempleTooltip();
+                return;
+            }
+
+            if (territory.Kind != TerritoryKind.Temple)
+            {
+                _hud.HideTempleTooltip();
+                return;
+            }
+
+            Vector2 screenPos = _board.ScreenPositionOf(territory);
+            _hud.ShowTempleTooltip(territory, screenPos);
         }
 
         // The same rules the click handlers apply, so a hover never promises a click that is refused.

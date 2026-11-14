@@ -281,6 +281,18 @@
                 <ui:Label name="destiny-skip" class="destiny-card__skip" picking-mode="Ignore" text="Click to skip" />
             </ui:VisualElement>
         </ui:VisualElement>
+        <!-- Minimal sleek dynamic tooltip for Temples (diamond territories). Informative UI overlay. -->
+        <ui:VisualElement name="temple-tooltip" class="temple-tooltip" picking-mode="Ignore" style="display: none;">
+            <ui:VisualElement name="temple-tooltip-pill" class="temple-tooltip__pill" picking-mode="Ignore">
+                <ui:VisualElement name="temple-tooltip-diamond" class="temple-tooltip__diamond" picking-mode="Ignore">
+                    <ui:VisualElement name="temple-tooltip-icon" class="temple-tooltip__icon" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement class="temple-tooltip__content" picking-mode="Ignore">
+                    <ui:Label name="temple-tooltip-title" class="temple-tooltip__title" picking-mode="Ignore" text="North Temple" />
+                    <ui:Label name="temple-tooltip-subtitle" class="temple-tooltip__subtitle" picking-mode="Ignore" text="TEMPLE · UNCLAIMED" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
         <!-- Main menu over the board. Contains multiple screens: Home, God Select, Rules, Pantheon, Theme. -->
         <ui:VisualElement name="menu" class="menu">
             <!-- 1. Home / Title screen: decluttered minimalist menu with only Play and How to play -->
@@ -362,8 +374,14 @@
                                     <ui:VisualElement class="howto__entry-head" picking-mode="Ignore">
                                         <ui:Label class="howto__marker" picking-mode="Ignore" text="3" />
                                         <ui:Label class="howto__entry-title" picking-mode="Ignore" text="Temples" />
+                                        <ui:VisualElement class="howto__temple-chip" picking-mode="Ignore">
+                                            <ui:VisualElement class="howto__temple-chip-diamond" picking-mode="Ignore">
+                                                <ui:VisualElement class="howto__temple-chip-icon" picking-mode="Ignore" />
+                                            </ui:VisualElement>
+                                            <ui:Label class="howto__temple-chip-label" picking-mode="Ignore" text="DIAMOND" />
+                                        </ui:VisualElement>
                                     </ui:VisualElement>
-                                    <ui:Label class="howto__entry-desc" picking-mode="Ignore" text="Start your turn holding 3 of the 4 Temples." />
+                                    <ui:Label class="howto__entry-desc" picking-mode="Ignore" text="Start your turn holding 3 of the 4 Temples (the 4 diamond-shaped spaces on the board)." />
                                 </ui:VisualElement>
 
                                 <ui:VisualElement class="howto__entry" picking-mode="Ignore">
@@ -422,7 +440,7 @@
                                             <ui:VisualElement class="howto__bullet" picking-mode="Ignore" />
                                             <ui:Label class="howto__entry-title" picking-mode="Ignore" text="Empty land" />
                                         </ui:VisualElement>
-                                        <ui:Label class="howto__entry-desc" picking-mode="Ignore" text="Temples and the Altar start empty. Taken without a fight; a third of your army moves in." />
+                                        <ui:Label class="howto__entry-desc" picking-mode="Ignore" text="Temples (diamond spaces) and the Altar start empty. Taken without a fight; a third of your army moves in." />
                                     </ui:VisualElement>
 
                                     <ui:VisualElement class="howto__entry" picking-mode="Ignore">

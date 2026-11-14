@@ -1715,6 +1715,47 @@
     margin-left: 6px;
 }
 
+.howto__temple-chip {
+    flex-direction: row;
+    align-items: center;
+    margin-left: 8px;
+    background-color: var(--paper);
+    border-width: 1px;
+    border-color: var(--ink-soft);
+    border-radius: var(--radius-xs);
+    padding: 1px 6px 1px 4px;
+    border-bottom-width: 2px;
+    border-bottom-color: var(--shadow);
+}
+
+.howto__temple-chip-diamond {
+    width: 15px;
+    height: 15px;
+    background-image: url("../Art/Placeholder/diamond.png");
+    -unity-background-image-tint-color: var(--ink);
+    -unity-background-scale-mode: scale-to-fit;
+    align-items: center;
+    justify-content: center;
+    margin-right: 4px;
+}
+
+.howto__temple-chip-icon {
+    width: 9px;
+    height: 9px;
+    background-image: url("../Art/Placeholder/icon_temple.png");
+    -unity-background-image-tint-color: var(--paper);
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.howto__temple-chip-label {
+    font-size: 10px;
+    -unity-font-definition: var(--font-strong);
+    color: var(--ink-soft);
+    letter-spacing: 0.5px;
+    margin: 0;
+    padding: 0;
+}
+
 .howto__entry-desc {
     font-size: 13.5px;
     color: var(--ink-soft);
@@ -3182,4 +3223,116 @@
 .destiny-name__icon {
     display: none;
     margin-right: var(--space-2);
+}
+
+/* ========================================================
+   Temple Dynamic Hover Tooltip:
+   Sleek, informative overlay anchored over diamond territories.
+   Non-intrusive, picking-mode="Ignore".
+   ======================================================== */
+.temple-tooltip {
+    position: absolute;
+    translate: -50% -100%;
+    margin-top: -65px;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.temple-tooltip__pill {
+    flex-direction: row;
+    align-items: center;
+    background-color: var(--paper);
+    border-width: 1.5px;
+    border-color: var(--ink);
+    border-radius: var(--radius-sm);
+    padding: 4px 10px 5px 8px;
+    border-bottom-width: 3px;
+    border-bottom-color: var(--shadow);
+}
+
+.temple-tooltip__diamond {
+    width: 20px;
+    height: 20px;
+    background-image: url("../Art/Placeholder/diamond.png");
+    -unity-background-image-tint-color: var(--ink);
+    -unity-background-scale-mode: scale-to-fit;
+    align-items: center;
+    justify-content: center;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.temple-tooltip__icon {
+    width: 12px;
+    height: 12px;
+    background-image: url("../Art/Placeholder/icon_temple.png");
+    -unity-background-image-tint-color: var(--paper);
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.temple-tooltip__content {
+    flex-direction: column;
+    justify-content: center;
+}
+
+.temple-tooltip__title {
+    font-size: 13.5px;
+    -unity-font-definition: var(--font-strong);
+    color: var(--ink);
+    margin: 0;
+    padding: 0;
+    -unity-text-align: middle-left;
+}
+
+.temple-tooltip__subtitle {
+    font-size: 9.5px;
+    -unity-font-definition: var(--font-strong);
+    color: var(--ink-soft);
+    margin: 0;
+    margin-top: 1px;
+    padding: 0;
+    letter-spacing: 0.5px;
+    -unity-text-align: middle-left;
+}
+
+/* Deity ownership accents on tooltip pill */
+.temple-tooltip__pill.god--zeus {
+    border-color: var(--nation-zeus);
+}
+.temple-tooltip__pill.god--zeus .temple-tooltip__diamond {
+    -unity-background-image-tint-color: var(--nation-zeus);
+}
+.temple-tooltip__pill.god--zeus .temple-tooltip__subtitle {
+    color: #2b78a8;
+}
+
+.temple-tooltip__pill.god--ra {
+    border-color: var(--nation-ra);
+}
+.temple-tooltip__pill.god--ra .temple-tooltip__diamond {
+    -unity-background-image-tint-color: var(--nation-ra);
+}
+.temple-tooltip__pill.god--ra .temple-tooltip__subtitle {
+    color: #ad7700;
+}
+
+.temple-tooltip__pill.god--thor {
+    border-color: var(--nation-thor);
+}
+.temple-tooltip__pill.god--thor .temple-tooltip__diamond {
+    -unity-background-image-tint-color: var(--nation-thor);
+}
+.temple-tooltip__pill.god--thor .temple-tooltip__subtitle {
+    color: #a34700;
+}
+
+.temple-tooltip__pill.god--morrigan {
+    border-color: #4A3E3D;
+}
+.temple-tooltip__pill.god--morrigan .temple-tooltip__diamond {
+    -unity-background-image-tint-color: #4A3E3D;
+}
+.temple-tooltip__pill.god--morrigan .temple-tooltip__subtitle {
+    color: var(--ink-soft);
 }

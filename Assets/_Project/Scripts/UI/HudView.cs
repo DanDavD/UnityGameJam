@@ -162,6 +162,10 @@ namespace GameJam.UI
         private Label _combatsLabel;
         private Button _playAgainButton;
         private Button _mainMenuButton;
+        private VisualElement _templeTooltip;
+        private VisualElement _templeTooltipPill;
+        private Label _templeTooltipTitle;
+        private Label _templeTooltipSubtitle;
         private IVisualElementScheduledItem _hintTimeout;
         private IVisualElementScheduledItem _newsTimeout;
 
@@ -300,6 +304,10 @@ namespace GameJam.UI
             _combatsLabel = root.Q<Label>("stat-combats-label");
             _playAgainButton = root.Q<Button>("play-again-button");
             _mainMenuButton = root.Q<Button>("main-menu-button");
+            _templeTooltip = root.Q<VisualElement>("temple-tooltip");
+            _templeTooltipPill = root.Q<VisualElement>("temple-tooltip-pill");
+            _templeTooltipTitle = root.Q<Label>("temple-tooltip-title");
+            _templeTooltipSubtitle = root.Q<Label>("temple-tooltip-subtitle");
 
             // Player-facing text lives in MatchText; the UXML text is only the UI Builder preview.
             root.Q<Label>("round-info-goal-heading").text = MatchText.GoalHeading;
@@ -907,6 +915,7 @@ namespace GameJam.UI
             HideHint();
             HideNews();
             HideReinforcements();
+            HideTempleTooltip();
             CloseRoundInfo();
             ShowWrath(false);
             StopFavorFlyers();
@@ -917,6 +926,43 @@ namespace GameJam.UI
             SetVisible(_quitButton, false);
             SetVisible(_quitModal, false);
             SetVisible(_endBanner, true);
+        }
+
+        /// <summary>
+        /// Shows the dynamic temple hover tooltip positioned over the specified territory's screen coordinates.
+        /// Purely informative overlay with picking-mode="Ignore".
+        /// </summary>
+        public void ShowTempleTooltip(Territory territory, Vector2 screenPosition)
+        {
+            if (territory == null || _templeTooltip == null || _document == null)
+                return;
+
+            IPanel panel = _document.rootVisualElement?.panel;
+            if (panel == null)
+                return;
+
+            var flipped = new Vector2(screenPosition.x, Screen.height - screenPosition.y);
+            Vector2 panelPos = RuntimePanelUtils.ScreenToPanel(panel, flipped);
+
+            _templeTooltip.style.left = panelPos.x;
+            _templeTooltip.style.top = panelPos.y;
+
+            if (_templeTooltipTitle != null)
+                _templeTooltipTitle.text = MatchText.TempleTooltipTitle(territory);
+            if (_templeTooltipSubtitle != null)
+                _templeTooltipSubtitle.text = MatchText.TempleTooltipSubtitle(territory);
+
+            if (_templeTooltipPill != null)
+                GodUss.Apply(_templeTooltipPill, territory.Owner);
+
+            SetVisible(_templeTooltip, true);
+        }
+
+        /// <summary>Hides the temple hover tooltip.</summary>
+        public void HideTempleTooltip()
+        {
+            if (_templeTooltip != null)
+                SetVisible(_templeTooltip, false);
         }
 
         /// <summary>True when a screen position (Input System, origin bottom-left) is over a pickable HUD element.</summary>
