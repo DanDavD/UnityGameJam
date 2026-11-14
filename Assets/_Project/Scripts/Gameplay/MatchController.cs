@@ -230,6 +230,12 @@ namespace GameJam.Gameplay
         // board answers "not now" instead of doing nothing.
         private void Update()
         {
+            Keyboard keyboard = Keyboard.current;
+            if (keyboard != null && keyboard.mKey.wasPressedThisFrame)
+            {
+                Match.ShowcaseForceSacred = !Match.ShowcaseForceSacred;
+            }
+
             _board.SetHovered(UsableTerritoryUnderPointer());
             UpdateTempleTooltipHover();
             // A click that skips the Destiny Die belongs to its overlay, not the board. UI Toolkit may

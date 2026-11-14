@@ -33,6 +33,9 @@ namespace GameJam.Core
             new[] { God.Zeus, God.Ra, God.Thor, God.Morrigan }
         );
 
+        /// <summary>Showcase helper: when enabled silently via 'M' key, attacks roll sacred until Wrath is used.</summary>
+        public static bool ShowcaseForceSacred { get; set; }
+
         private readonly IRandom _random;
 
         // Indexed by (int)God; always 0 while powers are off.
@@ -319,6 +322,7 @@ namespace GameJam.Core
         /// <summary>Rolls Destiny for round 1 and begins the opener's turn. All four nations start alive.</summary>
         public void Start()
         {
+            ShowcaseForceSacred = false;
             RequirePhase(TurnPhase.NotStarted, "start the match");
             StartRound(1);
             StartTurn();
@@ -359,6 +363,14 @@ namespace GameJam.Core
             God defender = to.Owner.Value;
             int attackerRoll = Die.Roll(_random);
             int defenderRoll = Die.Roll(_random);
+
+            if (ShowcaseForceSacred)
+            {
+                attackerRoll = Pantheon.SacredFace(CurrentGod);
+                if (Pantheon.Read(defender, defenderRoll) == RollOutcome.Sacred)
+                    defenderRoll = 3;
+            }
+
             CombatResult result = ResolveCombat(from, to, defender, attackerRoll, defenderRoll);
             PendingCombat = new Combat(from, to, CurrentGod, defender, result);
             Phase = TurnPhase.CombatPending;
@@ -380,6 +392,8 @@ namespace GameJam.Core
 
             // Only the attacker re-rolls; the defender keeps the die already on the table.
             int attackerRoll = Die.Roll(_random);
+            if (ShowcaseForceSacred)
+                attackerRoll = Pantheon.SacredFace(CurrentGod);
             combat.Result = ResolveCombat(
                 combat.From,
                 combat.To,
@@ -449,6 +463,7 @@ namespace GameJam.Core
             God god = CurrentGod;
             _wrathUsedThisTurn = true;
             SetFavor(god, 0);
+            ShowcaseForceSacred = false;
 
             switch (god)
             {
