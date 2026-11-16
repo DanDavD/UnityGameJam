@@ -2,7 +2,9 @@
 
 A turn-based digital board game of territorial conquest and asymmetrical divine powers where the die is the pantheon. Developed solo in a 1-week sprint for the **Official 2026 Unity Game Jam** (Theme: "Lucky Number").
 
-- **Play in Browser (WebGL):** [dandavd.itch.io/godboard](https://dandavd.itch.io/godboard)
+- **Play in Browser (WebGL):** [dandavd.itch.io/god-board](https://dandavd.itch.io/god-board)
+- **Game Jam Submission & Player Feedback:** [itch.io/jam/official-unity-game-jam-2026/rate/5357436](https://itch.io/jam/official-unity-game-jam-2026/rate/5357436)
+- **Agile Roadmap (Trello):** [trello.com/b/NE6zNufB/godboard-game-jam](https://trello.com/b/NE6zNufB/godboard-game-jam)
 - **Repository:** [github.com/DanDavD/UnityGameJam](https://github.com/DanDavD/UnityGameJam)
 - **Author:** Daniel David ([@DanDavD](https://github.com/DanDavD))
 - **Stack:** Unity 6, C# 12, UI Toolkit (UXML/USS), Universal Render Pipeline (URP 2D), WebGL
@@ -83,7 +85,7 @@ Developed under an AI-first multiplier approach:
 ## Quickstart & Verification
 
 ### Play in Browser
-Open the WebGL build directly: [dandavd.itch.io/godboard](https://dandavd.itch.io/godboard)
+Open the WebGL build directly: [dandavd.itch.io/god-board](https://dandavd.itch.io/god-board)
 
 ### Run Automated Tests via CLI
 ```bash
